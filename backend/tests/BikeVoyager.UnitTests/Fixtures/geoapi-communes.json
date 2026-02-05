@@ -1,0 +1,15 @@
+[
+  {
+    "nom": "Lyon",
+    "code": "69123",
+    "codesPostaux": ["69001", "69002"],
+    "centre": {
+      "type": "Point",
+      "coordinates": [4.8357, 45.764]
+    },
+    "departement": {
+      "code": "69",
+      "nom": "Rhone"
+    }
+  }
+]

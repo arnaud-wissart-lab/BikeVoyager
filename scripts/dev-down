@@ -1,0 +1,24 @@
+#!/usr/bin/env pwsh
+$ErrorActionPreference = 'Stop'
+
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
+$stateFile = Join-Path $repoRoot '.dev' 'pids.json'
+
+if (-not (Test-Path $stateFile)) {
+    Write-Host 'Aucun processus à arrêter.'
+    exit 0
+}
+
+$pids = Get-Content -Path $stateFile | ConvertFrom-Json
+
+foreach ($entry in $pids.PSObject.Properties) {
+    $pid = [int]$entry.Value
+    try {
+        Stop-Process -Id $pid -Force -ErrorAction Stop
+        Write-Host "Processus arrêté: $pid"
+    } catch {
+        Write-Host "Processus déjà arrêté: $pid"
+    }
+}
+
+Remove-Item -Path $stateFile -Force

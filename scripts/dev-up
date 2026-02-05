@@ -1,0 +1,23 @@
+#!/usr/bin/env pwsh
+$ErrorActionPreference = 'Stop'
+
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
+$stateDir = Join-Path $repoRoot '.dev'
+$stateFile = Join-Path $stateDir 'pids.json'
+
+New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
+
+$backendProject = Join-Path $repoRoot 'backend/src/BikeVoyager.Api/BikeVoyager.Api.csproj'
+$frontendDir = Join-Path $repoRoot 'frontend'
+
+$backend = Start-Process -FilePath 'dotnet' -ArgumentList @('watch', '--project', $backendProject, 'run') -WorkingDirectory $repoRoot -PassThru
+$frontend = Start-Process -FilePath 'npm' -ArgumentList @('run', 'dev') -WorkingDirectory $frontendDir -PassThru
+
+@{
+    backend = $backend.Id
+    frontend = $frontend.Id
+} | ConvertTo-Json | Set-Content -Path $stateFile
+
+Write-Host "Backend PID: $($backend.Id)"
+Write-Host "Frontend PID: $($frontend.Id)"
+Write-Host 'Utilisez ./scripts/dev-down pour arrêter les processus.'

@@ -1,0 +1,18 @@
+#!/usr/bin/env pwsh
+$ErrorActionPreference = 'Stop'
+
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
+
+Write-Host 'Audit backend: vulnérabilités...'
+dotnet list (Join-Path $repoRoot 'BikeVoyageur.sln') package --vulnerable --include-transitive
+
+Write-Host 'Audit backend: packages obsolètes...'
+dotnet list (Join-Path $repoRoot 'BikeVoyageur.sln') package --outdated
+
+Write-Host 'Audit frontend: npm audit...'
+Push-Location (Join-Path $repoRoot 'frontend')
+npm audit
+
+Write-Host 'Audit frontend: npm outdated...'
+npm outdated
+Pop-Location

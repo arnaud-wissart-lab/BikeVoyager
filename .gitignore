@@ -1,0 +1,12 @@
+.dev/
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/*.user
+**/*.suo
+**/*.cache
+.env
+*.log
+!.vscode/extensions.json

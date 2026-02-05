@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/backend/" />
+  <Folder Name="/backend/src/">
+    <Project Path="backend/src/BikeVoyager.Api/BikeVoyager.Api.csproj" />
+    <Project Path="backend/src/BikeVoyager.AppHost/BikeVoyager.AppHost.csproj" />
+    <Project Path="backend/src/BikeVoyager.Application/BikeVoyager.Application.csproj" />
+    <Project Path="backend/src/BikeVoyager.Domain/BikeVoyager.Domain.csproj" />
+    <Project Path="backend/src/BikeVoyager.Infrastructure/BikeVoyager.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/backend/tests/">
+    <Project Path="backend/tests/BikeVoyager.ApiTests/BikeVoyager.ApiTests.csproj" />
+    <Project Path="backend/tests/BikeVoyager.UnitTests/BikeVoyager.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/frontend/">
+    <Project Path="frontend/BikeVoyageur.Frontend.csproj" />
+  </Folder>
+</Solution>

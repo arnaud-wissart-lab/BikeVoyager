@@ -12,16 +12,6 @@ internal static class ApiRequestIdentity
             return sessionId;
         }
 
-        var forwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-        if (!string.IsNullOrWhiteSpace(forwardedFor))
-        {
-            var firstValue = forwardedFor.Split(',')[0].Trim();
-            if (!string.IsNullOrWhiteSpace(firstValue))
-            {
-                return firstValue;
-            }
-        }
-
         return context.Connection.RemoteIpAddress?.ToString() ??
                context.TraceIdentifier;
     }

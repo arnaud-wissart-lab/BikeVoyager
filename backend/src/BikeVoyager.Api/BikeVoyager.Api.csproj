@@ -22,4 +22,8 @@
     <ProjectReference Include="..\BikeVoyager.Infrastructure\BikeVoyager.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="BikeVoyager.ApiTests" />
+  </ItemGroup>
+
 </Project>

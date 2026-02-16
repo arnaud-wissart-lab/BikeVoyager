@@ -238,8 +238,14 @@ Parametres `ApiSecurity` (dans `appsettings.json`):
 Comportement session anonyme:
 
 - sur `/api/v1/*` (et alias legacy `/api/*`, hors `OPTIONS`), un cookie de session est cree s'il est absent/invalide/expire
-- la partition de rate limiting utilise cette session en priorite, puis l'IP en fallback
+- la partition de rate limiting utilise cette session en priorite, puis `RemoteIpAddress` en fallback
+- le header `X-Forwarded-For` n'est pas utilise directement pour la partition (anti-spoof)
 - le frontend ne transmet plus `X-Session-Id`
+
+Reverse proxy:
+
+- pour conserver une IP client fiable derriere proxy, configurer l'infra pour ne pas exposer l'API directement et ne faire confiance qu'a des proxies reseau explicites
+- sans chaine proxy de confiance configuree, la partition fallback se fait sur l'IP de connexion vue par l'API
 
 Note: ces protections limitent le spam mais ne remplacent pas une authentification
 forte si l'API doit etre exposee a des clients non fiables.

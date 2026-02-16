@@ -1,36 +1,25 @@
 import {
   Accordion,
-  ActionIcon,
-  Badge,
-  Button,
   Container,
-  Group,
-  Modal,
-  Paper,
-  ScrollArea,
-  SegmentedControl,
   Stack,
-  Switch,
   Text,
   ThemeIcon,
-  Title,
 } from '@mantine/core'
 import {
   IconDeviceFloppy,
-  IconDownload,
   IconMapPinPlus,
-  IconPlugConnected,
-  IconPlugConnectedX,
   IconRoute,
-  IconShieldLock,
-  IconTrash,
-  IconUpload,
 } from '@tabler/icons-react'
 import { useState, type ChangeEvent, type ComponentProps, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ActiveCloudProvider, CloudAuthState } from '../../features/cloud/cloudSync'
 import type { CloudProvider, SavedTripRecord } from '../../features/data/dataPortability'
 import AddressBookPanel from './AddressBookPanel'
+import BackupRestoreSection from './data/BackupRestoreSection'
+import CloudSyncSection from './data/CloudSyncSection'
+import DataPageHeader from './data/DataPageHeader'
+import DeleteSavedTripModal from './data/DeleteSavedTripModal'
+import SavedTripsSection from './data/SavedTripsSection'
 
 type DataPageProps = {
   contentSize: string
@@ -133,22 +122,11 @@ export default function DataPage({
           textAlign: 'center',
         },
       } as const)
-  const modalStyles = {
-    content: {
-      border: '1px solid var(--mantine-color-default-border)',
-      boxShadow: 'var(--bikevoyager-panel-shadow)',
-    },
-    header: {
-      padding: '12px 16px',
-      borderBottom: '1px solid var(--mantine-color-default-border)',
-    },
-    body: {
-      padding: '14px 16px 16px',
-    },
-  } as const
+
   const closeDeleteTripModal = () => {
     setDeleteTripCandidate(null)
   }
+
   const confirmDeleteTrip = () => {
     if (!deleteTripCandidate) {
       return
@@ -161,64 +139,13 @@ export default function DataPage({
   return (
     <Container size={contentSize} py="lg">
       <Stack gap="xl">
-        <Modal
-          opened={deleteTripCandidate !== null}
+        <DeleteSavedTripModal
+          candidate={deleteTripCandidate}
+          isFrench={isFrench}
           onClose={closeDeleteTripModal}
-          title={
-            <Group gap="xs" wrap="nowrap">
-              <ThemeIcon variant="light" color="red" radius="xl" size="md">
-                <IconTrash size={14} />
-              </ThemeIcon>
-              <Text size="sm" fw={600}>
-                {t('dataSavedTripDeleteConfirmTitle')}
-              </Text>
-            </Group>
-          }
-          centered
-          styles={modalStyles}
-          size="sm"
-        >
-          <Stack gap="sm">
-            <Text size="sm">
-              {t('dataSavedTripDeleteConfirmBody', {
-                name: deleteTripCandidate?.name ?? '',
-              })}
-            </Text>
-            {deleteTripCandidate && (
-              <Paper withBorder radius="md" p="xs">
-                <Stack gap={2}>
-                  <Text size="sm" fw={600} lineClamp={1}>
-                    {deleteTripCandidate.name}
-                  </Text>
-                  <Text size="xs" c="dimmed" lineClamp={2}>
-                    {new Date(deleteTripCandidate.savedAt).toLocaleString(
-                      isFrench ? 'fr-FR' : 'en-US',
-                    )}
-                  </Text>
-                </Stack>
-              </Paper>
-            )}
-            <Group justify="flex-end" gap="xs">
-              <Button variant="outline" onClick={closeDeleteTripModal}>
-                {t('commonCancel')}
-              </Button>
-              <Button
-                color="red"
-                variant="filled"
-                leftSection={<IconTrash size={14} />}
-                onClick={confirmDeleteTrip}
-              >
-                {t('dataSavedTripDeleteConfirmAction')}
-              </Button>
-            </Group>
-          </Stack>
-        </Modal>
-        <Stack gap={4}>
-          <Title order={2}>{t('dataPageTitle')}</Title>
-          <Text size="sm" c="dimmed">
-            {t('dataPageSubtitle')}
-          </Text>
-        </Stack>
+          onConfirm={confirmDeleteTrip}
+        />
+        <DataPageHeader />
 
         <Accordion
           value={dataAccordionValue}
@@ -281,64 +208,15 @@ export default function DataPage({
               </Stack>
             </Accordion.Control>
             <Accordion.Panel>
-              {savedTrips.length === 0 ? (
-                <Text size="sm" c="dimmed">
-                  {t('dataSavedTripsEmpty')}
-                </Text>
-              ) : (
-                <ScrollArea.Autosize mah={isDesktop ? 320 : 260} offsetScrollbars>
-                  <Stack gap={8}>
-                    {savedTrips.map((trip) => (
-                      <Paper key={trip.id} withBorder radius="md" p="sm">
-                        <Stack gap={6}>
-                          <Group justify="space-between" align="center" wrap="nowrap">
-                            <Text size="sm" fw={600} lineClamp={1}>
-                              {trip.name}
-                            </Text>
-                            <Badge variant="outline">
-                              {trip.tripType === 'loop' ? t('typeLoop') : t('typeOneWay')}
-                            </Badge>
-                          </Group>
-                          <Text size="xs" c="dimmed">
-                            {new Date(trip.savedAt).toLocaleString(
-                              isFrench ? 'fr-FR' : 'en-US',
-                            )}{' '}
-                            • {formatDistance(trip.trip.distance_m)}
-                          </Text>
-                          <Group gap="xs" wrap="nowrap">
-                            <Button
-                              size="xs"
-                              variant="default"
-                              onClick={() => onOpenSavedTrip(trip)}
-                            >
-                              {t('dataSavedTripOpen')}
-                            </Button>
-                            <Button
-                              size="xs"
-                              variant="light"
-                              onClick={() => {
-                                void onExportSavedTrip(trip)
-                              }}
-                            >
-                              {t('dataSavedTripExport')}
-                            </Button>
-                            <ActionIcon
-                              size="sm"
-                              variant="subtle"
-                              color="red"
-                              onClick={() => setDeleteTripCandidate(trip)}
-                              aria-label={t('dataSavedTripDelete')}
-                              title={t('dataSavedTripDelete')}
-                            >
-                              <IconTrash size={14} />
-                            </ActionIcon>
-                          </Group>
-                        </Stack>
-                      </Paper>
-                    ))}
-                  </Stack>
-                </ScrollArea.Autosize>
-              )}
+              <SavedTripsSection
+                isDesktop={isDesktop}
+                isFrench={isFrench}
+                savedTrips={savedTrips}
+                formatDistance={formatDistance}
+                onOpenSavedTrip={onOpenSavedTrip}
+                onExportSavedTrip={onExportSavedTrip}
+                onDeleteSavedTripRequest={setDeleteTripCandidate}
+              />
             </Accordion.Panel>
           </Accordion.Item>
 
@@ -359,225 +237,43 @@ export default function DataPage({
             </Accordion.Control>
             <Accordion.Panel>
               <Stack gap="lg">
-                <Paper withBorder radius="md" p={isDesktop ? 'md' : 'lg'}>
-                  <Stack gap={isDesktop ? 'sm' : 'md'}>
-                    <Group justify="space-between" align="center">
-                      <Group gap="xs">
-                        <ThemeIcon variant="light" color="blue" radius="xl" size="md">
-                          <IconDeviceFloppy size={16} />
-                        </ThemeIcon>
-                        <Text fw={600}>{t('dataBackupsTitle')}</Text>
-                      </Group>
-                    </Group>
-                    <Text size="sm" c="dimmed">
-                      {t('dataHubBody')}
-                    </Text>
-                    <Group grow={isDesktop} wrap="wrap">
-                      <Button
-                        variant="default"
-                        leftSection={<IconDownload size={16} />}
-                        onClick={onExportBackup}
-                        fullWidth={!isDesktop}
-                        styles={mobileActionButtonStyles}
-                      >
-                        {t('dataExportBackup')}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        leftSection={<IconUpload size={16} />}
-                        onClick={onImportData}
-                        fullWidth={!isDesktop}
-                        styles={mobileActionButtonStyles}
-                      >
-                        {t('dataImport')}
-                      </Button>
-                    </Group>
-                    <input
-                      ref={importInputRef}
-                      type="file"
-                      accept="application/json,.json"
-                      onChange={(event) => {
-                        void onImportFileChange(event)
-                      }}
-                      style={{ display: 'none' }}
-                    />
-                  </Stack>
-                </Paper>
-
-                <Paper withBorder radius="md" p={isDesktop ? 'md' : 'lg'}>
-                  <Stack gap={isDesktop ? 'sm' : 'md'}>
-                    <Group gap="xs">
-                      <ThemeIcon variant="light" color="teal" radius="xl" size="md">
-                        <IconShieldLock size={16} />
-                      </ThemeIcon>
-                      <Text fw={600}>{t('cloudSyncTitle')}</Text>
-                    </Group>
-                    <Text size="sm" c="dimmed">
-                      {t('cloudSyncBody')}
-                    </Text>
-                    {hasAnyConfiguredCloudProvider ? (
-                      <>
-                        <SegmentedControl
-                          fullWidth
-                          radius="xl"
-                          value={cloudProvider}
-                          onChange={onCloudProviderChange}
-                          data={cloudProviderControlData}
-                        />
-                        {!selectedCloudProvider && (
-                          <Text size="xs" c="dimmed">
-                            {t('cloudSelectProvider')}
-                          </Text>
-                        )}
-                        {selectedCloudProvider && !selectedCloudConfigured && (
-                          <Text size="xs" c="orange.6">
-                            {t('cloudProviderMissingClientId')}
-                          </Text>
-                        )}
-                        {selectedCloudProvider &&
-                          cloudAuthState &&
-                          cloudAuthState.provider !== selectedCloudProvider && (
-                            <Text size="xs" c="orange.6">
-                              {t('cloudConnectedToOtherProvider', {
-                                provider: toCloudProviderLabel(cloudAuthState.provider),
-                              })}
-                            </Text>
-                          )}
-                        {cloudAuthState && (
-                          <Text size="xs" c="dimmed">
-                            {t('cloudConnectedAs', {
-                              provider: toCloudProviderLabel(cloudAuthState.provider),
-                              account: cloudAccountLabel ?? t('cloudAccountUnknown'),
-                            })}
-                          </Text>
-                        )}
-                        {cloudLastSyncAt && (
-                          <Text size="xs" c="dimmed">
-                            {t('cloudLastSyncAt', {
-                              value: new Date(cloudLastSyncAt).toLocaleString(
-                                isFrench ? 'fr-FR' : 'en-US',
-                              ),
-                            })}
-                          </Text>
-                        )}
-                        {selectedCloudProvider && selectedCloudConfigured && (
-                          <>
-                            <Text size="xs" c="dimmed">
-                              {t('cloudBackupFileLabel', { fileName: cloudBackupFileName })}
-                            </Text>
-                            <Switch
-                              checked={cloudAutoBackupEnabled}
-                              onChange={(event) =>
-                                onCloudAutoBackupEnabledChange(event.currentTarget.checked)
-                              }
-                              label={t('cloudAutoBackupToggle')}
-                              description={t('cloudAutoBackupToggleHint')}
-                            />
-                            <Group grow={isDesktop} wrap="wrap">
-                              <Button
-                                variant="default"
-                                leftSection={<IconPlugConnected size={16} />}
-                                onClick={onCloudConnect}
-                                disabled={isCloudAuthLoading}
-                                loading={isCloudAuthLoading}
-                                fullWidth={!isDesktop}
-                                styles={mobileActionButtonStyles}
-                              >
-                                {connectedCloudMatchesSelection
-                                  ? t('cloudReconnect')
-                                  : t('cloudConnect')}
-                              </Button>
-                              {cloudAuthState && (
-                                <Button
-                                  variant="outline"
-                                  leftSection={<IconPlugConnectedX size={16} />}
-                                  onClick={onCloudDisconnect}
-                                  disabled={isCloudAuthLoading}
-                                  loading={isCloudAuthLoading && !isCloudSyncLoading}
-                                  fullWidth={!isDesktop}
-                                  styles={mobileActionButtonStyles}
-                                  >
-                                    {t('cloudDisconnect')}
-                                  </Button>
-                              )}
-                              {connectedCloudMatchesSelection &&
-                                !cloudAutoBackupEnabled && (
-                                  <Button
-                                    variant="light"
-                                    leftSection={<IconDeviceFloppy size={16} />}
-                                    onClick={onCloudUploadBackup}
-                                    loading={isCloudSyncLoading}
-                                    disabled={isCloudSyncLoading}
-                                    fullWidth={!isDesktop}
-                                    styles={mobileActionButtonStyles}
-                                  >
-                                    {t('cloudSaveBackup')}
-                                  </Button>
-                                )}
-                            </Group>
-                          </>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <Text size="sm" c="dimmed">
-                          {t('cloudUnavailable')}
-                        </Text>
-                        <Text size="xs" c="dimmed">
-                          {t('cloudUnavailableAdminHint')}
-                        </Text>
-                        <Button
-                          variant="default"
-                          leftSection={<IconPlugConnected size={16} />}
-                          disabled
-                          fullWidth={!isDesktop}
-                          styles={mobileActionButtonStyles}
-                        >
-                          {t('cloudConnect')}
-                        </Button>
-                        {cloudAuthState && (
-                          <Button
-                            variant="outline"
-                            leftSection={<IconPlugConnectedX size={16} />}
-                            onClick={onCloudDisconnect}
-                            disabled={isCloudAuthLoading}
-                            loading={isCloudAuthLoading && !isCloudSyncLoading}
-                          >
-                            {t('cloudDisconnect')}
-                          </Button>
-                        )}
-                      </>
-                    )}
-                    {cloudSyncMessage && (
-                      <Text size="xs" c="teal.7">
-                        {cloudSyncMessage}
-                      </Text>
-                    )}
-                    {cloudSyncError && (
-                      <Text size="xs" c="red.6">
-                        {cloudSyncError}
-                      </Text>
-                    )}
-                    <Stack gap={2}>
-                      <Text size="xs" fw={600}>
-                        {t('cloudSecurityTitle')}
-                      </Text>
-                      <Text size="xs" c="dimmed">
-                        {t('cloudSecurityItem1')}
-                      </Text>
-                      <Text size="xs" c="dimmed">
-                        {t('cloudSecurityItem2')}
-                      </Text>
-                      <Text size="xs" c="dimmed">
-                        {t('cloudSecurityItem3')}
-                      </Text>
-                    </Stack>
-                  </Stack>
-                </Paper>
+                <BackupRestoreSection
+                  isDesktop={isDesktop}
+                  mobileActionButtonStyles={mobileActionButtonStyles}
+                  onExportBackup={onExportBackup}
+                  onImportData={onImportData}
+                  importInputRef={importInputRef}
+                  onImportFileChange={onImportFileChange}
+                />
+                <CloudSyncSection
+                  isDesktop={isDesktop}
+                  isFrench={isFrench}
+                  mobileActionButtonStyles={mobileActionButtonStyles}
+                  hasAnyConfiguredCloudProvider={hasAnyConfiguredCloudProvider}
+                  cloudProvider={cloudProvider}
+                  onCloudProviderChange={onCloudProviderChange}
+                  cloudProviderControlData={cloudProviderControlData}
+                  selectedCloudProvider={selectedCloudProvider}
+                  selectedCloudConfigured={selectedCloudConfigured}
+                  cloudAuthState={cloudAuthState}
+                  toCloudProviderLabel={toCloudProviderLabel}
+                  cloudAccountLabel={cloudAccountLabel}
+                  cloudLastSyncAt={cloudLastSyncAt}
+                  cloudBackupFileName={cloudBackupFileName}
+                  connectedCloudMatchesSelection={connectedCloudMatchesSelection}
+                  onCloudConnect={onCloudConnect}
+                  onCloudDisconnect={onCloudDisconnect}
+                  isCloudAuthLoading={isCloudAuthLoading}
+                  isCloudSyncLoading={isCloudSyncLoading}
+                  cloudAutoBackupEnabled={cloudAutoBackupEnabled}
+                  onCloudAutoBackupEnabledChange={onCloudAutoBackupEnabledChange}
+                  onCloudUploadBackup={onCloudUploadBackup}
+                  cloudSyncMessage={cloudSyncMessage}
+                  cloudSyncError={cloudSyncError}
+                />
               </Stack>
             </Accordion.Panel>
           </Accordion.Item>
-
         </Accordion>
       </Stack>
     </Container>

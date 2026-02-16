@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties } from 'react'
+import { useCallback, useEffect, type CSSProperties } from 'react'
 import type { TFunction } from 'i18next'
 import type { AppStore } from '../../state/appStore'
 import { useRoutingFeatureSlice } from './useRoutingFeatureSlice'
@@ -716,36 +716,39 @@ export const useRoutingController = ({
     setProfileSettings(defaultProfileSettings)
   }
 
-  const loadValhallaStatus = async (options?: { quiet?: boolean }) => {
-    const quiet = options?.quiet === true
-    if (!quiet) {
-      setIsValhallaStatusLoading(true)
-      setValhallaStatusError(false)
-    }
+  const loadValhallaStatus = useCallback(
+    async (options?: { quiet?: boolean }) => {
+      const quiet = options?.quiet === true
+      if (!quiet) {
+        setIsValhallaStatusLoading(true)
+        setValhallaStatusError(false)
+      }
 
-    try {
-      const result = await fetchValhallaStatus()
-      if (!result.ok) {
+      try {
+        const result = await fetchValhallaStatus()
+        if (!result.ok) {
+          if (!quiet) {
+            setValhallaStatusError(true)
+          }
+          return
+        }
+
+        setValhallaStatus(result.data)
+        if (!quiet) {
+          setValhallaStatusError(false)
+        }
+      } catch {
         if (!quiet) {
           setValhallaStatusError(true)
         }
-        return
+      } finally {
+        if (!quiet) {
+          setIsValhallaStatusLoading(false)
+        }
       }
-
-      setValhallaStatus(result.data)
-      if (!quiet) {
-        setValhallaStatusError(false)
-      }
-    } catch {
-      if (!quiet) {
-        setValhallaStatusError(true)
-      }
-    } finally {
-      if (!quiet) {
-        setIsValhallaStatusLoading(false)
-      }
-    }
-  }
+    },
+    [setIsValhallaStatusLoading, setValhallaStatus, setValhallaStatusError],
+  )
 
   const canSubmitFeedback =
     feedbackSubject.trim().length >= 6 &&
@@ -858,7 +861,7 @@ export const useRoutingController = ({
     }
 
     void loadValhallaStatus()
-  }, [isValhallaStatusLoading, route, valhallaStatus])
+  }, [isValhallaStatusLoading, loadValhallaStatus, route, valhallaStatus])
 
   useEffect(() => {
     if (route !== 'aide') {
@@ -876,7 +879,7 @@ export const useRoutingController = ({
     return () => {
       window.clearInterval(intervalId)
     }
-  }, [route, valhallaStatus?.build?.state])
+  }, [loadValhallaStatus, route, valhallaStatus?.build?.state])
 
   useEffect(() => {
     if (route !== 'aide') {
@@ -911,7 +914,7 @@ export const useRoutingController = ({
     }
 
     void triggerAutomaticValhallaUpdate()
-  }, [route, valhallaStatus, valhallaAutoUpdateRequestedRef])
+  }, [loadValhallaStatus, route, valhallaStatus, valhallaAutoUpdateRequestedRef])
 
   const handleExportGpx = async () => {
     if (!routeResult || routeResult.geometry.coordinates.length < 2) {

@@ -24,6 +24,8 @@ public static class WebApplicationExtensions
         }
         else
         {
+            app.UseHsts();
+            app.UseApiSecurityHeaders();
             app.UseHttpsRedirection();
         }
 

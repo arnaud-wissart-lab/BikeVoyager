@@ -24,4 +24,9 @@ public static class ApplicationBuilderExtensions
     {
         return app.UseMiddleware<LegacyApiPathRewriteMiddleware>();
     }
+
+    public static IApplicationBuilder UseApiSecurityHeaders(this IApplicationBuilder app)
+    {
+        return app.UseMiddleware<SecurityHeadersMiddleware>();
+    }
 }

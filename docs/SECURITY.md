@@ -68,3 +68,16 @@ API -> valide pending + state + code -> échange code/token -> crée session aut
 - Déployer un cache distribué robuste pour les sessions cloud.
 - Surveiller les erreurs OAuth et les erreurs de refresh token.
 - Limiter la surface CORS aux origines strictement nécessaires.
+
+## Politique de headers HTTP (API)
+
+En environnement non `Development`, l'API applique un durcissement HTTP minimal via le pipeline ASP.NET:
+- `UseHttpsRedirection` + `UseHsts` (header `Strict-Transport-Security` sur les réponses HTTPS);
+- `X-Content-Type-Options: nosniff`;
+- `Referrer-Policy: strict-origin-when-cross-origin`;
+- `X-Frame-Options: DENY`;
+- `Permissions-Policy: geolocation=(), camera=(), microphone=()`.
+
+Objectif:
+- réduire les risques de type MIME sniffing, clickjacking et exposition de métadonnées de navigation;
+- conserver un comportement fonctionnel inchangé côté API.

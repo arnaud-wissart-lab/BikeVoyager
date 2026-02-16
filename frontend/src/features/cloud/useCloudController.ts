@@ -135,64 +135,83 @@ export const useCloudController = ({
     [setCloudDiagnostics, setCloudDiagnosticsError, setIsCloudDiagnosticsLoading, t],
   )
 
-  const tryRestoreCloudBackupAfterConnect = async (authState: NonNullable<typeof cloudAuthState>) => {
-    setIsCloudSyncLoading(true)
-    setCloudSyncMessage(null)
-    setCloudSyncError(null)
-
-    try {
-      const response = await restoreBackupFromCloud({
-        authState,
-        fileName: cloudBackupFileName,
-      })
-      setCloudAuthState(response.authState)
-      setCloudLastSyncAt(response.modifiedAt)
-
-      let parsedPayload: unknown
-      try {
-        parsedPayload = JSON.parse(response.content) as unknown
-      } catch {
-        throw new Error(t('dataImportInvalid'))
-      }
-
-      const imported = parseImportedPayload(parsedPayload)
-      if (imported.kind === 'backup' && hasLocalBackupData) {
-        if (wouldCloudBackupMergeChangeLocal(imported)) {
-          setPendingCloudRestore({
-            imported,
-            authState: response.authState,
-            modifiedAt: response.modifiedAt,
-          })
-          setCloudSyncMessage(t('cloudRestoreDecisionPrompt'))
-        } else {
-          setCloudSyncError(null)
-          setCloudSyncMessage(t('cloudRestoreAlreadyUpToDate'))
-        }
-        return
-      }
-
-      const importedKind = applyParsedImportedData(imported, { mode: 'replace' })
-      setCloudProvider(response.authState.provider)
-      cloudLastAutoSyncPayloadRef.current = null
-      setCloudSyncError(null)
-      setCloudSyncMessage(cloudRestoreSuccessMessageByKind(importedKind))
-    } catch (error) {
-      if (error instanceof CloudBackupNotFoundError) {
-        setCloudSyncError(null)
-        setCloudSyncMessage(t('cloudRestoreNotFound'))
-        return
-      }
-
+  const tryRestoreCloudBackupAfterConnect = useCallback(
+    async (authState: NonNullable<typeof cloudAuthState>) => {
+      setIsCloudSyncLoading(true)
       setCloudSyncMessage(null)
-      setCloudSyncError(
-        t('cloudRestoreError', {
-          message: error instanceof Error ? error.message : t('dataImportInvalid'),
-        }),
-      )
-    } finally {
-      setIsCloudSyncLoading(false)
-    }
-  }
+      setCloudSyncError(null)
+
+      try {
+        const response = await restoreBackupFromCloud({
+          authState,
+          fileName: cloudBackupFileName,
+        })
+        setCloudAuthState(response.authState)
+        setCloudLastSyncAt(response.modifiedAt)
+
+        let parsedPayload: unknown
+        try {
+          parsedPayload = JSON.parse(response.content) as unknown
+        } catch {
+          throw new Error(t('dataImportInvalid'))
+        }
+
+        const imported = parseImportedPayload(parsedPayload)
+        if (imported.kind === 'backup' && hasLocalBackupData) {
+          if (wouldCloudBackupMergeChangeLocal(imported)) {
+            setPendingCloudRestore({
+              imported,
+              authState: response.authState,
+              modifiedAt: response.modifiedAt,
+            })
+            setCloudSyncMessage(t('cloudRestoreDecisionPrompt'))
+          } else {
+            setCloudSyncError(null)
+            setCloudSyncMessage(t('cloudRestoreAlreadyUpToDate'))
+          }
+          return
+        }
+
+        const importedKind = applyParsedImportedData(imported, { mode: 'replace' })
+        setCloudProvider(response.authState.provider)
+        cloudLastAutoSyncPayloadRef.current = null
+        setCloudSyncError(null)
+        setCloudSyncMessage(cloudRestoreSuccessMessageByKind(importedKind))
+      } catch (error) {
+        if (error instanceof CloudBackupNotFoundError) {
+          setCloudSyncError(null)
+          setCloudSyncMessage(t('cloudRestoreNotFound'))
+          return
+        }
+
+        setCloudSyncMessage(null)
+        setCloudSyncError(
+          t('cloudRestoreError', {
+            message: error instanceof Error ? error.message : t('dataImportInvalid'),
+          }),
+        )
+      } finally {
+        setIsCloudSyncLoading(false)
+      }
+    },
+    [
+      applyParsedImportedData,
+      cloudBackupFileName,
+      cloudLastAutoSyncPayloadRef,
+      cloudRestoreSuccessMessageByKind,
+      hasLocalBackupData,
+      parseImportedPayload,
+      setCloudAuthState,
+      setCloudLastSyncAt,
+      setCloudProvider,
+      setCloudSyncError,
+      setCloudSyncMessage,
+      setIsCloudSyncLoading,
+      setPendingCloudRestore,
+      t,
+      wouldCloudBackupMergeChangeLocal,
+    ],
+  )
 
   const handleCloudProviderChange = (value: string) => {
     if (value === 'none' || value === 'onedrive' || value === 'google-drive') {
@@ -495,6 +514,7 @@ export const useCloudController = ({
     setDataAccordionValue,
     setShouldRevealCloudPanel,
     t,
+    tryRestoreCloudBackupAfterConnect,
   ])
 
   useEffect(() => {

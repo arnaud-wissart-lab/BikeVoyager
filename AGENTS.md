@@ -9,7 +9,7 @@ Faire de ce dépôt une vitrine GitHub : code propre, auditable, docs impeccable
 
 ## Qualité / Architecture
 - Respect SOLID / DRY / KISS.
-- Éviter les fichiers monolithiques : viser < 400 lignes par fichier (sauf exception justifiée).
+- Éviter les fichiers monolithiques : backend cible < 400 LOC ; frontend cible < 600 LOC (sauf exception justifiée).
 - Pas de sur-design : design patterns uniquement si bénéfice clair.
 
 ## Changement management

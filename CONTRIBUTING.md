@@ -12,6 +12,8 @@ Ce depot vise une vitrine GitHub : code propre, auditable et documentation clair
 
 ## Regles de reference
 - `AGENTS.md` fait foi pour les regles de contribution.
+- Seuils de taille cibles : backend < 400 LOC ; frontend < 600 LOC.
+- Toute exception a ces seuils doit etre justifiee dans `DECISIONS.md` (ADR).
 - Commentaires et documentation destines aux humains : francais.
 - PRs petites et atomiques : un seul theme par PR.
 - Pas de reformat global sans justification explicite.

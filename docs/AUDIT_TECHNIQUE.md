@@ -1,7 +1,7 @@
-# Audit technique - BikeVoyager (mise a jour 2026-02-16, revalidation LOC)
+# Audit technique - BikeVoyager (releve LOC complet du 2026-02-16)
 
 > Objectif : maintenir une vitrine GitHub propre, auditable et maintenable.
-> Mesure LOC : `(Get-Content <fichier> | Measure-Object -Line).Lines`, relevee le 2026-02-16.
+> Mesure LOC : `(Get-Content <fichier> | Measure-Object -Line).Lines`, releve complet le 2026-02-16.
 > Note : mesure LOC indicative (EOL/encodage). Recalcul recommande via `wc -l` avec tolerance de +/-5%.
 
 ## 1) Anciens hotspots : statut reel (Resolu vs Restant)
@@ -22,7 +22,7 @@ Critere de statut :
 - `RESOLU` = hotspot historique reduit sous 400 LOC ET responsabilite unique.
 - `RESTANT` = hotspot historique encore au-dessus de 400 LOC OU melange de responsabilites.
 
-Verification au 2026-02-16 : tous les items marques `RESOLU` restent conformes a ce critere.
+Verification au 2026-02-16 : 8/9 anciens hotspots sont `RESOLU`, 1/9 reste `RESTANT`.
 
 ## 2) Hotspots LOC actuels (etat reel)
 
@@ -38,7 +38,7 @@ Verification au 2026-02-16 : tous les items marques `RESOLU` restent conformes a
 
 Constat : aucun fichier backend depasse 400 LOC.
 
-### Frontend (fichiers > 400 LOC)
+### Frontend applicatif (hors tests, fichiers > 400 LOC)
 
 | Fichier exact | LOC |
 |---|---:|
@@ -52,12 +52,14 @@ Constat : aucun fichier backend depasse 400 LOC.
 | `frontend/src/features/data/useDataController.addressBookActions.ts` | 407 |
 | `frontend/src/state/appStore.ts` | 407 |
 
-Priorisation split frontend : commencer par `frontend/src/ui/pages/DataPage.tsx`, puis `frontend/src/features/cloud/useCloudController.ts`.
+Note : `frontend/src/test/App.test.tsx` est aussi au-dessus de 400 LOC (428), mais hors perimetre applicatif.
+
+Priorisation split frontend : commencer par `frontend/src/ui/pages/DataPage.tsx`, puis `frontend/src/features/cloud/useCloudController.ts`, puis `frontend/src/app/AppPages.tsx`.
 
 ## 3) Restant (uniquement les constats encore vrais)
 
 - Le principal hotspot historique restant est `frontend/src/features/cloud/useCloudController.ts` (536 LOC).
-- La dette de taille est desormais concentree sur des modules frontend (9 fichiers > 400 LOC).
+- La dette de taille est desormais concentree sur le frontend (9 fichiers applicatifs > 400 LOC, +1 fichier de test > 400 LOC).
 - Le backend est revenu sous le seuil de 400 LOC pour les fichiers anciennement critiques.
 
 ## 4) Ce qui fait vitrine (10 lignes max)

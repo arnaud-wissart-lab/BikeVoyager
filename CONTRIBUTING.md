@@ -29,6 +29,7 @@ Ce depot vise une vitrine GitHub : code propre, auditable et documentation clair
 - Backend : `dotnet test BikeVoyager.sln`
 - Frontend : `npm test` (et `npm run e2e` si la zone frontend touchee le justifie)
 - Si la CI frontend est impactee : `npm run lint` et `npm run build`
+- Mesure LOC (source de verite) : `pwsh scripts/loc.ps1 --top 20 --threshold 400 --out docs/LOC_REPORT.md`
 
 ## Contenu attendu dans chaque PR
 - Resume

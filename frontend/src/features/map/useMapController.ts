@@ -1,25 +1,20 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import type { TFunction } from 'i18next'
 import { useMapFeatureSlice } from './useMapFeatureSlice'
 import { usePoisFeatureSlice } from '../pois/usePoisFeatureSlice'
 import type { AppStore } from '../../state/appStore'
-import type { MapViewMode, PoiCategory, RouteKey, TripType } from '../routing/domain'
+import type { MapViewMode, RouteKey, TripType } from '../routing/domain'
 import {
   buildCumulativeDistances,
   computeRouteBounds,
   defaultProfileSettings,
   expandBounds,
-  haversineDistanceMeters,
   kmhToMps,
   isNavigationCameraMode,
   isNavigationMode,
-  osmTagLabels,
-  osmValueLabels,
-  poiPreferredTagOrder,
-  projectCoordinateOnRoute,
-  sampleRouteAtDistance,
-  simulationTickMs,
 } from '../routing/domain'
+import { useMapPoiFormatting } from './useMapPoiFormatting'
+import { useMapNavigationEffects } from './useMapNavigationEffects'
 
 type UseMapControllerParams = {
   store: AppStore
@@ -265,137 +260,22 @@ export const useMapController = ({
     return `${head.join(' • ')}${suffix}`
   }, [detourPoints])
 
-  const toTitleCase = (value: string) => {
-    const trimmed = value.trim()
-    if (!trimmed) {
-      return trimmed
-    }
-
-    return trimmed[0].toLocaleUpperCase(isFrench ? 'fr-FR' : 'en-US') + trimmed.slice(1)
-  }
-  const formatRawOsmToken = (value: string) => value.trim().replaceAll('_', ' ')
-  const normalizeOsmToken = (value: string) => value.trim().toLowerCase()
-
-  const formatPoiTagLabel = (tagKey: string) => {
-    const normalized = normalizeOsmToken(tagKey)
-    const mapped = osmTagLabels[normalized]
-    if (mapped) {
-      return isFrench ? mapped.fr : mapped.en
-    }
-
-    return toTitleCase(tagKey.replaceAll(':', ' • ').replaceAll('_', ' '))
-  }
-
-  const formatPoiTagValue = (tagValue: string) => {
-    const tokens = tagValue
-      .split(';')
-      .map((token) => token.trim())
-      .filter(Boolean)
-
-    if (tokens.length === 0) {
-      return ''
-    }
-
-    const localized = tokens.map((token) => {
-      const mapped = osmValueLabels[normalizeOsmToken(token)]
-      if (mapped) {
-        return isFrench ? mapped.fr : mapped.en
-      }
-
-      return formatRawOsmToken(token)
-    })
-
-    return localized.join(' ; ')
-  }
-
-  const formatPoiKind = (kind: string | null | undefined) => {
-    if (!kind) {
-      return null
-    }
-
-    const separatorIndex = kind.indexOf(':')
-    if (separatorIndex <= 0) {
-      return toTitleCase(formatPoiTagValue(kind))
-    }
-
-    const kindKey = kind.slice(0, separatorIndex)
-    const kindValue = kind.slice(separatorIndex + 1)
-    return `${formatPoiTagLabel(kindKey)} • ${formatPoiTagValue(kindValue)}`
-  }
-
-  const getPoiDisplayName = (poi: typeof selectedPoi) => {
-    if (!poi) {
-      return t('poiDetailsTitle')
-    }
-
-    const hasExplicitName = Object.keys(poi.tags ?? {}).some((key) => {
-      const normalized = key.toLowerCase()
-      return (
-        normalized === 'name' ||
-        normalized === 'name:fr' ||
-        normalized === 'name:en' ||
-        normalized === 'brand' ||
-        normalized === 'operator' ||
-        normalized === 'official_name' ||
-        normalized === 'int_name'
-      )
-    })
-
-    if (hasExplicitName && poi.name.trim()) {
-      return poi.name
-    }
-
-    const kindLabel = formatPoiKind(poi.kind)
-    if (kindLabel && kindLabel.includes(' • ')) {
-      const parts = kindLabel.split(' • ')
-      return toTitleCase(parts[parts.length - 1])
-    }
-
-    if (kindLabel) {
-      return toTitleCase(kindLabel)
-    }
-
-    return poi.name
-  }
-
-  const selectedPoiDisplayName = getPoiDisplayName(selectedPoi)
-  const selectedPoiKind = formatPoiKind(selectedPoi?.kind)
-  const poiCategoryLabels = useMemo<Record<PoiCategory, string>>(
-    () => ({
-      monuments: t('poiCategoryMonuments'),
-      paysages: t('poiCategoryLandscapes'),
-      commerces: t('poiCategoryShops'),
-      services: t('poiCategoryServices'),
-    }),
-    [t],
-  )
-  const selectedPoiCategoryLabel = selectedPoi
-    ? poiCategoryLabels[selectedPoi.category]
-    : null
-  const selectedPoiTags = useMemo(() => {
-    if (!selectedPoi?.tags) {
-      return [] as Array<[string, string]>
-    }
-
-    return Object.entries(selectedPoi.tags)
-      .filter(([key, value]) => Boolean(key?.trim()) && Boolean(value?.trim()))
-      .sort(([leftKey], [rightKey]) => {
-        const leftIndex = poiPreferredTagOrder.indexOf(leftKey.toLowerCase())
-        const rightIndex = poiPreferredTagOrder.indexOf(rightKey.toLowerCase())
-        if (leftIndex !== -1 && rightIndex !== -1) {
-          return leftIndex - rightIndex
-        }
-        if (leftIndex !== -1) {
-          return -1
-        }
-        if (rightIndex !== -1) {
-          return 1
-        }
-        return leftKey.localeCompare(rightKey)
-      })
-  }, [selectedPoi])
-  const selectedPoiWebsite =
-    selectedPoi?.tags?.website ?? selectedPoi?.tags?.['contact:website'] ?? null
+  const {
+    formatPoiTagLabel,
+    formatPoiTagValue,
+    formatPoiKind,
+    getPoiDisplayName,
+    selectedPoiDisplayName,
+    selectedPoiKind,
+    poiCategoryLabels,
+    selectedPoiCategoryLabel,
+    selectedPoiTags,
+    selectedPoiWebsite,
+  } = useMapPoiFormatting({
+    selectedPoi,
+    t,
+    isFrench,
+  })
 
   const notificationsSupported = typeof Notification !== 'undefined'
   const notificationsPermission = notificationsSupported
@@ -506,311 +386,37 @@ export const useMapController = ({
     setActivePoiAlertId(null)
   }
 
-  useEffect(() => {
-    if (route !== 'carte' || !hasRoute) {
-      setIsNavigationActive(false)
-      setIsNavigationSetupOpen(false)
-    }
-  }, [hasRoute, route, setIsNavigationActive, setIsNavigationSetupOpen])
-
-  useEffect(() => {
-    if (isDesktop || route !== 'carte' || !hasRoute || isNavigationActive) {
-      setIsMobileMapPanelExpanded(false)
-      return
-    }
-
-    if (!isPoiModalOpen) {
-      setIsMobileMapPanelExpanded(true)
-    }
-  }, [
+  useMapNavigationEffects({
+    route,
     hasRoute,
     isDesktop,
     isNavigationActive,
     isPoiModalOpen,
-    route,
-    setIsMobileMapPanelExpanded,
-  ])
-
-  useEffect(() => {
-    if (!selectedPoiId) {
-      setIsPoiModalOpen(false)
-      setIsMobilePoiDetailsExpanded(true)
-      return
-    }
-
-    if (visiblePoiItems.some((poi) => poi.id === selectedPoiId)) {
-      return
-    }
-
-    setIsPoiModalOpen(false)
-    setIsMobilePoiDetailsExpanded(true)
-  }, [
     selectedPoiId,
-    setIsMobilePoiDetailsExpanded,
-    setIsPoiModalOpen,
     visiblePoiItems,
-  ])
-
-  useEffect(() => {
-    if (isNavigationActive) {
-      return
-    }
-
-    simulationDistanceRef.current = 0
-    alertSeenPoiIdsRef.current.clear()
-    setNavigationProgress(null)
-    setNavigationError(null)
-    setActivePoiAlertId(null)
-  }, [
-    alertSeenPoiIdsRef,
-    isNavigationActive,
-    setActivePoiAlertId,
-    setNavigationError,
-    setNavigationProgress,
-    simulationDistanceRef,
-  ])
-
-  useEffect(() => {
-    if (!isNavigationActive) {
-      return
-    }
-
-    if (routeCoordinates.length < 2 || routeCumulativeDistances.length < 2) {
-      setNavigationError(t('navigationNoRouteData'))
-      return
-    }
-
-    alertSeenPoiIdsRef.current.clear()
-    setActivePoiAlertId(null)
-    setNavigationError(null)
-
-    const initialPoint = sampleRouteAtDistance(
-      routeCoordinates,
-      routeCumulativeDistances,
-      0,
-    )
-    if (!initialPoint) {
-      return
-    }
-
-    simulationDistanceRef.current = 0
-    setNavigationProgress({
-      ...initialPoint,
-      source: navigationMode,
-      speed_mps: navigationMode === 'simulation' ? kmhToMps(simulationSpeedKmh) : null,
-    })
-  }, [
-    alertSeenPoiIdsRef,
-    isNavigationActive,
-    navigationMode,
-    routeCoordinates,
-    routeCumulativeDistances,
-    setActivePoiAlertId,
-    setNavigationError,
-    setNavigationProgress,
-    simulationDistanceRef,
-    simulationSpeedKmh,
-    t,
-  ])
-
-  useEffect(() => {
-    if (
-      !isNavigationActive ||
-      navigationMode !== 'simulation' ||
-      routeCoordinates.length < 2 ||
-      routeCumulativeDistances.length < 2 ||
-      routeDistanceFromGeometry <= 0
-    ) {
-      return
-    }
-
-    const speedMps = kmhToMps(simulationSpeedKmh)
-    let lastTick = performance.now()
-
-    const intervalId = window.setInterval(() => {
-      const now = performance.now()
-      const deltaSeconds = Math.max(0, (now - lastTick) / 1000)
-      lastTick = now
-
-      setNavigationProgress((current) => {
-        const currentDistance = current?.distance_m ?? simulationDistanceRef.current
-        const nextDistance = Math.min(
-          routeDistanceFromGeometry,
-          currentDistance + speedMps * deltaSeconds,
-        )
-        simulationDistanceRef.current = nextDistance
-
-        const sampledPoint = sampleRouteAtDistance(
-          routeCoordinates,
-          routeCumulativeDistances,
-          nextDistance,
-        )
-        if (!sampledPoint) {
-          return current
-        }
-
-        return {
-          ...sampledPoint,
-          source: 'simulation',
-          speed_mps: speedMps,
-        }
-      })
-    }, simulationTickMs)
-
-    return () => {
-      window.clearInterval(intervalId)
-    }
-  }, [
-    isNavigationActive,
-    navigationMode,
     routeCoordinates,
     routeCumulativeDistances,
     routeDistanceFromGeometry,
-    setNavigationProgress,
-    simulationDistanceRef,
     simulationSpeedKmh,
-  ])
-
-  useEffect(() => {
-    if (
-      !isNavigationActive ||
-      navigationMode !== 'gps' ||
-      routeCoordinates.length < 2 ||
-      routeCumulativeDistances.length < 2
-    ) {
-      return
-    }
-
-    if (!('geolocation' in navigator)) {
-      setNavigationError(t('navigationGpsUnsupported'))
-      return
-    }
-
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        const projection = projectCoordinateOnRoute(
-          [position.coords.longitude, position.coords.latitude],
-          routeCoordinates,
-          routeCumulativeDistances,
-        )
-        if (!projection) {
-          return
-        }
-
-        simulationDistanceRef.current = projection.distance_m
-        setNavigationError(null)
-        setNavigationProgress({
-          ...projection,
-          source: 'gps',
-          speed_mps:
-            typeof position.coords.speed === 'number' && position.coords.speed > 0
-              ? position.coords.speed
-              : null,
-        })
-      },
-      (error) => {
-        if (error.code === error.PERMISSION_DENIED) {
-          setNavigationError(t('navigationGpsPermissionDenied'))
-          return
-        }
-        if (error.code === error.TIMEOUT) {
-          setNavigationError(t('navigationGpsTimeout'))
-          return
-        }
-        if (error.code === error.POSITION_UNAVAILABLE) {
-          setNavigationError(t('navigationGpsUnavailable'))
-          return
-        }
-
-        setNavigationError(t('navigationGpsFailed'))
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 1000,
-      },
-    )
-
-    return () => {
-      navigator.geolocation.clearWatch(watchId)
-    }
-  }, [
-    isNavigationActive,
     navigationMode,
-    routeCoordinates,
-    routeCumulativeDistances,
-    setNavigationError,
-    setNavigationProgress,
-    simulationDistanceRef,
-    t,
-  ])
-
-  useEffect(() => {
-    if (
-      !isNavigationActive ||
-      !poiAlertEnabled ||
-      !navigationProgress ||
-      poiAlertCategories.length === 0 ||
-      poiItems.length === 0
-    ) {
-      return
-    }
-
-    let closestPoi: (typeof poiItems)[number] | null = null
-    let closestDistance = Number.POSITIVE_INFINITY
-    const currentCoordinate: [number, number] = [
-      navigationProgress.lon,
-      navigationProgress.lat,
-    ]
-
-    for (const poi of poiItems) {
-      if (!poiAlertCategories.includes(poi.category)) {
-        continue
-      }
-      if (alertSeenPoiIdsRef.current.has(poi.id)) {
-        continue
-      }
-
-      const poiDistance = haversineDistanceMeters(currentCoordinate, [poi.lon, poi.lat])
-      if (poiDistance > poiAlertDistanceMeters || poiDistance >= closestDistance) {
-        continue
-      }
-
-      closestPoi = poi
-      closestDistance = poiDistance
-    }
-
-    if (!closestPoi) {
-      return
-    }
-
-    alertSeenPoiIdsRef.current.add(closestPoi.id)
-    setActivePoiAlertId(closestPoi.id)
-
-    if (
-      systemNotificationsEnabled &&
-      typeof Notification !== 'undefined' &&
-      Notification.permission === 'granted'
-    ) {
-      const title = t('poiAlertNotificationTitle')
-      const body = t('poiAlertNotificationBody', {
-        name: closestPoi.name,
-        distance: Math.round(closestDistance),
-      })
-      new Notification(title, { body })
-    }
-  }, [
-    alertSeenPoiIdsRef,
-    isNavigationActive,
     navigationProgress,
-    poiAlertCategories,
-    poiAlertDistanceMeters,
     poiAlertEnabled,
+    poiAlertCategories,
     poiItems,
-    setActivePoiAlertId,
+    poiAlertDistanceMeters,
     systemNotificationsEnabled,
+    alertSeenPoiIdsRef,
+    simulationDistanceRef,
+    setIsNavigationActive,
+    setIsNavigationSetupOpen,
+    setIsMobileMapPanelExpanded,
+    setIsPoiModalOpen,
+    setIsMobilePoiDetailsExpanded,
+    setNavigationProgress,
+    setNavigationError,
+    setActivePoiAlertId,
     t,
-  ])
+  })
 
   return {
     hasRoute,

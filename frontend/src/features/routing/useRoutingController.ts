@@ -1,56 +1,16 @@
 import { useCallback, useEffect, type CSSProperties } from 'react'
-import type { TFunction } from 'i18next'
-import type { AppStore } from '../../state/appStore'
-import { useRoutingFeatureSlice } from './useRoutingFeatureSlice'
+import { fetchValhallaStatus, readApiMessage, startValhallaUpdate, submitDeveloperFeedback, exportRouteAsGpx } from './api'
 import {
-  apiModeByUi,
-  buildLoopRequest,
   buildGpxFileName,
   defaultProfileSettings,
   downloadBlob,
-  isMode,
-  loopTelemetryEvents,
   parseContentDispositionFileName,
   plannerDraftStorageKey,
-  routeOptionVariants,
   routeStorageKey,
-  speedRanges,
-  trackLoopEvent,
-  type AssistLevel,
-  type DetourPoint,
-  type LoopRequestPayload,
-  type PlaceCandidate,
-  type RouteLocation,
-  type RouteRequestPayload,
-  type RouteKey,
-  type TripType,
 } from './domain'
-import {
-  exportRouteAsGpx,
-  fetchLoop,
-  fetchRoute,
-  fetchValhallaStatus,
-  readApiMessage,
-  startValhallaUpdate,
-  submitDeveloperFeedback,
-} from './api'
-
-type MapContext = {
-  mapTripType: TripType | null
-  mapStartCoordinate: [number, number] | null
-  mapEndCoordinate: [number, number] | null
-  startLabel: string
-  endLabel: string
-  mapHeaderTitle: string
-}
-
-type UseRoutingControllerParams = {
-  store: AppStore
-  route: RouteKey
-  t: TFunction
-  map: MapContext
-  onNavigate: (next: RouteKey, force?: boolean) => void
-}
+import { createRoutingControllerActions } from './useRoutingController.actions'
+import { useRoutingFeatureSlice } from './useRoutingFeatureSlice'
+import type { UseRoutingControllerParams } from './useRoutingController.types'
 
 export const useRoutingController = ({
   store,
@@ -72,13 +32,8 @@ export const useRoutingController = ({
     hasResult,
     isDirty,
     routeResult,
-    detourPoints,
-    routeAlternativeIndex,
-    loopAlternativeIndex,
-    profileSettings,
     routeErrorKey,
     routeErrorMessage,
-    isRouteLoading,
     feedbackSubject,
     feedbackMessage,
     isFeedbackSubmitting,
@@ -86,24 +41,7 @@ export const useRoutingController = ({
     valhallaStatus,
     isValhallaStatusLoading,
     valhallaAutoUpdateRequestedRef,
-    setMode,
-    setTripType,
-    setOnewayStartValue,
-    setOnewayStartPlace,
-    setLoopStartValue,
-    setLoopStartPlace,
-    setEndValue,
-    setEndPlace,
-    setTargetDistanceKm,
-    setHasResult,
     setIsDirty,
-    setRouteResult,
-    setDetourPoints,
-    setRouteAlternativeIndex,
-    setLoopAlternativeIndex,
-    setRouteErrorKey,
-    setRouteErrorMessage,
-    setIsRouteLoading,
     setIsExporting,
     setExportError,
     setFeedbackSubject,
@@ -116,7 +54,6 @@ export const useRoutingController = ({
     setIsValhallaStatusLoading,
     setValhallaStatusError,
     setProfileSettings,
-    lastRouteRequestRef,
   } = store
 
   const activeStartPlace = tripType === 'loop' ? loopStartPlace : onewayStartPlace
@@ -166,552 +103,33 @@ export const useRoutingController = ({
     }
   }
 
-  const buildRouteOptionsVariant = (variantIndex: number) =>
-    routeOptionVariants[variantIndex % routeOptionVariants.length]
-  const resolveEbikeAssistForMode = (nextMode: typeof mode): AssistLevel | undefined =>
-    nextMode === 'ebike' ? profileSettings.ebikeAssist : undefined
-  const toWaypointPayload = (points: DetourPoint[]) =>
-    points.map(({ lat, lon, label }) => ({ lat, lon, label }))
+  const {
+    requestRoute,
+    requestLoop,
+    handleCalculate,
+    recalculateWithDetours,
+    addDetourPointAndRecalculate,
+    removeDetourPointAndRecalculate,
+    handleRecalculateAlternative,
+    handleModeChange,
+    handleTypeChange,
+    handleOnewayStartValueChange,
+    handleOnewayStartPlaceSelect,
+    handleLoopStartValueChange,
+    handleLoopStartPlaceSelect,
+    handleEndValueChange,
+    handleEndPlaceSelect,
+    handleTargetDistanceChange,
+    handleSpeedChange,
+  } = createRoutingControllerActions({
+    store,
+    isFormReady,
+    map,
+    t,
+    onNavigate,
+    markDirty,
+  })
 
-  const requestRoute = async (
-    requestBody: RouteRequestPayload,
-    nextDetours: DetourPoint[] = [],
-  ) => {
-    setIsRouteLoading(true)
-    lastRouteRequestRef.current = {
-      type: 'route',
-      payload: requestBody,
-    }
-
-    try {
-      const result = await fetchRoute(requestBody)
-      if (!result.ok) {
-        const response = result.response
-        if (response.status === 503) {
-          const message = await readApiMessage(response)
-          if (message) {
-            setRouteErrorMessage(message)
-            setRouteErrorKey(null)
-          } else {
-            setRouteErrorMessage(null)
-            setRouteErrorKey('routeErrorUnavailable')
-          }
-          return false
-        }
-
-        if (response.status === 504) {
-          setRouteErrorMessage(null)
-          setRouteErrorKey('routeErrorTimeout')
-          return false
-        }
-
-        if (response.status === 502) {
-          setRouteErrorMessage(null)
-          setRouteErrorKey('routeErrorGateway')
-          return false
-        }
-
-        setRouteErrorMessage(null)
-        setRouteErrorKey('routeErrorFailed')
-        return false
-      }
-
-      setRouteResult(result.result)
-      setHasResult(true)
-      setIsDirty(false)
-      setDetourPoints(nextDetours)
-      onNavigate('carte', true)
-      return true
-    } catch {
-      setRouteErrorMessage(null)
-      setRouteErrorKey('routeErrorFailed')
-      return false
-    } finally {
-      setIsRouteLoading(false)
-    }
-  }
-
-  const requestLoop = async (
-    requestBody: LoopRequestPayload,
-    nextDetours: DetourPoint[] = [],
-  ) => {
-    setIsRouteLoading(true)
-    lastRouteRequestRef.current = {
-      type: 'loop',
-      payload: requestBody,
-    }
-
-    try {
-      const result = await fetchLoop(requestBody)
-      if (!result.ok) {
-        const response = result.response
-        if (response.status === 503) {
-          const message = await readApiMessage(response)
-          if (message) {
-            setRouteErrorMessage(message)
-            setRouteErrorKey(null)
-          } else {
-            setRouteErrorMessage(null)
-            setRouteErrorKey('routeErrorUnavailable')
-          }
-          return false
-        }
-
-        if (response.status === 504) {
-          setRouteErrorMessage(null)
-          setRouteErrorKey('routeErrorTimeout')
-          return false
-        }
-
-        if (response.status === 502) {
-          setRouteErrorMessage(null)
-          setRouteErrorKey('routeErrorGateway')
-          return false
-        }
-
-        if (response.status === 422) {
-          const message = await readApiMessage(response)
-          if (message) {
-            setRouteErrorMessage(message)
-            setRouteErrorKey(null)
-          } else {
-            setRouteErrorMessage(null)
-            setRouteErrorKey('loopErrorFailed')
-          }
-          return false
-        }
-
-        setRouteErrorMessage(null)
-        setRouteErrorKey('loopErrorFailed')
-        return false
-      }
-
-      setRouteResult(result.result)
-      setHasResult(true)
-      setIsDirty(false)
-      setDetourPoints(nextDetours)
-      onNavigate('carte', true)
-      return true
-    } catch {
-      setRouteErrorMessage(null)
-      setRouteErrorKey('loopErrorFailed')
-      return false
-    } finally {
-      setIsRouteLoading(false)
-    }
-  }
-
-  const handleCalculate = async () => {
-    if (!isFormReady || !mode || !tripType) {
-      return
-    }
-
-    setRouteErrorKey(null)
-    setRouteErrorMessage(null)
-
-    if (tripType === 'loop') {
-      const loopRequest = buildLoopRequest(
-        loopStartPlace,
-        targetDistanceKm,
-        mode,
-        profileSettings.speeds[mode],
-        resolveEbikeAssistForMode(mode),
-        0,
-      )
-
-      if (!loopRequest) {
-        trackLoopEvent(loopTelemetryEvents.failed, { reason: 'invalid_form' })
-        return
-      }
-
-      trackLoopEvent(loopTelemetryEvents.requested, {
-        targetDistanceKm: loopRequest.targetDistanceKm,
-      })
-
-      const success = await requestLoop(loopRequest, [])
-      if (success) {
-        setLoopAlternativeIndex(0)
-        trackLoopEvent(loopTelemetryEvents.succeeded, {
-          targetDistanceKm: loopRequest.targetDistanceKm,
-        })
-      }
-
-      return
-    }
-
-    if (!onewayStartPlace || !endPlace) {
-      setRouteErrorKey('routeErrorMissingPlace')
-      return
-    }
-
-    const requestBody: RouteRequestPayload = {
-      from: {
-        lat: onewayStartPlace.lat,
-        lon: onewayStartPlace.lon,
-        label: onewayStartPlace.label,
-      },
-      to: {
-        lat: endPlace.lat,
-        lon: endPlace.lon,
-        label: endPlace.label,
-      },
-      mode: apiModeByUi[mode],
-      options: buildRouteOptionsVariant(0),
-      speedKmh: profileSettings.speeds[mode],
-      ...(mode === 'ebike'
-        ? {
-            ebikeAssist: profileSettings.ebikeAssist,
-          }
-        : {}),
-    }
-
-    const success = await requestRoute(requestBody, [])
-    if (success) {
-      setRouteAlternativeIndex(0)
-    }
-  }
-
-  const recalculateWithDetours = async (nextDetours: DetourPoint[]) => {
-    if (!routeResult || !map.mapTripType) {
-      return false
-    }
-
-    const resolvedMode = mode ?? 'bike'
-    setRouteErrorKey(null)
-    setRouteErrorMessage(null)
-
-    if (map.mapTripType === 'loop') {
-      const startLocation: RouteLocation | null = loopStartPlace
-        ? {
-            lat: loopStartPlace.lat,
-            lon: loopStartPlace.lon,
-            label: loopStartPlace.label,
-          }
-        : map.mapStartCoordinate
-          ? {
-              lat: map.mapStartCoordinate[1],
-              lon: map.mapStartCoordinate[0],
-              label: map.startLabel || t('poiStartFallback'),
-            }
-          : null
-
-      if (!startLocation) {
-        setRouteErrorKey('loopErrorFailed')
-        return false
-      }
-
-      const loopDistance =
-        typeof targetDistanceKm === 'number' && targetDistanceKm > 0
-          ? targetDistanceKm
-          : Math.max(1, Math.round(routeResult.distance_m / 1000))
-
-      const requestBody: LoopRequestPayload = {
-        start: startLocation,
-        targetDistanceKm: loopDistance,
-        mode: apiModeByUi[resolvedMode],
-        speedKmh: profileSettings.speeds[resolvedMode],
-        ...(resolvedMode === 'ebike'
-          ? {
-              ebikeAssist: profileSettings.ebikeAssist,
-            }
-          : {}),
-        variation: loopAlternativeIndex,
-        ...(nextDetours.length > 0
-          ? {
-              waypoints: toWaypointPayload(nextDetours),
-            }
-          : {}),
-      }
-
-      return requestLoop(requestBody, nextDetours)
-    }
-
-    const fromLocation: RouteLocation | null = onewayStartPlace
-      ? {
-          lat: onewayStartPlace.lat,
-          lon: onewayStartPlace.lon,
-          label: onewayStartPlace.label,
-        }
-      : map.mapStartCoordinate
-        ? {
-            lat: map.mapStartCoordinate[1],
-            lon: map.mapStartCoordinate[0],
-            label: map.startLabel || t('poiStartFallback'),
-          }
-        : null
-    const toLocation: RouteLocation | null = endPlace
-      ? {
-          lat: endPlace.lat,
-          lon: endPlace.lon,
-          label: endPlace.label,
-        }
-      : map.mapEndCoordinate
-        ? {
-            lat: map.mapEndCoordinate[1],
-            lon: map.mapEndCoordinate[0],
-            label: map.endLabel || t('poiEndFallback'),
-          }
-        : null
-
-    if (!fromLocation || !toLocation) {
-      setRouteErrorKey('routeErrorMissingPlace')
-      return false
-    }
-
-    const requestBody: RouteRequestPayload = {
-      from: fromLocation,
-      to: toLocation,
-      ...(nextDetours.length > 0
-        ? {
-            waypoints: toWaypointPayload(nextDetours),
-          }
-        : {}),
-      mode: apiModeByUi[resolvedMode],
-      options: buildRouteOptionsVariant(routeAlternativeIndex),
-      speedKmh: profileSettings.speeds[resolvedMode],
-      ...(resolvedMode === 'ebike'
-        ? {
-            ebikeAssist: profileSettings.ebikeAssist,
-          }
-        : {}),
-    }
-
-    return requestRoute(requestBody, nextDetours)
-  }
-
-  const pointsAreClose = (
-    left: { lat: number; lon: number },
-    right: { lat: number; lon: number },
-  ) => Math.abs(left.lat - right.lat) < 0.00003 && Math.abs(left.lon - right.lon) < 0.00003
-
-  const appendDetourPoint = (point: DetourPoint) => {
-    if (detourPoints.some((existing) => existing.id === point.id)) {
-      return detourPoints
-    }
-
-    if (detourPoints.some((existing) => pointsAreClose(existing, point))) {
-      return detourPoints
-    }
-
-    return [...detourPoints, point]
-  }
-
-  const addDetourPointAndRecalculate = async (point: DetourPoint) => {
-    const nextDetours = appendDetourPoint(point)
-    if (nextDetours === detourPoints) {
-      return {
-        status: 'unchanged' as const,
-        nextDetours,
-      }
-    }
-
-    const success = await recalculateWithDetours(nextDetours)
-    if (!success) {
-      return {
-        status: 'failed' as const,
-        nextDetours,
-      }
-    }
-
-    return {
-      status: 'success' as const,
-      nextDetours,
-    }
-  }
-
-  const removeDetourPointAndRecalculate = async (detourId: string) => {
-    const nextDetours = detourPoints.filter((point) => point.id !== detourId)
-    const success = await recalculateWithDetours(nextDetours)
-    return {
-      success,
-      nextDetours,
-    }
-  }
-
-  const handleRecalculateAlternative = async () => {
-    if (!routeResult || isRouteLoading) {
-      return
-    }
-
-    setRouteErrorKey(null)
-    setRouteErrorMessage(null)
-
-    const resolvedMode = mode ?? 'bike'
-    if (routeResult.kind === 'loop') {
-      const startLocation: RouteLocation | null = loopStartPlace
-        ? {
-            lat: loopStartPlace.lat,
-            lon: loopStartPlace.lon,
-            label: loopStartPlace.label,
-          }
-        : map.mapStartCoordinate
-          ? {
-              lat: map.mapStartCoordinate[1],
-              lon: map.mapStartCoordinate[0],
-              label: map.startLabel || t('poiStartFallback'),
-            }
-          : null
-
-      const loopDistance =
-        typeof targetDistanceKm === 'number' && targetDistanceKm > 0
-          ? targetDistanceKm
-          : Math.max(1, Math.round(routeResult.distance_m / 1000))
-
-      if (!startLocation) {
-        setRouteErrorKey('loopErrorFailed')
-        return
-      }
-
-      const nextVariation = loopAlternativeIndex + 1
-      const requestBody: LoopRequestPayload = {
-        start: startLocation,
-        targetDistanceKm: loopDistance,
-        mode: apiModeByUi[resolvedMode],
-        speedKmh: profileSettings.speeds[resolvedMode],
-        ...(resolvedMode === 'ebike'
-          ? {
-              ebikeAssist: profileSettings.ebikeAssist,
-            }
-          : {}),
-        variation: nextVariation,
-        ...(detourPoints.length > 0
-          ? {
-              waypoints: toWaypointPayload(detourPoints),
-            }
-          : {}),
-      }
-
-      const success = await requestLoop(requestBody, detourPoints)
-      if (success) {
-        setLoopAlternativeIndex(nextVariation)
-      }
-      return
-    }
-
-    const fromLocation: RouteLocation | null = onewayStartPlace
-      ? {
-          lat: onewayStartPlace.lat,
-          lon: onewayStartPlace.lon,
-          label: onewayStartPlace.label,
-        }
-      : map.mapStartCoordinate
-        ? {
-            lat: map.mapStartCoordinate[1],
-            lon: map.mapStartCoordinate[0],
-            label: map.startLabel || t('poiStartFallback'),
-          }
-        : null
-    const toLocation: RouteLocation | null = endPlace
-      ? {
-          lat: endPlace.lat,
-          lon: endPlace.lon,
-          label: endPlace.label,
-        }
-      : map.mapEndCoordinate
-        ? {
-            lat: map.mapEndCoordinate[1],
-            lon: map.mapEndCoordinate[0],
-            label: map.endLabel || t('poiEndFallback'),
-          }
-        : null
-
-    if (!fromLocation || !toLocation) {
-      setRouteErrorKey('routeErrorMissingPlace')
-      return
-    }
-
-    const nextVariant = routeAlternativeIndex + 1
-    const requestBody: RouteRequestPayload = {
-      from: fromLocation,
-      to: toLocation,
-      ...(detourPoints.length > 0
-        ? {
-            waypoints: toWaypointPayload(detourPoints),
-          }
-        : {}),
-      mode: apiModeByUi[resolvedMode],
-      options: buildRouteOptionsVariant(nextVariant),
-      speedKmh: profileSettings.speeds[resolvedMode],
-      ...(resolvedMode === 'ebike'
-        ? {
-            ebikeAssist: profileSettings.ebikeAssist,
-          }
-        : {}),
-    }
-
-    const success = await requestRoute(requestBody, detourPoints)
-    if (success) {
-      setRouteAlternativeIndex(nextVariant)
-    }
-  }
-
-  const handleModeChange = (value: string) => {
-    if (!isMode(value)) {
-      return
-    }
-
-    setMode(value)
-    setRouteAlternativeIndex(0)
-    setLoopAlternativeIndex(0)
-    markDirty()
-  }
-  const handleTypeChange = (value: string) => {
-    setTripType(value as TripType)
-    setEndValue('')
-    setEndPlace(null)
-    setTargetDistanceKm('')
-    setDetourPoints([])
-    setRouteAlternativeIndex(0)
-    setLoopAlternativeIndex(0)
-    setRouteErrorKey(null)
-    setRouteErrorMessage(null)
-    markDirty()
-  }
-  const handleOnewayStartValueChange = (value: string) => {
-    setOnewayStartValue(value)
-    markDirty()
-  }
-  const handleOnewayStartPlaceSelect = (place: PlaceCandidate | null) => {
-    setOnewayStartPlace(place)
-    markDirty()
-  }
-  const handleLoopStartValueChange = (value: string) => {
-    setLoopStartValue(value)
-    markDirty()
-  }
-  const handleLoopStartPlaceSelect = (place: PlaceCandidate | null) => {
-    setLoopStartPlace(place)
-    markDirty()
-  }
-  const handleEndValueChange = (value: string) => {
-    setEndValue(value)
-    markDirty()
-  }
-  const handleEndPlaceSelect = (place: PlaceCandidate | null) => {
-    setEndPlace(place)
-    markDirty()
-  }
-  const handleTargetDistanceChange = (value: number | string) => {
-    setTargetDistanceKm(typeof value === 'number' ? value : '')
-    markDirty()
-  }
-  const handleSpeedChange = (
-    targetMode: 'walk' | 'bike' | 'ebike',
-    value: number | '',
-  ) => {
-    if (typeof value !== 'number') {
-      return
-    }
-
-    const range = speedRanges[targetMode]
-    setProfileSettings((current) => ({
-      ...current,
-      speeds: {
-        ...current.speeds,
-        [targetMode]: Math.max(range.min, Math.min(range.max, value)),
-      },
-    }))
-  }
   const handleResetProfiles = () => {
     setProfileSettings(defaultProfileSettings)
   }

@@ -30,3 +30,11 @@
 - Pas de projet ServiceDefaults pour l’instant afin de limiter les changements backend.
 - Variables OTLP Aspire configurées pour éviter l’erreur du dashboard.
 - Frontend visible dans la solution via un projet .NET “contenu” sans build.
+
+## 2026-02-16 — Justification temporaire des fichiers frontend > 600 lignes
+
+- `frontend/src/i18n.ts` : fichier majoritairement déclaratif (catalogues de traduction). Le découpage par namespaces est prévu dans une PR dédiée pour éviter une régression i18n transversale.
+- `frontend/src/ui/pages/MapPage.tsx` : composant d’assemblage UI dense. Son extraction en sous-sections est reportée à une PR UI ciblée avec tests visuels/E2E.
+- `frontend/src/components/CesiumRouteMap.tsx` : logique impérative fortement couplée au cycle de vie Cesium. Refacto planifiée avec scénario de non-régression map 2D/3D.
+- `frontend/src/features/data/dataPortability.ts` : module de compatibilité import/export (schéma + migration). Découpage reporté pour préserver la stabilité des sauvegardes existantes.
+- `frontend/src/features/cloud/useCloudController.ts` : orchestrateur OAuth/sync multi-fournisseurs. Fractionnement prévu avec tests d’intégration cloud pour limiter le risque de régression.

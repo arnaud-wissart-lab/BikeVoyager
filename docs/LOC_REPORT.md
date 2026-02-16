@@ -1,7 +1,7 @@
 # LOC Report
 
-- Date: 2026-02-16 18:43:36 +01:00
-- Commit: `b364a2d`
+- Date: 2026-02-16 20:32:33 +01:00
+- Commit: `1632fe3`
 - Methode: lecture Raw + comptage des caracteres `n` (lignes = count(`n`) + 1, 0 si fichier vide).
 - Scope: `backend, frontend, docs`
 - Threshold: `400`
@@ -10,8 +10,6 @@
 
 | Fichier | LOC |
 |---|---:|
-| `frontend/src/ui/pages/DataPage.tsx` | 587 |
-| `frontend/src/features/cloud/useCloudController.ts` | 586 |
 | `frontend/src/features/data/useDataController.ts` | 517 |
 | `frontend/src/app/AppPages.tsx` | 509 |
 | `frontend/src/test/App.test.tsx` | 507 |
@@ -23,5 +21,4 @@
 | `frontend/src/features/routing/useRoutingController.ts` | 420 |
 | `frontend/src/features/routing/useRoutingController.actions.ts` | 415 |
 | `frontend/src/state/appStore.ts` | 414 |
-| `backend/src/BikeVoyager.Infrastructure/Pois/OverpassGeometryHelper.cs` | 406 |
 | `frontend/src/ui/pages/AddressBookPanel.tsx` | 401 |

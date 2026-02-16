@@ -142,3 +142,39 @@ Pour eviter toute rupture immediate, un alias de compatibilite temporaire est ac
 - Suivi necessaire :
   - documenter la table canonique + mapping legacy dans la doc API.
   - basculer progressivement tous les clients et tests vers `/api/v1/*`.
+
+# ADR-0003 - Exception de taille pour OverpassGeometryHelper
+
+- Date : 2026-02-16
+- Statut : Accepte
+- Portee : backend
+- References : refacto auditabilite backend (fichiers > 400 lignes)
+
+## Contexte
+La refacto backend a reduit les fichiers les plus volumineux de `Routing` et `AppHost`.
+
+`backend/src/BikeVoyager.Infrastructure/Pois/OverpassGeometryHelper.cs` reste a 405 lignes, soit un depassement de 5 lignes par rapport a la cible < 400.
+
+Le module regroupe un pipeline geometrique tres coherent :
+- calcul de bounding boxes,
+- projection point-segment et segment-segment,
+- conversion lat/lon vers metre local,
+- fallback robuste sur geometries partielles.
+
+## Decision
+Conserver `OverpassGeometryHelper` dans un seul fichier a ce stade et accepter une exception temporaire documentee a 405 lignes.
+
+Aucune extraction supplementaire n'est faite pour ne pas disperser une logique mathematique compacte et fortement couplee.
+
+## Consequences
+- Positives :
+  - lisibilite algorithmique preservee pour l'audit geometrique.
+  - risque de regression reduit sur une zone numeriquement sensible.
+- Negatives :
+  - non-conformite marginale a la regle stricte de taille.
+- Suivi necessaire :
+  - reevaluation lors d'une prochaine evolution fonctionnelle POI pour extraire des sous-modules si la taille continue d'augmenter.
+
+## Alternatives evaluees
+1. Extraire les projections lineaires dans un helper annexe : non retenu (dispersion d'un meme algorithme).
+2. Fractionner par type de calcul (bounds/projections) immediatement : non retenu (gain de taille faible, cout de navigation plus eleve).

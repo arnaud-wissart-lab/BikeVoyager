@@ -1,4 +1,4 @@
-# Audit technique - BikeVoyager (mise a jour 2026-02-16)
+# Audit technique - BikeVoyager (mise a jour 2026-02-16, revalidation LOC)
 
 > Objectif : maintenir une vitrine GitHub propre, auditable et maintenable.
 > Mesure LOC : `(Get-Content <fichier> | Measure-Object -Line).Lines`, relevee le 2026-02-16.
@@ -16,6 +16,12 @@
 | `backend/src/BikeVoyager.Infrastructure/Routing/ValhallaLoopService.cs` | 618 | 255 | **RESOLU** | Taille maitrisee. |
 | `backend/src/BikeVoyager.AppHost/Program.cs` | 459 | 17 | **RESOLU** | Bootstrapping minimal. |
 | `backend/src/BikeVoyager.Infrastructure/Pois/OverpassGeometryHelper.cs` | 405 | 348 | **RESOLU** | Redescendu sous 400 LOC. |
+
+Critere de statut :
+- `RESOLU` = hotspot historique reduit sous 400 LOC ou plus monolithique.
+- `RESTANT` = hotspot historique encore au-dessus de 400 LOC.
+
+Verification au 2026-02-16 : tous les items marques `RESOLU` restent conformes a ce critere.
 
 ## 2) Hotspots LOC actuels (etat reel)
 

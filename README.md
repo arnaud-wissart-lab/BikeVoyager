@@ -163,8 +163,11 @@ Invite d’installation : `frontend/src/components/InstallPrompt.tsx` gère la p
 
 ## Documentation liée
 
-- `RUNBOOK.md`
-- `docs/API.md`
-- `docs/AUDIT_TECHNIQUE.md`
-- `docs/CONTRIBUTING.md`
-- `frontend/README.md`
+- [RUNBOOK](RUNBOOK.md)
+- [API](docs/API.md)
+- [Audit technique](docs/AUDIT_TECHNIQUE.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security](SECURITY.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [License](LICENSE)
+- [Frontend README](frontend/README.md)

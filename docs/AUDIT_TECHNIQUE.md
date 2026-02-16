@@ -2,6 +2,7 @@
 
 > Objectif : maintenir une vitrine GitHub propre, auditable et maintenable.
 > Mesure LOC : `(Get-Content <fichier> | Measure-Object -Line).Lines`, relevee le 2026-02-16.
+> Note : mesure LOC indicative (EOL/encodage). Recalcul recommande via `wc -l` avec tolerance de +/-5%.
 
 ## 1) Anciens hotspots : statut reel (Resolu vs Restant)
 
@@ -18,8 +19,8 @@
 | `backend/src/BikeVoyager.Infrastructure/Pois/OverpassGeometryHelper.cs` | 405 | 348 | **RESOLU** | Redescendu sous 400 LOC. |
 
 Critere de statut :
-- `RESOLU` = hotspot historique reduit sous 400 LOC ou plus monolithique.
-- `RESTANT` = hotspot historique encore au-dessus de 400 LOC.
+- `RESOLU` = hotspot historique reduit sous 400 LOC ET responsabilite unique.
+- `RESTANT` = hotspot historique encore au-dessus de 400 LOC OU melange de responsabilites.
 
 Verification au 2026-02-16 : tous les items marques `RESOLU` restent conformes a ce critere.
 
@@ -50,6 +51,8 @@ Constat : aucun fichier backend depasse 400 LOC.
 | `frontend/src/ui/pages/PlannerPage.tsx` | 415 |
 | `frontend/src/features/data/useDataController.addressBookActions.ts` | 407 |
 | `frontend/src/state/appStore.ts` | 407 |
+
+Priorisation split frontend : commencer par `frontend/src/ui/pages/DataPage.tsx`, puis `frontend/src/features/cloud/useCloudController.ts`.
 
 ## 3) Restant (uniquement les constats encore vrais)
 

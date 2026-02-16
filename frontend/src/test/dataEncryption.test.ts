@@ -2,7 +2,7 @@ import {
   decryptBikeVoyagerPayload,
   encryptBikeVoyagerPayload,
   isEncryptedBikeVoyagerPayload,
-} from '../features/app/dataEncryption'
+} from '../features/data/dataEncryption'
 
 describe('dataEncryption', () => {
   it('chiffre et dechiffre une sauvegarde', async () => {
@@ -42,4 +42,5 @@ describe('dataEncryption', () => {
     ).rejects.toThrow()
   })
 })
+
 

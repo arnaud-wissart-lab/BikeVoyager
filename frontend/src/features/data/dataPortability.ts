@@ -11,7 +11,7 @@ import {
   poiAlertDistanceRange,
   poiCorridorRange,
   toStoredTripResult,
-} from './domain'
+} from '../routing/domain'
 import type {
   MapViewMode,
   Mode,
@@ -23,7 +23,7 @@ import type {
   ProfileSettings,
   TripResult,
   TripType,
-} from './domain'
+} from '../routing/domain'
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object'
@@ -746,3 +746,4 @@ export const parseImportedBikeVoyagerData = (
 
   return null
 }
+

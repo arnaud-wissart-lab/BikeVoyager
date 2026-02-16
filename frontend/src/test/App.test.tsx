@@ -1,8 +1,8 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../App'
-import { apiPaths } from '../features/app/apiPaths'
-import { routeStorageKey } from '../features/app/domain'
+import { apiPaths } from '../features/routing/apiPaths'
+import { routeStorageKey } from '../features/routing/domain'
 import {
   createJsonResponse,
   renderWithProviders,
@@ -503,3 +503,4 @@ describe('App', () => {
     expect(getPoiAroundRouteCallCount()).toBe(callCountBeforeLastToggle)
   })
 })
+

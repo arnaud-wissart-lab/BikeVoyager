@@ -12,8 +12,8 @@ import {
 import { IconChevronDown, IconChevronUp, IconRoute } from '@tabler/icons-react'
 import { type DragEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { AddressBookEntry } from '../dataPortability'
-import type { Mode } from '../domain'
+import type { AddressBookEntry } from '../../features/data/dataPortability'
+import type { Mode } from '../../features/routing/domain'
 
 type DeliveryPlannerPanelProps = {
   mode: Mode
@@ -189,3 +189,4 @@ export default function DeliveryPlannerPanel({
     </Stack>
   )
 }
+

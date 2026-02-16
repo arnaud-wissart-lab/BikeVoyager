@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import type { MapCommand, MapViewMode, PoiItem } from './domain'
+import type { MapCommand, MapViewMode, PoiItem } from '../routing/domain'
 
 type UseMapPageControllerParams = {
   initialMapViewMode: MapViewMode

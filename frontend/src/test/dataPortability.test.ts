@@ -4,8 +4,8 @@ import {
   normalizeAppPreferences,
   parseImportedBikeVoyagerData,
   upsertAddressBookEntry,
-} from '../features/app/dataPortability'
-import type { TripResult } from '../features/app/domain'
+} from '../features/data/dataPortability'
+import type { TripResult } from '../features/routing/domain'
 
 const sampleRoute: TripResult = {
   kind: 'route',
@@ -174,3 +174,4 @@ describe('dataPortability', () => {
     expect(imported.trip.trip.kind).toBe('route')
   })
 })
+

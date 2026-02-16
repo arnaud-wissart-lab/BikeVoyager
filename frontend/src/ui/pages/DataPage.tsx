@@ -28,8 +28,8 @@ import {
 } from '@tabler/icons-react'
 import { useState, type ChangeEvent, type ComponentProps, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ActiveCloudProvider, CloudAuthState } from '../cloudSync'
-import type { CloudProvider, SavedTripRecord } from '../dataPortability'
+import type { ActiveCloudProvider, CloudAuthState } from '../../features/cloud/cloudSync'
+import type { CloudProvider, SavedTripRecord } from '../../features/data/dataPortability'
 import AddressBookPanel from './AddressBookPanel'
 
 type DataPageProps = {
@@ -583,3 +583,4 @@ export default function DataPage({
     </Container>
   )
 }
+

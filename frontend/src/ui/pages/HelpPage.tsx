@@ -16,8 +16,8 @@ import {
 } from '@mantine/core'
 import { IconDatabase, IconMail, IconRoute } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
-import type { CloudDiagnostics } from '../cloudSync'
-import type { ValhallaStatus } from '../domain'
+import type { CloudDiagnostics } from '../../features/cloud/cloudSync'
+import type { ValhallaStatus } from '../../features/routing/domain'
 
 type HelpPageProps = {
   contentSize: string
@@ -298,3 +298,4 @@ export default function HelpPage({
     </Container>
   )
 }
+

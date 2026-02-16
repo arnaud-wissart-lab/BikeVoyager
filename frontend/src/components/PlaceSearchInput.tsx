@@ -11,7 +11,7 @@ import { useDebouncedValue } from '@mantine/hooks'
 import { IconX } from '@tabler/icons-react'
 import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { apiPaths } from '../features/app/apiPaths'
+import { apiPaths } from '../features/routing/apiPaths'
 
 export type PlaceCandidate = {
   label: string
@@ -383,3 +383,4 @@ export default function PlaceSearchInput({
     </Combobox>
   )
 }
+

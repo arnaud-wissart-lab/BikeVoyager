@@ -33,13 +33,13 @@ import type {
   PoiItem,
   RouteBounds,
   TripResult,
-} from '../domain'
+} from '../../features/routing/domain'
 import MapCollapsibleSection from './MapCollapsibleSection'
 import MapSummaryPanel from './MapSummaryPanel'
 import PoiPanel from './PoiPanel'
 import NavigationOptionsPanel from './NavigationOptionsPanel'
 
-const LazyCesiumRouteMap = lazy(() => import('../../../components/CesiumRouteMap'))
+const LazyCesiumRouteMap = lazy(() => import('../../components/CesiumRouteMap'))
 
 type MapPageProps = {
   availableViewportHeight: string
@@ -835,3 +835,4 @@ export default function MapPage({
     </Box>
   )
 }
+

@@ -1,5 +1,5 @@
-import type { CloudProvider } from './dataPortability'
-import { apiPaths } from './apiPaths'
+import type { CloudProvider } from '../data/dataPortability'
+import { apiPaths } from '../routing/apiPaths'
 
 export type ActiveCloudProvider = Exclude<CloudProvider, 'none'>
 

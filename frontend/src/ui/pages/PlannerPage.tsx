@@ -25,8 +25,8 @@ import {
   IconX,
 } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
-import PlaceSearchInput from '../../../components/PlaceSearchInput'
-import type { Mode, PlaceCandidate, TripType } from '../domain'
+import PlaceSearchInput from '../../components/PlaceSearchInput'
+import type { Mode, PlaceCandidate, TripType } from '../../features/routing/domain'
 
 type PlannerHelperItem = {
   key: string
@@ -423,3 +423,4 @@ export default function PlannerPage({
     </Container>
   )
 }
+

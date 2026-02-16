@@ -15,10 +15,10 @@ import {
 import { IconAdjustmentsHorizontal, IconMapPinPlus, IconRefresh, IconX } from '@tabler/icons-react'
 import type { ComponentProps } from 'react'
 import { useTranslation } from 'react-i18next'
-import PlaceSearchInput from '../../../components/PlaceSearchInput'
-import type { PlaceCandidate } from '../../../components/PlaceSearchInput'
-import type { AddressBookEntry } from '../dataPortability'
-import type { DetourPoint, PoiCategory, PoiItem } from '../domain'
+import PlaceSearchInput from '../../components/PlaceSearchInput'
+import type { PlaceCandidate } from '../../components/PlaceSearchInput'
+import type { AddressBookEntry } from '../../features/data/dataPortability'
+import type { DetourPoint, PoiCategory, PoiItem } from '../../features/routing/domain'
 import DeliveryPlannerPanel from './DeliveryPlannerPanel'
 
 type PoiCategoryOption = {
@@ -494,3 +494,4 @@ export default function PoiPanel({
     </Stack>
   )
 }
+

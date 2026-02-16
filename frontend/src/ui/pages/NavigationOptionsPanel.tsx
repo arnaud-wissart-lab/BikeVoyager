@@ -1,6 +1,6 @@
 import { Checkbox, Group, Paper, SegmentedControl, Slider, Stack, Text } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
-import type { NavigationCameraMode, NavigationMode, PoiCategory } from '../domain'
+import type { NavigationCameraMode, NavigationMode, PoiCategory } from '../../features/routing/domain'
 
 type PoiCategoryOption = {
   value: string
@@ -170,3 +170,4 @@ export default function NavigationOptionsPanel({
     </Paper>
   )
 }
+

@@ -18,7 +18,7 @@ import {
   type AssistLevel,
   type Mode,
   type ProfileSettings,
-} from '../domain'
+} from '../../features/routing/domain'
 
 type ProfilesPageProps = {
   contentSize: string
@@ -197,3 +197,4 @@ export default function ProfilesPage({
     </Container>
   )
 }
+

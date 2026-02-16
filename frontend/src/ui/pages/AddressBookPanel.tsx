@@ -14,10 +14,10 @@ import {
 import { IconMapPinPlus, IconTrash, IconX } from '@tabler/icons-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import PlaceSearchInput from '../../../components/PlaceSearchInput'
-import { parseAddressTagsInput } from '../addressBookUtils'
-import type { AddressBookEntry } from '../dataPortability'
-import type { PlaceCandidate } from '../domain'
+import PlaceSearchInput from '../../components/PlaceSearchInput'
+import { parseAddressTagsInput } from '../../features/data/addressBookUtils'
+import type { AddressBookEntry } from '../../features/data/dataPortability'
+import type { PlaceCandidate } from '../../features/routing/domain'
 
 type AddressBookPanelProps = {
   isDesktop: boolean
@@ -397,3 +397,4 @@ export default function AddressBookPanel({
     </Stack>
   )
 }
+

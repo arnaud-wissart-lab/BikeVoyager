@@ -4,7 +4,7 @@ import {
   parseAddressTagsInput,
   reorderIdsByDragAndDrop,
   toggleAddressTagInInput,
-} from '../features/app/addressBookUtils'
+} from '../features/data/addressBookUtils'
 
 describe('addressBookUtils', () => {
   it('normalise et dedup les tags saisis', () => {
@@ -37,3 +37,4 @@ describe('addressBookUtils', () => {
     expect(formatAddressTagFallbackLabel('delivery')).toBe('Delivery')
   })
 })
+

@@ -160,7 +160,8 @@ public class LoopEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
                 50000,
                 12000,
                 "faible",
-                42);
+                42,
+                Array.Empty<RouteElevationPoint>());
 
             return Task.FromResult(response);
         }

@@ -9,6 +9,8 @@ import '@mantine/core/styles.css'
 import '@mantine/notifications/styles.css'
 import '@fontsource/ibm-plex-sans/400.css'
 import '@fontsource/ibm-plex-sans/500.css'
+import 'cesium/Build/Cesium/Widgets/widgets.css'
+import { registerSW } from 'virtual:pwa-register'
 import './i18n'
 import './index.css'
 import App from './App'
@@ -18,11 +20,15 @@ const colorSchemeManager = localStorageColorSchemeManager({
   key: 'bv-color-scheme',
 })
 
+if (import.meta.env.PROD) {
+  registerSW({ immediate: true })
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <MantineProvider
       theme={theme}
-      defaultColorScheme="light"
+      defaultColorScheme="auto"
       colorSchemeManager={colorSchemeManager}
     >
       <Notifications position="top-right" />

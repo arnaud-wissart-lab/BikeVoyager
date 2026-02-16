@@ -40,17 +40,29 @@ internal sealed class AddressApiGeocodingProvider : IGeocodingProvider
             return Array.Empty<PlaceCandidate>();
         }
 
-        var url = $"search/?q={Uri.EscapeDataString(query)}&limit={limit}";
-
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<AddressFeatureCollection>(url, cancellationToken);
-            if (response?.Features is null)
+            var urls = BuildSearchUrls(query, limit);
+            foreach (var url in urls)
             {
-                return Array.Empty<PlaceCandidate>();
+                var response = await _httpClient.GetFromJsonAsync<AddressFeatureCollection>(url, cancellationToken);
+                if (response?.Features is null)
+                {
+                    continue;
+                }
+
+                var mapped = MapFeatures(response.Features, Source);
+                if (mapped.Count > 0)
+                {
+                    return mapped;
+                }
             }
 
-            return MapFeatures(response.Features, Source);
+            return Array.Empty<PlaceCandidate>();
+        }
+        catch (OperationCanceledException)
+        {
+            return Array.Empty<PlaceCandidate>();
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -81,11 +93,31 @@ internal sealed class AddressApiGeocodingProvider : IGeocodingProvider
 
             return MapFeatures(response.Features, Source).FirstOrDefault();
         }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogWarning(ex, "Erreur lors du reverse géocodage via l'API Adresse.");
             return null;
         }
+    }
+
+    internal static IReadOnlyList<string> BuildSearchUrls(string query, int limit)
+    {
+        var normalized = query.Trim();
+        var safeLimit = Math.Clamp(limit, 1, 20);
+        var encodedQuery = Uri.EscapeDataString(normalized);
+        var urls = new List<string>(2);
+
+        if (LooksLikeHouseNumberQuery(normalized))
+        {
+            urls.Add($"search/?q={encodedQuery}&limit={safeLimit}&type=housenumber&autocomplete=0");
+        }
+
+        urls.Add($"search/?q={encodedQuery}&limit={safeLimit}");
+        return urls;
     }
 
     internal static IReadOnlyList<PlaceCandidate> MapFeatures(
@@ -133,6 +165,26 @@ internal sealed class AddressApiGeocodingProvider : IGeocodingProvider
 
         var parts = context.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
         return parts.Length > 0 ? parts[0] : null;
+    }
+
+    private static bool LooksLikeHouseNumberQuery(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return false;
+        }
+
+        foreach (var character in query)
+        {
+            if (char.IsWhiteSpace(character))
+            {
+                continue;
+            }
+
+            return char.IsDigit(character);
+        }
+
+        return false;
     }
 
     internal sealed class AddressFeatureCollection

@@ -37,6 +37,10 @@ internal sealed class GeoApiGouvGeocodingProvider : IGeocodingProvider
 
             return MapCommunes(communes, Source);
         }
+        catch (OperationCanceledException)
+        {
+            return Array.Empty<PlaceCandidate>();
+        }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogWarning(ex, "Erreur lors de la recherche de communes via Geo API Gouv.");
@@ -60,6 +64,10 @@ internal sealed class GeoApiGouvGeocodingProvider : IGeocodingProvider
             }
 
             return MapCommunes(communes, Source).FirstOrDefault();
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

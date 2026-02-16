@@ -64,6 +64,7 @@ public class PlacesEndpointsTests : IClassFixture<WebApplicationFactory<Program>
         public Task<IReadOnlyList<PlaceCandidate>> SearchAsync(
             string query,
             int limit,
+            GeocodingSearchMode mode,
             CancellationToken cancellationToken)
         {
             IReadOnlyList<PlaceCandidate> result = new[]

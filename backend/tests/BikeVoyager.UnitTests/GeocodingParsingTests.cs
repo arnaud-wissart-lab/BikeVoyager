@@ -38,6 +38,25 @@ public class GeocodingParsingTests
         Assert.Equal("75", candidat.Department);
     }
 
+    [Fact]
+    public void BuildSearchUrls_AvecNumero_CommenceParUneRechercheHousenumber()
+    {
+        var urls = AddressApiGeocodingProvider.BuildSearchUrls("31 rue de la place", 8);
+
+        Assert.Equal(2, urls.Count);
+        Assert.Equal("search/?q=31%20rue%20de%20la%20place&limit=8&type=housenumber&autocomplete=0", urls[0]);
+        Assert.Equal("search/?q=31%20rue%20de%20la%20place&limit=8", urls[1]);
+    }
+
+    [Fact]
+    public void BuildSearchUrls_SansNumero_GardeLaRechercheStandard()
+    {
+        var urls = AddressApiGeocodingProvider.BuildSearchUrls("rue de la place", 8);
+
+        var uniqueUrl = Assert.Single(urls);
+        Assert.Equal("search/?q=rue%20de%20la%20place&limit=8", uniqueUrl);
+    }
+
     private static string ReadFixture(string fileName)
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", fileName);

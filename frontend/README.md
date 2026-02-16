@@ -1,73 +1,127 @@
-# React + TypeScript + Vite
+# Frontend BikeVoyager
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Documentation de référence : français en priorité.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- `React 19`
+- `TypeScript`
+- `Vite`
+- `Mantine`
+- `Cesium`
+- `i18next` (FR par défaut, EN disponible)
+- `vite-plugin-pwa`
 
-## React Compiler
+## Démarrage local
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```powershell
+cd frontend
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Le frontend s’attend à une API disponible sur `/api` (proxy Vite/AppHost).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Scripts npm
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- `npm run dev` : développement local
+- `npm run build` : build de production
+- `npm run test` : tests Vitest
+- `npm run e2e` : tests E2E Playwright (desktop + mobile)
+- `npm run e2e:ui` : exécution E2E en mode interactif
+- `npm run lint` : lint ESLint
+- `npm run format` : vérification Prettier
+- `npm run preview` : preview du build
+
+## Fonctionnalités UI principales
+
+- planification d’itinéraire et boucle (`/api/route`, `/api/loop`)
+- recherche de lieux
+- vue carte Cesium
+- onglet Donnees (sauvegardes locales, export/import, sync cloud)
+- onglet Aide avec diagnostic Valhalla
+
+## Cohérence UI
+
+Le frontend repose sur un thème Mantine centralisé dans `src/theme.ts`:
+
+- palette sobre gris/bleu/vert homogène entre clair/sombre
+- typographie unifiée (IBM Plex Sans, échelle de tailles et interlignes)
+- composants cohérents par défaut (`Button`, `ActionIcon`, `SegmentedControl`,
+  `TextInput`, `NumberInput`, `Checkbox`, `Paper`, `Badge`, `Slider`)
+- hiérarchie d’actions: actions principales en `sm`, micro-actions en `xs`
+- constantes techniques centralisées (endpoints API) dans
+  `src/features/app/apiPaths.ts` pour éviter les chaînes dupliquées
+
+Audit détaillé de la passe UI: `docs/ui-audit-2026-02-15.md` (à la racine du repo).
+
+## E2E (Playwright)
+
+Les scénarios E2E sont dans `e2e/` et mockent les endpoints `/api/*` dans le
+navigateur pour rester déterministes (pas de backend requis pour ces tests).
+
+Prérequis (une seule fois):
+
+```powershell
+npx playwright install chromium
 ```
+
+Exécution:
+
+```powershell
+npm run e2e
+```
+
+Couverture actuelle:
+
+- non-dépassement horizontal du menu bas mobile
+- cohérence de l’écran Aide (cache distribué + heure serveur, sans backend/fallback)
+- parcours complet desktop (planifier -> calcul -> carte)
+
+## Session API anonyme
+
+- aucun login/mot de passe n'est requis pour l'utilisateur final
+- l'API crée en silence un cookie de session anonyme HttpOnly sur `/api/*`
+- le frontend n'envoie plus de header `X-Session-Id`
+- ce mécanisme renforce l'anti-abus, mais ne remplace pas une authentification forte
+
+## Configuration OAuth cloud
+
+Pour activer la synchronisation OneDrive/Google Drive depuis l’onglet `Donnees`,
+configurer les variables d’environnement de l’API (backend):
+
+```powershell
+$env:CloudSync__GoogleDrive__ClientId="..."
+$env:CloudSync__GoogleDrive__ClientSecret="..." # requis si l'app OAuth est confidentielle
+$env:CloudSync__OneDrive__ClientId="..."
+$env:CloudSync__OneDrive__ClientSecret="..."   # requis pour une app Entra Web
+npm run dev
+```
+
+Redirect URI recommandee (Google + Microsoft): `http://localhost:5173/`
+
+Les sessions cloud OAuth sont stockees cote API (cookie HttpOnly + cache distribue Redis).
+
+Scopes utilises:
+
+- Google Drive: `openid email profile https://www.googleapis.com/auth/drive.file`
+- OneDrive (Microsoft Graph): `offline_access Files.ReadWrite User.Read`
+
+## Mises à jour Valhalla dans le front
+
+L’onglet Aide affiche :
+
+- état Valhalla (`ready` / `not_ready`)
+- progression de build si une mise à jour est en cours
+- indicateur “mise à jour OSM disponible”
+- bouton de lancement manuel de la mise à jour
+
+Quand une mise à jour est lancée, le backend construit en arrière-plan une release candidate, puis bascule vers `live` une fois terminée.
+
+## PWA
+
+Voir `docs/pwa.md` pour la stratégie d’installation et de cache.
+
+## English quick note
+
+Primary docs are in French. The Help tab shows Valhalla status and lets users start updates manually.

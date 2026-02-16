@@ -30,6 +30,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\BikeVoyager.Domain\BikeVoyager.Domain.csproj" />
     <ProjectReference Include="..\..\src\BikeVoyager.Application\BikeVoyager.Application.csproj" />
+    <ProjectReference Include="..\..\src\BikeVoyager.Infrastructure\BikeVoyager.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

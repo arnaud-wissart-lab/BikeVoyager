@@ -16,15 +16,15 @@ jobs:
       - name: Restaurer outils dotnet
         run: dotnet tool restore
       - name: Restaurer
-        run: dotnet restore BikeVoyageur.sln
+        run: dotnet restore BikeVoyager.sln
       - name: Format (vérification)
-        run: dotnet format BikeVoyageur.sln --check --no-restore
+        run: dotnet format BikeVoyager.sln --check --no-restore
       - name: Build
-        run: dotnet build BikeVoyageur.sln -c Release --no-restore
+        run: dotnet build BikeVoyager.sln -c Release --no-restore
       - name: Tests
-        run: dotnet test BikeVoyageur.sln -c Release --no-build
+        run: dotnet test BikeVoyager.sln -c Release --no-build
       - name: Audit vulnérabilités
-        run: dotnet list BikeVoyageur.sln package --vulnerable --include-transitive
+        run: dotnet list BikeVoyager.sln package --vulnerable --include-transitive
 
   frontend:
     runs-on: ubuntu-latest
@@ -47,6 +47,12 @@ jobs:
       - name: Build
         working-directory: frontend
         run: npm run build
+      - name: Installer Chromium (Playwright)
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: E2E
+        working-directory: frontend
+        run: npm run e2e
       - name: Audit npm
         working-directory: frontend
         run: npm audit

@@ -1,0 +1,12 @@
+services:
+  valhalla:
+    image: ghcr.io/valhalla/valhalla:latest
+    container_name: bikevoyager-valhalla
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./valhalla:/custom_files
+    entrypoint: ["/bin/sh", "/custom_files/entrypoint.sh"]
+    environment:
+      - VALHALLA_CONFIG=/custom_files/live/valhalla.json
+    restart: unless-stopped

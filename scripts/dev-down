@@ -3,22 +3,42 @@ $ErrorActionPreference = 'Stop'
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
 $stateFile = Join-Path $repoRoot '.dev' 'pids.json'
+$valhallaCompose = Join-Path $repoRoot 'infra' 'valhalla.compose.yml'
 
 if (-not (Test-Path $stateFile)) {
     Write-Host 'Aucun processus à arrêter.'
-    exit 0
+} else {
+    $pids = Get-Content -Path $stateFile | ConvertFrom-Json
+
+    foreach ($entry in $pids.PSObject.Properties) {
+        $pid = [int]$entry.Value
+        try {
+            Stop-Process -Id $pid -Force -ErrorAction Stop
+            Write-Host "Processus arrêté: $pid"
+        } catch {
+            Write-Host "Processus déjà arrêté: $pid"
+        }
+    }
+
+    Remove-Item -Path $stateFile -Force
 }
 
-$pids = Get-Content -Path $stateFile | ConvertFrom-Json
-
-foreach ($entry in $pids.PSObject.Properties) {
-    $pid = [int]$entry.Value
-    try {
-        Stop-Process -Id $pid -Force -ErrorAction Stop
-        Write-Host "Processus arrêté: $pid"
-    } catch {
-        Write-Host "Processus déjà arrêté: $pid"
+$knownProcessNames = @('BikeVoyager.AppHost', 'BikeVoyager.Api')
+foreach ($processName in $knownProcessNames) {
+    $running = Get-Process -Name $processName -ErrorAction SilentlyContinue
+    foreach ($process in $running) {
+        try {
+            Stop-Process -Id $process.Id -Force -ErrorAction Stop
+            Write-Host "Processus arrêté (fallback): $($process.ProcessName)#$($process.Id)"
+        }
+        catch {
+            Write-Host "Processus déjà arrêté (fallback): $($process.ProcessName)#$($process.Id)"
+        }
     }
 }
 
-Remove-Item -Path $stateFile -Force
+try {
+    docker compose -f $valhallaCompose stop valhalla | Out-Null
+} catch {
+    Write-Host "Valhalla: arret ignore (Docker indisponible ?)."
+}

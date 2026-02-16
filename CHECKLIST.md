@@ -1,5 +1,19 @@
 # CHECKLIST
 
+## 2026-02-15 — Passe UI professionnelle + E2E
+
+- [x] Thème global harmonisé (typographie, tailles, radius, defaults composants)
+- [x] Navigation mobile auditée (pas de débordement horizontal)
+- [x] Écran Aide simplifié (suppression Backend/Fallback, heure serveur conservée)
+- [x] Tests E2E Playwright ajoutés (mobile footer + aide cloud)
+- [x] Scénario E2E parcours complet (planifier -> calcul -> carte)
+- [x] CI frontend enrichie avec exécution Playwright E2E
+- [x] Endpoints API centralisés via constantes partagées (`apiPaths`)
+- [x] Protection API renforcée (garde d'origine + rate limiting)
+- [x] Session API anonyme silencieuse (cookie HttpOnly signé côté backend)
+- [x] Tests d'intégration API session anonyme ajoutés/renforcés
+- [x] Documentation mise à jour (README, frontend/README, RUNBOOK, audit UI)
+
 ## 2026-02-05 — Initialisation du mono-repo
 
 - [x] Structure repo créée et conforme
@@ -18,7 +32,7 @@
 
 ## 2026-02-05 — Unification solution à la racine
 
-- [x] Solution unique créée à la racine (`BikeVoyageur.slnx`)
+- [x] Solution unique créée à la racine (`BikeVoyager.slnx`)
 - [x] Solutions `backend/` déplacées en archive
 - [x] Documentation mise à jour (README/RUNBOOK)
 
@@ -74,3 +88,10 @@
 - [x] Profils fixes avec vitesses réglables par mode
 - [x] Sauvegarde localStorage + réinitialisation
 - [x] Résumé de vitesse affiché dans Planifier
+
+## 2026-02-05 — Recherche de lieux (France)
+
+- [x] Service de géocodage backend (communes + adresses optionnelles)
+- [x] Cache mémoire + résilience HttpClient/Polly
+- [x] Endpoints `/api/places/search` et `/api/places/reverse`
+- [x] Auto-complétion front avec debounce et cache

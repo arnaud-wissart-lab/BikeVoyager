@@ -12,6 +12,6 @@
     <Project Path="backend/tests/BikeVoyager.UnitTests/BikeVoyager.UnitTests.csproj" />
   </Folder>
   <Folder Name="/frontend/">
-    <Project Path="frontend/BikeVoyageur.Frontend.csproj" />
+    <Project Path="frontend/BikeVoyager.Frontend.csproj" />
   </Folder>
 </Solution>

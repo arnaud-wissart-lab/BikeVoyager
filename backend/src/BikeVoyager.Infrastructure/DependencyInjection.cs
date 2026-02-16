@@ -1,8 +1,12 @@
 using BikeVoyager.Application.Geocoding;
 using BikeVoyager.Application.Integrations;
+using BikeVoyager.Application.Pois;
+using BikeVoyager.Application.Routing;
 using BikeVoyager.Application.Trips;
 using BikeVoyager.Infrastructure.Geocoding;
 using BikeVoyager.Infrastructure.Integrations;
+using BikeVoyager.Infrastructure.Pois;
+using BikeVoyager.Infrastructure.Routing;
 using BikeVoyager.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +22,26 @@ public static class DependencyInjection
     {
         services.AddSingleton<ITripService, InMemoryTripService>();
         services.AddMemoryCache();
+        var redisConfiguration =
+            configuration["Cache:Redis:Configuration"]
+            ?? configuration.GetConnectionString("redis")
+            ?? configuration.GetConnectionString("Redis");
+
+        if (!string.IsNullOrWhiteSpace(redisConfiguration))
+        {
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisConfiguration;
+                options.InstanceName = configuration["Cache:Redis:InstanceName"] ?? "bikevoyager:";
+            });
+        }
+        else
+        {
+            services.AddDistributedMemoryCache();
+        }
         services.Configure<GeocodingOptions>(configuration.GetSection(GeocodingOptions.SectionName));
+        services.Configure<ValhallaOptions>(configuration.GetSection(ValhallaOptions.SectionName));
+        services.Configure<OverpassOptions>(configuration.GetSection(OverpassOptions.SectionName));
 
         services.AddHttpClient<IExternalPingService, ExternalPingService>(client =>
             {
@@ -46,7 +69,43 @@ public static class DependencyInjection
             .AddPolicyHandler(GetRetryPolicy())
             .AddPolicyHandler(GetCircuitBreakerPolicy());
 
-        services.AddScoped<IGeocodingService, GeocodingService>();
+        services.AddHttpClient<IRouteService, ValhallaRouteService>((sp, client) =>
+            {
+                var options = sp.GetRequiredService<IOptions<ValhallaOptions>>().Value;
+                var baseUrl = options.BaseUrl.TrimEnd('/') + "/";
+                client.BaseAddress = new Uri(baseUrl);
+                client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+            })
+            .AddPolicyHandler(GetValhallaRetryPolicy());
+
+        services.AddHttpClient<ILoopService, ValhallaLoopService>((sp, client) =>
+            {
+                var options = sp.GetRequiredService<IOptions<ValhallaOptions>>().Value;
+                var baseUrl = options.BaseUrl.TrimEnd('/') + "/";
+                client.BaseAddress = new Uri(baseUrl);
+                client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+            })
+            .AddPolicyHandler(GetValhallaRetryPolicy());
+
+        services.AddHttpClient<IPoiService, OverpassPoiService>((sp, client) =>
+            {
+                var options = sp.GetRequiredService<IOptions<OverpassOptions>>().Value;
+                var baseUrl = options.BaseUrl.TrimEnd('/') + "/";
+                client.BaseAddress = new Uri(baseUrl);
+                client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("BikeVoyager/1.0");
+            })
+            .AddPolicyHandler(GetRetryPolicy())
+            .AddPolicyHandler(GetCircuitBreakerPolicy());
+
+        services.AddScoped<IGeocodingService>(sp =>
+            new GeocodingService(
+                sp.GetRequiredService<GeoApiGouvGeocodingProvider>(),
+                sp.GetRequiredService<AddressApiGeocodingProvider>(),
+                sp.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>(),
+                sp.GetService<Microsoft.Extensions.Caching.Distributed.IDistributedCache>(),
+                sp.GetRequiredService<IOptions<GeocodingOptions>>(),
+                sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GeocodingService>>()));
 
         return services;
     }
@@ -60,4 +119,9 @@ public static class DependencyInjection
         HttpPolicyExtensions
             .HandleTransientHttpError()
             .CircuitBreakerAsync(5, TimeSpan.FromSeconds(15));
+
+    private static IAsyncPolicy<HttpResponseMessage> GetValhallaRetryPolicy() =>
+        HttpPolicyExtensions
+            .HandleTransientHttpError()
+            .WaitAndRetryAsync(4, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)));
 }

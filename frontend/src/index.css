@@ -1,5 +1,12 @@
 :root {
   color-scheme: light dark;
+  --bikevoyager-panel-shadow: 0 10px 26px rgba(25, 46, 77, 0.1);
+  --bikevoyager-icon-accent: var(--mantine-color-blue-6);
+}
+
+[data-mantine-color-scheme='dark'] {
+  --bikevoyager-panel-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
+  --bikevoyager-icon-accent: var(--mantine-color-blue-4);
 }
 
 *,
@@ -11,10 +18,62 @@
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--mantine-color-body);
   color: var(--mantine-color-text);
+  font-family: var(--mantine-font-family);
+  line-height: 1.45;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.mobile-map-panel-content {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mobile-map-panel-content::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.mobile-map-panel-content,
+.mobile-poi-details-content {
+  transform-origin: top center;
+  will-change: max-height, opacity, transform, filter;
+}
+
+.mobile-map-panel-content > *,
+.mobile-poi-details-content > * {
+  transition:
+    opacity 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mobile-map-panel-content[aria-hidden='true'] > *,
+.mobile-poi-details-content[aria-hidden='true'] > * {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.mantine-SegmentedControl-label .tabler-icon {
+  color: var(--bikevoyager-icon-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-map-panel-content,
+  .mobile-poi-details-content,
+  .mobile-map-panel-content > *,
+  .mobile-poi-details-content > * {
+    transition: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
 }

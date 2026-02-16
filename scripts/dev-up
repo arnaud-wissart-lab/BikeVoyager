@@ -7,6 +7,94 @@ $stateFile = Join-Path $stateDir 'pids.json'
 
 New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
 
+$valhallaCompose = Join-Path $repoRoot 'infra' 'valhalla.compose.yml'
+$valhallaDir = Join-Path $repoRoot 'infra' 'valhalla'
+$valhallaReadyLive = Join-Path $valhallaDir 'live' 'tiles' '.valhalla_ready'
+$valhallaReadyLegacy = Join-Path $valhallaDir 'tiles' '.valhalla_ready'
+
+$env:Valhalla__DataPath = $valhallaDir
+
+function Get-EnvValue([string]$name) {
+    $processValue = (Get-Item -Path "Env:$name" -ErrorAction SilentlyContinue).Value
+    if (-not [string]::IsNullOrWhiteSpace($processValue)) {
+        return $processValue.Trim()
+    }
+
+    $userValue = [System.Environment]::GetEnvironmentVariable($name, 'User')
+    if (-not [string]::IsNullOrWhiteSpace($userValue)) {
+        return $userValue.Trim()
+    }
+
+    $machineValue = [System.Environment]::GetEnvironmentVariable($name, 'Machine')
+    if (-not [string]::IsNullOrWhiteSpace($machineValue)) {
+        return $machineValue.Trim()
+    }
+
+    return ''
+}
+
+$cloudGoogleClientId = Get-EnvValue 'CloudSync__GoogleDrive__ClientId'
+if ([string]::IsNullOrWhiteSpace($cloudGoogleClientId)) {
+    $cloudGoogleClientId = Get-EnvValue 'CLOUDSYNC_GOOGLEDRIVE_CLIENT_ID'
+}
+
+$cloudOneDriveClientId = Get-EnvValue 'CloudSync__OneDrive__ClientId'
+if ([string]::IsNullOrWhiteSpace($cloudOneDriveClientId)) {
+    $cloudOneDriveClientId = Get-EnvValue 'CLOUDSYNC_ONEDRIVE_CLIENT_ID'
+}
+
+$cloudGoogleClientSecret = Get-EnvValue 'CloudSync__GoogleDrive__ClientSecret'
+if ([string]::IsNullOrWhiteSpace($cloudGoogleClientSecret)) {
+    $cloudGoogleClientSecret = Get-EnvValue 'CLOUDSYNC_GOOGLEDRIVE_CLIENT_SECRET'
+}
+
+$cloudOneDriveClientSecret = Get-EnvValue 'CloudSync__OneDrive__ClientSecret'
+if ([string]::IsNullOrWhiteSpace($cloudOneDriveClientSecret)) {
+    $cloudOneDriveClientSecret = Get-EnvValue 'CLOUDSYNC_ONEDRIVE_CLIENT_SECRET'
+}
+
+if (-not [string]::IsNullOrWhiteSpace($cloudGoogleClientId)) {
+    $env:CloudSync__GoogleDrive__ClientId = $cloudGoogleClientId
+    $env:CLOUDSYNC_GOOGLEDRIVE_CLIENT_ID = $cloudGoogleClientId
+    Write-Host 'CloudSync: Google Drive ClientId détecté.'
+} else {
+    Write-Host 'CloudSync: Google Drive ClientId absent.'
+}
+
+if (-not [string]::IsNullOrWhiteSpace($cloudOneDriveClientId)) {
+    $env:CloudSync__OneDrive__ClientId = $cloudOneDriveClientId
+    $env:CLOUDSYNC_ONEDRIVE_CLIENT_ID = $cloudOneDriveClientId
+    Write-Host 'CloudSync: OneDrive ClientId détecté.'
+} else {
+    Write-Host 'CloudSync: OneDrive ClientId absent.'
+}
+
+if (-not [string]::IsNullOrWhiteSpace($cloudGoogleClientSecret)) {
+    $env:CloudSync__GoogleDrive__ClientSecret = $cloudGoogleClientSecret
+    $env:CLOUDSYNC_GOOGLEDRIVE_CLIENT_SECRET = $cloudGoogleClientSecret
+    Write-Host 'CloudSync: Google Drive ClientSecret détecté.'
+} else {
+    Write-Host 'CloudSync: Google Drive ClientSecret absent.'
+}
+
+if (-not [string]::IsNullOrWhiteSpace($cloudOneDriveClientSecret)) {
+    $env:CloudSync__OneDrive__ClientSecret = $cloudOneDriveClientSecret
+    $env:CLOUDSYNC_ONEDRIVE_CLIENT_SECRET = $cloudOneDriveClientSecret
+    Write-Host 'CloudSync: OneDrive ClientSecret détecté.'
+} else {
+    Write-Host 'CloudSync: OneDrive ClientSecret absent.'
+}
+
+if ((Test-Path $valhallaReadyLive) -or (Test-Path $valhallaReadyLegacy)) {
+    try {
+        docker compose -f $valhallaCompose up -d valhalla | Out-Null
+    } catch {
+        Write-Host "Valhalla: demarrage impossible (Docker indisponible ?)."
+    }
+} else {
+    Write-Host "Valhalla: donnees absentes. Le moteur de routage restera indisponible jusqu'au build."
+}
+
 $backendProject = Join-Path $repoRoot 'backend/src/BikeVoyager.Api/BikeVoyager.Api.csproj'
 $frontendDir = Join-Path $repoRoot 'frontend'
 

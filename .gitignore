@@ -1,12 +1,61 @@
+# Build artifacts
 .dev/
+/.vs/
+/.tmp/
 **/bin/
 **/obj/
 **/node_modules/
 **/dist/
 **/dist-ssr/
+**/logs/
+**/TestResults/
+**/.vite/
+**/artifacts/
+backend/src/**/backend/
+backend/tests/**/backend/
+
+# Local environment and logs
+.env
+*.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.coverage
+*.coveragexml
+*.trx
+
+# Editor and IDE files
 **/*.user
 **/*.suo
 **/*.cache
-.env
-*.log
+**/*.ntvs*
+**/*.njsproj
+**/*.sw?
+.idea/
+.DS_Store
+.vscode/*
 !.vscode/extensions.json
+
+# Valhalla runtime/generated data (keep compose + entrypoint tracked)
+infra/valhalla/data/
+infra/valhalla/live/
+infra/valhalla/releases/
+infra/valhalla/logs/
+infra/valhalla/tiles/
+infra/valhalla/*.pbf
+infra/valhalla/*.sqlite
+infra/valhalla/*.tar
+infra/valhalla/build-status.json
+infra/valhalla/build-manifest.json
+infra/valhalla/source-meta.json
+infra/valhalla/update-status.json
+infra/valhalla/.valhalla_update_available
+infra/valhalla/.build.lock
+infra/valhalla/.build-step-*.sh
+
+# Frontend E2E artifacts
+frontend/playwright-report/
+frontend/test-results/

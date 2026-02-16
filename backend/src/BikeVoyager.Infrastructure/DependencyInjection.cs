@@ -10,14 +10,22 @@ using BikeVoyager.Infrastructure.Routing;
 using BikeVoyager.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using Polly;
-using Polly.Extensions.Http;
+using System.Net;
 
 namespace BikeVoyager.Infrastructure;
 
 public static class DependencyInjection
 {
+    private static readonly PredicateBuilder<HttpResponseMessage> TransientHttpPredicate =
+        new PredicateBuilder<HttpResponseMessage>()
+            .Handle<HttpRequestException>()
+            .HandleResult(static response =>
+                response.StatusCode == HttpStatusCode.RequestTimeout ||
+                (int)response.StatusCode >= 500);
+
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<ITripService, InMemoryTripService>();
@@ -48,8 +56,7 @@ public static class DependencyInjection
                 client.BaseAddress = new Uri(configuration["ExternalPing:BaseUrl"] ?? "https://example.com");
                 client.Timeout = TimeSpan.FromSeconds(5);
             })
-            .AddPolicyHandler(GetRetryPolicy())
-            .AddPolicyHandler(GetCircuitBreakerPolicy());
+            .AddSharedHttpResilience();
 
         services.AddHttpClient<GeoApiGouvGeocodingProvider>((sp, client) =>
             {
@@ -57,8 +64,7 @@ public static class DependencyInjection
                 client.BaseAddress = new Uri(options.CommuneProvider.BaseUrl);
                 client.Timeout = TimeSpan.FromSeconds(options.CommuneProvider.TimeoutSeconds);
             })
-            .AddPolicyHandler(GetRetryPolicy())
-            .AddPolicyHandler(GetCircuitBreakerPolicy());
+            .AddSharedHttpResilience();
 
         services.AddHttpClient<AddressApiGeocodingProvider>((sp, client) =>
             {
@@ -66,8 +72,7 @@ public static class DependencyInjection
                 client.BaseAddress = new Uri(options.AddressProvider.BaseUrl);
                 client.Timeout = TimeSpan.FromSeconds(options.AddressProvider.TimeoutSeconds);
             })
-            .AddPolicyHandler(GetRetryPolicy())
-            .AddPolicyHandler(GetCircuitBreakerPolicy());
+            .AddSharedHttpResilience();
 
         services.AddHttpClient<IRouteService, ValhallaRouteService>((sp, client) =>
             {
@@ -76,7 +81,7 @@ public static class DependencyInjection
                 client.BaseAddress = new Uri(baseUrl);
                 client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
             })
-            .AddPolicyHandler(GetValhallaRetryPolicy());
+            .AddValhallaHttpResilience();
 
         services.AddHttpClient<ILoopService, ValhallaLoopService>((sp, client) =>
             {
@@ -85,7 +90,7 @@ public static class DependencyInjection
                 client.BaseAddress = new Uri(baseUrl);
                 client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
             })
-            .AddPolicyHandler(GetValhallaRetryPolicy());
+            .AddValhallaHttpResilience();
 
         services.AddHttpClient<IPoiService, OverpassPoiService>((sp, client) =>
             {
@@ -95,8 +100,7 @@ public static class DependencyInjection
                 client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("BikeVoyager/1.0");
             })
-            .AddPolicyHandler(GetRetryPolicy())
-            .AddPolicyHandler(GetCircuitBreakerPolicy());
+            .AddSharedHttpResilience();
 
         services.AddScoped<IGeocodingService>(sp =>
             new GeocodingService(
@@ -110,18 +114,44 @@ public static class DependencyInjection
         return services;
     }
 
-    private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy() =>
-        HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .WaitAndRetryAsync(3, attempt => TimeSpan.FromMilliseconds(200 * attempt));
+    private static IHttpClientBuilder AddSharedHttpResilience(this IHttpClientBuilder builder)
+    {
+        builder.AddResilienceHandler("shared-http-resilience", pipeline =>
+            pipeline
+                .AddRetry(new HttpRetryStrategyOptions
+                {
+                    ShouldHandle = TransientHttpPredicate,
+                    MaxRetryAttempts = 3,
+                    Delay = TimeSpan.FromMilliseconds(200),
+                    BackoffType = DelayBackoffType.Linear,
+                    UseJitter = false,
+                    ShouldRetryAfterHeader = false,
+                })
+                .AddCircuitBreaker(new HttpCircuitBreakerStrategyOptions
+                {
+                    ShouldHandle = TransientHttpPredicate,
+                    MinimumThroughput = 5,
+                    FailureRatio = 1d,
+                    SamplingDuration = TimeSpan.FromSeconds(30),
+                    BreakDuration = TimeSpan.FromSeconds(15),
+                }));
 
-    private static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy() =>
-        HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .CircuitBreakerAsync(5, TimeSpan.FromSeconds(15));
+        return builder;
+    }
 
-    private static IAsyncPolicy<HttpResponseMessage> GetValhallaRetryPolicy() =>
-        HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .WaitAndRetryAsync(4, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)));
+    private static IHttpClientBuilder AddValhallaHttpResilience(this IHttpClientBuilder builder)
+    {
+        builder.AddResilienceHandler("valhalla-http-resilience", pipeline =>
+            pipeline.AddRetry(new HttpRetryStrategyOptions
+            {
+                ShouldHandle = TransientHttpPredicate,
+                MaxRetryAttempts = 4,
+                Delay = TimeSpan.FromSeconds(2),
+                BackoffType = DelayBackoffType.Exponential,
+                UseJitter = false,
+                ShouldRetryAfterHeader = false,
+            }));
+
+        return builder;
+    }
 }

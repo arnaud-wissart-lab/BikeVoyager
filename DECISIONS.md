@@ -37,3 +37,11 @@ Ce fichier ne contient ni hotspots, ni backlog, ni plan d'execution.
 - Contexte : besoin d'un demarrage local coherent API + frontend sans introduire une stack d'orchestration supplementaire.
 - Decision : usage de .NET Aspire AppHost pour l'orchestration locale (API + frontend Vite) sans ajouter de stack d'orchestration externe.
 - Consequences : demarrage local coherent, complexite d'outillage limitee.
+
+## ADR-0006 - Resilience HTTP via Microsoft.Extensions.Http.Resilience
+- Date : 2026-02-16
+- Statut : Acceptee
+- Contexte : les packages `Microsoft.Extensions.Http.Polly` et `Polly.Extensions.Http` sont depreciees et l'enregistrement HttpClientFactory doit rester equivalent (retry/circuit-breaker + timeouts existants).
+- Decision : migration vers `Microsoft.Extensions.Http.Resilience` avec `AddResilienceHandler` personnalise :
+  retry lineaire (3 tentatives, 200 ms), circuit-breaker (seuil 5, pause 15 s), retry exponentiel specifique Valhalla (4 tentatives, base 2 s). Les timeouts restent portes par `HttpClient.Timeout` deja configure par client.
+- Consequences : suppression des dependances depreciees, pipeline de resilience aligne sur l'API .NET moderne, comportement conserve sans changement de flux metier.

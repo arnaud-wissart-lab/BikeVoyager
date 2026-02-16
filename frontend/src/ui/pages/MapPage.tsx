@@ -1,26 +1,4 @@
-import {
-  ActionIcon,
-  Box,
-  Button,
-  Group,
-  Loader,
-  Paper,
-  ScrollArea,
-  SegmentedControl,
-  Stack,
-  Text,
-} from '@mantine/core'
-import {
-  IconChevronDown,
-  IconChevronUp,
-  IconExternalLink,
-  IconMapPinPlus,
-  IconMinus,
-  IconPlayerPlay,
-  IconPlus,
-  IconRoute,
-  IconX,
-} from '@tabler/icons-react'
+import { Box, Loader, Paper, Stack, Text } from '@mantine/core'
 import { Suspense, lazy, type ComponentProps, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type {
@@ -34,10 +12,13 @@ import type {
   RouteBounds,
   TripResult,
 } from '../../features/routing/domain'
-import MapCollapsibleSection from './MapCollapsibleSection'
 import MapSummaryPanel from './MapSummaryPanel'
-import PoiPanel from './PoiPanel'
 import NavigationOptionsPanel from './NavigationOptionsPanel'
+import PoiPanel from './PoiPanel'
+import MapNavigationOverlay from './map/MapNavigationOverlay'
+import MapNavigationSetupOverlay from './map/MapNavigationSetupOverlay'
+import MapPanelsOverlay from './map/MapPanelsOverlay'
+import MapPoiDetailsOverlay from './map/MapPoiDetailsOverlay'
 
 const LazyCesiumRouteMap = lazy(() => import('../../components/CesiumRouteMap'))
 
@@ -271,357 +252,54 @@ export default function MapPage({
         </Box>
       )}
 
-      {isDesktop && hasRoute && !isNavigationActive && (
-        <Box
-          style={{
-            position: 'absolute',
-            top: mapOverlayPadding,
-            right: mapOverlayPadding,
-            width: 320,
-            zIndex: 30,
-            pointerEvents: 'auto',
-          }}
-        >
-          <Stack gap="xs">
-            <MapCollapsibleSection
-              title={t('mapSummaryTitle')}
-              expanded={isSummaryPanelExpanded}
-              onToggle={onToggleSummaryPanel}
-              content={<MapSummaryPanel isCompact={false} {...summaryPanelProps} />}
-              isCompact={false}
-              ariaLabel={t(
-                isSummaryPanelExpanded ? 'mapPanelCollapse' : 'mapPanelExpand',
-              )}
-              backgroundColor={surfaceColor}
-              transitionDuration={panelTransitionDuration}
-              transitionTimingFunction={panelTransitionTiming}
-            />
-            <MapCollapsibleSection
-              title={t('tabPois')}
-              expanded={isPoiPanelExpanded}
-              onToggle={onTogglePoiPanel}
-              content={<PoiPanel isCompact={false} {...poiPanelProps} />}
-              isCompact={false}
-              indicator={renderPoiLoadIndicator()}
-              ariaLabel={t(isPoiPanelExpanded ? 'mapPanelCollapse' : 'mapPanelExpand')}
-              backgroundColor={surfaceColor}
-              transitionDuration={panelTransitionDuration}
-              transitionTimingFunction={panelTransitionTiming}
-            />
-          </Stack>
-        </Box>
-      )}
+      <MapPanelsOverlay
+        isDesktop={isDesktop}
+        hasRoute={hasRoute}
+        isNavigationActive={isNavigationActive}
+        mapOverlayPadding={mapOverlayPadding}
+        isSummaryPanelExpanded={isSummaryPanelExpanded}
+        onToggleSummaryPanel={onToggleSummaryPanel}
+        summaryPanelProps={summaryPanelProps}
+        isPoiPanelExpanded={isPoiPanelExpanded}
+        onTogglePoiPanel={onTogglePoiPanel}
+        poiPanelProps={poiPanelProps}
+        renderPoiLoadIndicator={renderPoiLoadIndicator}
+        surfaceColor={surfaceColor}
+        panelTransitionDuration={panelTransitionDuration}
+        panelTransitionTiming={panelTransitionTiming}
+        onResetRouteView={onResetRouteView}
+        chromeFooterHeight={chromeFooterHeight}
+        isMobileMapPanelExpanded={isMobileMapPanelExpanded}
+        onToggleMobileMapPanel={onToggleMobileMapPanel}
+        mobileMapPanelTransition={mobileMapPanelTransition}
+      />
 
-      {!isDesktop && hasRoute && !isNavigationActive && (
-        <Box
-          style={{
-            position: 'absolute',
-            top: mapOverlayPadding,
-            left: mapOverlayPadding,
-            pointerEvents: 'auto',
-            zIndex: 31,
-          }}
-        >
-          <ActionIcon
-            variant="default"
-            size="lg"
-            onClick={onResetRouteView}
-            aria-label={t('mapResetView')}
-            title={t('mapResetView')}
-          >
-            <IconRoute size={18} />
-          </ActionIcon>
-        </Box>
-      )}
-
-      {!isDesktop && hasRoute && !isNavigationActive && (
-        <Paper
-          withBorder
-          radius="lg"
-          shadow="sm"
-          p="xs"
-          style={{
-            position: 'absolute',
-            left: mapOverlayPadding,
-            right: mapOverlayPadding,
-            bottom: chromeFooterHeight + mapOverlayPadding,
-            backgroundColor: surfaceColor,
-            zIndex: 30,
-          }}
-        >
-          <Group justify="space-between" align="center" gap="xs" wrap="nowrap">
-            <Text fw={600} size="sm" lineClamp={1} style={{ minWidth: 0, flex: 1 }}>
-              {t('mapSummaryTitle')} + {t('tabPois')}
-            </Text>
-            <Group gap={6} align="center" wrap="nowrap">
-              {renderPoiLoadIndicator('sm')}
-              <ActionIcon
-                variant="default"
-                size="md"
-                onClick={onToggleMobileMapPanel}
-                aria-label={t(
-                  isMobileMapPanelExpanded ? 'mapPanelCollapse' : 'mapPanelExpand',
-                )}
-              >
-                {isMobileMapPanelExpanded ? (
-                  <IconChevronDown size={16} />
-                ) : (
-                  <IconChevronUp size={16} />
-                )}
-              </ActionIcon>
-            </Group>
-          </Group>
-          <Box
-            className="mobile-map-panel-content"
-            aria-hidden={!isMobileMapPanelExpanded}
-            style={{
-              maxHeight: isMobileMapPanelExpanded ? 'min(52dvh, 380px)' : 0,
-              opacity: isMobileMapPanelExpanded ? 1 : 0,
-              transform: isMobileMapPanelExpanded
-                ? 'translateY(0) scale(1)'
-                : 'translateY(10px) scale(0.985)',
-              filter: isMobileMapPanelExpanded ? 'blur(0px)' : 'blur(1.5px)',
-              overflowY: isMobileMapPanelExpanded ? 'auto' : 'hidden',
-              paddingTop: isMobileMapPanelExpanded ? 8 : 0,
-              pointerEvents: isMobileMapPanelExpanded ? 'auto' : 'none',
-              overscrollBehavior: 'contain',
-              transition: mobileMapPanelTransition,
-            }}
-          >
-            <Stack gap="xs">
-              <MapCollapsibleSection
-                title={t('mapSummaryTitle')}
-                expanded={isSummaryPanelExpanded}
-                onToggle={onToggleSummaryPanel}
-                content={<MapSummaryPanel isCompact {...summaryPanelProps} />}
-                isCompact
-                ariaLabel={t(
-                  isSummaryPanelExpanded ? 'mapPanelCollapse' : 'mapPanelExpand',
-                )}
-                backgroundColor={surfaceColor}
-                transitionDuration={panelTransitionDuration}
-                transitionTimingFunction={panelTransitionTiming}
-              />
-              <MapCollapsibleSection
-                title={t('tabPois')}
-                expanded={isPoiPanelExpanded}
-                onToggle={onTogglePoiPanel}
-                content={<PoiPanel isCompact {...poiPanelProps} />}
-                isCompact
-                indicator={renderPoiLoadIndicator()}
-                ariaLabel={t(
-                  isPoiPanelExpanded ? 'mapPanelCollapse' : 'mapPanelExpand',
-                )}
-                backgroundColor={surfaceColor}
-                transitionDuration={panelTransitionDuration}
-                transitionTimingFunction={panelTransitionTiming}
-              />
-            </Stack>
-          </Box>
-        </Paper>
-      )}
-
-      {isPoiModalOpen && selectedPoi && !isNavigationActive && (
-        <Paper
-          withBorder
-          radius="md"
-          p="sm"
-          style={{
-            position: 'absolute',
-            top: mapOverlayPadding + (isDesktop ? 64 : 52),
-            right: isDesktop ? mapOverlayPadding + 344 : mapOverlayPadding,
-            left: isDesktop ? undefined : mapOverlayPadding,
-            width: isDesktop ? 300 : undefined,
-            maxHeight: isDesktop ? '52vh' : '36dvh',
-            overflow: 'hidden',
-            backgroundColor: surfaceColor,
-            pointerEvents: 'auto',
-            zIndex: 26,
-          }}
-        >
-          <Stack gap={8}>
-            <Group justify="space-between" align="flex-start" wrap="nowrap">
-              <Stack gap={2} style={{ minWidth: 0 }}>
-                <Text size="sm" fw={700} lineClamp={2}>
-                  {selectedPoiDisplayName}
-                </Text>
-                <Text size="xs" c="dimmed">
-                  {selectedPoiCategoryLabel}
-                  {selectedPoiKind ? ` • ${selectedPoiKind}` : ''}
-                </Text>
-              </Stack>
-              <Group gap={4} align="center" wrap="nowrap">
-                {!isDesktop && (
-                  <ActionIcon
-                    variant="default"
-                    size="sm"
-                    onClick={onZoomOutPoi}
-                    aria-label={t('mapPoiZoomOut')}
-                    title={t('mapPoiZoomOut')}
-                    disabled={isRouteLoading}
-                  >
-                    <IconMinus size={14} />
-                  </ActionIcon>
-                )}
-                {!isDesktop && (
-                  <ActionIcon
-                    variant="default"
-                    size="sm"
-                    onClick={onZoomInPoi}
-                    aria-label={t('mapPoiZoomIn')}
-                    title={t('mapPoiZoomIn')}
-                    disabled={isRouteLoading}
-                  >
-                    <IconPlus size={14} />
-                  </ActionIcon>
-                )}
-                {!isDesktop && (
-                  <ActionIcon
-                    variant="default"
-                    size="sm"
-                    onClick={onToggleMobilePoiDetails}
-                    aria-label={t(
-                      isMobilePoiDetailsExpanded
-                        ? 'mapPanelCollapse'
-                        : 'mapPanelExpand',
-                    )}
-                  >
-                    {isMobilePoiDetailsExpanded ? (
-                      <IconChevronDown size={14} />
-                    ) : (
-                      <IconChevronUp size={14} />
-                    )}
-                  </ActionIcon>
-                )}
-                {isDesktop && (
-                  <ActionIcon
-                    variant="subtle"
-                    size="sm"
-                    onClick={onClosePoiModal}
-                    aria-label={t('poiDetailsClose')}
-                  >
-                    <IconX size={14} />
-                  </ActionIcon>
-                )}
-              </Group>
-            </Group>
-
-            <Box
-              className="mobile-poi-details-content"
-              aria-hidden={!isDesktop && !isMobilePoiDetailsExpanded}
-              style={
-                isDesktop
-                  ? undefined
-                  : {
-                      maxHeight: isMobilePoiDetailsExpanded ? '26dvh' : 0,
-                      opacity: isMobilePoiDetailsExpanded ? 1 : 0,
-                      transform: isMobilePoiDetailsExpanded
-                        ? 'translateY(0) scale(1)'
-                        : 'translateY(8px) scale(0.988)',
-                      filter: isMobilePoiDetailsExpanded ? 'blur(0px)' : 'blur(1px)',
-                      overflowY: isMobilePoiDetailsExpanded ? 'auto' : 'hidden',
-                      pointerEvents: isMobilePoiDetailsExpanded ? 'auto' : 'none',
-                      transition: mobilePoiPanelTransition,
-                    }
-              }
-            >
-              <Stack gap={8}>
-                <Group gap={6} wrap="wrap">
-                  <Button
-                    size="xs"
-                    variant={poiDetourIds.has(selectedPoi.id) ? 'filled' : 'light'}
-                    disabled={isRouteLoading}
-                    onClick={onAddSelectedPoiWaypoint}
-                    leftSection={<IconMapPinPlus size={14} />}
-                  >
-                    {t('poiAddWaypoint')}
-                  </Button>
-                  {selectedPoiWebsite && (
-                    <Button
-                      size="xs"
-                      variant="default"
-                      component="a"
-                      href={selectedPoiWebsite}
-                      target="_blank"
-                      rel="noreferrer"
-                      leftSection={<IconExternalLink size={14} />}
-                    >
-                      {t('poiDetailsWebsite')}
-                    </Button>
-                  )}
-                </Group>
-
-                <Group justify="space-between" align="center" wrap="nowrap" gap={8}>
-                  <Text size="xs" c="dimmed">
-                    {t('poiDetailsDistanceAlong')}
-                  </Text>
-                  <Text size="xs" fw={600} ta="right">
-                    {formatDistance(selectedPoi.distance_m)}
-                  </Text>
-                </Group>
-                {typeof selectedPoi.distance_to_route_m === 'number' && (
-                  <Group justify="space-between" align="center" wrap="nowrap" gap={8}>
-                    <Text size="xs" c="dimmed">
-                      {t('poiDetailsDistanceToRoute')}
-                    </Text>
-                    <Text size="xs" fw={600} ta="right">
-                      {formatDistance(selectedPoi.distance_to_route_m)}
-                    </Text>
-                  </Group>
-                )}
-                <Group justify="space-between" align="center" wrap="nowrap" gap={8}>
-                  <Text size="xs" c="dimmed">
-                    {t('poiDetailsCoordinates')}
-                  </Text>
-                  <Text size="xs" fw={600} ta="right">
-                    {formatCoordinate(selectedPoi.lat)} ; {formatCoordinate(selectedPoi.lon)}
-                  </Text>
-                </Group>
-                {selectedPoi.osm_type && typeof selectedPoi.osm_id === 'number' && (
-                  <Group justify="space-between" align="center" wrap="nowrap" gap={8}>
-                    <Text size="xs" c="dimmed">
-                      {t('poiDetailsSource')}
-                    </Text>
-                    <Text size="xs" fw={600} ta="right">
-                      {selectedPoi.osm_type}/{selectedPoi.osm_id}
-                    </Text>
-                  </Group>
-                )}
-
-                <Text size="xs" c="dimmed">
-                  {t('poiDetailsTags')}
-                </Text>
-                {selectedPoiTags.length === 0 ? (
-                  <Text size="xs" c="dimmed">
-                    {t('poiDetailsNoData')}
-                  </Text>
-                ) : (
-                  <ScrollArea.Autosize mah={isDesktop ? 180 : 140} offsetScrollbars>
-                    <Stack gap={4}>
-                      {selectedPoiTags.map(([key, value]) => (
-                        <Group
-                          key={key}
-                          justify="space-between"
-                          align="flex-start"
-                          wrap="nowrap"
-                          gap={8}
-                        >
-                          <Text size="xs" c="dimmed">
-                            {formatPoiTagLabel(key)}
-                          </Text>
-                          <Text size="xs" ta="right">
-                            {formatPoiTagValue(value)}
-                          </Text>
-                        </Group>
-                      ))}
-                    </Stack>
-                  </ScrollArea.Autosize>
-                )}
-              </Stack>
-            </Box>
-          </Stack>
-        </Paper>
-      )}
+      <MapPoiDetailsOverlay
+        isOpen={isPoiModalOpen}
+        selectedPoi={selectedPoi}
+        isNavigationActive={isNavigationActive}
+        mapOverlayPadding={mapOverlayPadding}
+        isDesktop={isDesktop}
+        surfaceColor={surfaceColor}
+        selectedPoiDisplayName={selectedPoiDisplayName}
+        selectedPoiCategoryLabel={selectedPoiCategoryLabel}
+        selectedPoiKind={selectedPoiKind}
+        onZoomOutPoi={onZoomOutPoi}
+        onZoomInPoi={onZoomInPoi}
+        isRouteLoading={isRouteLoading}
+        isMobilePoiDetailsExpanded={isMobilePoiDetailsExpanded}
+        onToggleMobilePoiDetails={onToggleMobilePoiDetails}
+        onClosePoiModal={onClosePoiModal}
+        poiDetourIds={poiDetourIds}
+        onAddSelectedPoiWaypoint={onAddSelectedPoiWaypoint}
+        selectedPoiWebsite={selectedPoiWebsite}
+        formatDistance={formatDistance}
+        formatCoordinate={formatCoordinate}
+        selectedPoiTags={selectedPoiTags}
+        formatPoiTagLabel={formatPoiTagLabel}
+        formatPoiTagValue={formatPoiTagValue}
+        mobilePoiPanelTransition={mobilePoiPanelTransition}
+      />
 
       {isRouteLoading && (
         <Box
@@ -644,195 +322,40 @@ export default function MapPage({
         </Box>
       )}
 
-      {isNavigationSetupOpen && hasRoute && !isNavigationActive && (
-        <Box
-          style={{
-            position: 'absolute',
-            inset: 0,
-            zIndex: 40,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: mapOverlayPadding,
-            pointerEvents: 'auto',
-            backgroundColor: setupOverlayColor,
-            backdropFilter: 'blur(2px)',
-          }}
-        >
-          <Paper
-            withBorder
-            radius="md"
-            p="md"
-            style={{
-              width: isDesktop ? 460 : '100%',
-              maxWidth: 560,
-              maxHeight: isDesktop ? '78vh' : '82dvh',
-              overflowY: 'auto',
-              backgroundColor: surfaceColor,
-            }}
-          >
-            <Stack gap="md">
-              <Group justify="space-between" align="center" wrap="nowrap">
-                <Text fw={600}>{t('navigationSetupTitle')}</Text>
-                <ActionIcon
-                  variant="subtle"
-                  onClick={onCloseNavigationSetup}
-                  aria-label={t('navigationSetupClose')}
-                >
-                  <IconX size={16} />
-                </ActionIcon>
-              </Group>
-              <NavigationOptionsPanel
-                isCompact={false}
-                {...navigationOptionsPanelProps}
-              />
-              <Group grow>
-                <Button variant="default" onClick={onCloseNavigationSetup}>
-                  {t('navigationSetupClose')}
-                </Button>
-                <Button
-                  onClick={onStartNavigation}
-                  data-testid="nav-start"
-                  leftSection={<IconPlayerPlay size={16} />}
-                >
-                  {t('navigationStart')}
-                </Button>
-              </Group>
-            </Stack>
-          </Paper>
-        </Box>
-      )}
+      <MapNavigationSetupOverlay
+        isOpen={isNavigationSetupOpen}
+        hasRoute={hasRoute}
+        isNavigationActive={isNavigationActive}
+        mapOverlayPadding={mapOverlayPadding}
+        setupOverlayColor={setupOverlayColor}
+        isDesktop={isDesktop}
+        surfaceColor={surfaceColor}
+        onCloseNavigationSetup={onCloseNavigationSetup}
+        navigationOptionsPanelProps={navigationOptionsPanelProps}
+        onStartNavigation={onStartNavigation}
+      />
 
-      {isNavigationActive && hasRoute && (
-        <Box style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-          <Box
-            style={{
-              position: 'absolute',
-              top: mapOverlayPadding,
-              left: mapOverlayPadding,
-              right: mapOverlayPadding,
-              display: 'flex',
-              justifyContent: 'center',
-              pointerEvents: 'auto',
-            }}
-          >
-            <Paper
-              withBorder
-              radius="md"
-              p="sm"
-              style={{ backgroundColor: surfaceColor, minWidth: 260, maxWidth: 520 }}
-            >
-              <Stack gap={6}>
-                <Group justify="space-between" align="center" wrap="nowrap">
-                  <Text size="xs" c="dimmed">
-                    {t('navigationTitle')}
-                  </Text>
-                  <Button
-                    size="xs"
-                    radius="xl"
-                    variant="subtle"
-                    color="gray"
-                    onClick={onExitNavigation}
-                    data-testid="nav-exit"
-                    leftSection={<IconX size={14} />}
-                  >
-                    {t('navigationExit')}
-                  </Button>
-                </Group>
-                <Text size="xs" c="dimmed">
-                  {navigationMode === 'simulation'
-                    ? t('navigationModeSimulationLabel')
-                    : t('navigationModeGpsLabel')}
-                </Text>
-                <Group gap="lg" justify="center" wrap="nowrap">
-                  <Stack gap={2} align="center">
-                    <Text size="xs" c="dimmed">
-                      {t('navigationRemaining')}
-                    </Text>
-                    <Text fw={600}>{distanceLabel}</Text>
-                  </Stack>
-                  <Stack gap={2} align="center">
-                    <Text size="xs" c="dimmed">
-                      {t('navigationEta')}
-                    </Text>
-                    <Text fw={600}>{etaLabel}</Text>
-                  </Stack>
-                </Group>
-                {navigationProgressPct !== null && (
-                  <Text size="xs" c="dimmed">
-                    {t('navigationProgressLabel', {
-                      progress: Math.round(navigationProgressPct),
-                    })}
-                  </Text>
-                )}
-                <SegmentedControl
-                  size="xs"
-                  radius="xl"
-                  value={navigationCameraMode}
-                  onChange={onNavigationCameraModeChange}
-                  data={[
-                    { label: t('navigationViewFollow3d'), value: 'follow_3d' },
-                    { label: t('navigationViewPanoramic3d'), value: 'panoramic_3d' },
-                    { label: t('navigationViewOverview2d'), value: 'overview_2d' },
-                  ]}
-                  fullWidth
-                />
-                {navigationError && (
-                  <Text size="xs" c="red.6">
-                    {navigationError}
-                  </Text>
-                )}
-              </Stack>
-            </Paper>
-          </Box>
-          {activePoiAlert && (
-            <Box
-              style={{
-                position: 'absolute',
-                left: mapOverlayPadding,
-                right: mapOverlayPadding,
-                bottom: mapOverlayPadding + (isDesktop ? 0 : chromeFooterHeight + 8),
-                display: 'flex',
-                justifyContent: 'center',
-                pointerEvents: 'auto',
-              }}
-            >
-              <Paper
-                withBorder
-                radius="md"
-                p="sm"
-                style={{ backgroundColor: surfaceColor, maxWidth: 520, width: '100%' }}
-              >
-                <Stack gap={6}>
-                  <Text size="xs" c="dimmed">
-                    {t('poiAlertTitle')}
-                  </Text>
-                  <Text size="sm" fw={600}>
-                    {getPoiDisplayName(activePoiAlert)}
-                  </Text>
-                  <Text size="xs" c="dimmed">
-                    {poiCategoryLabels[activePoiAlert.category]}
-                  </Text>
-                  <Group gap="xs" wrap="nowrap">
-                    <Button
-                      size="xs"
-                      variant="light"
-                      onClick={onAddActivePoiAlertWaypoint}
-                      leftSection={<IconMapPinPlus size={14} />}
-                    >
-                      {t('poiAlertAddWaypoint')}
-                    </Button>
-                    <Button size="xs" variant="subtle" onClick={onDismissPoiAlert}>
-                      {t('poiAlertDismiss')}
-                    </Button>
-                  </Group>
-                </Stack>
-              </Paper>
-            </Box>
-          )}
-        </Box>
-      )}
+      <MapNavigationOverlay
+        isNavigationActive={isNavigationActive}
+        hasRoute={hasRoute}
+        mapOverlayPadding={mapOverlayPadding}
+        surfaceColor={surfaceColor}
+        onExitNavigation={onExitNavigation}
+        navigationMode={navigationMode}
+        distanceLabel={distanceLabel}
+        etaLabel={etaLabel}
+        navigationProgressPct={navigationProgressPct}
+        navigationCameraMode={navigationCameraMode}
+        onNavigationCameraModeChange={onNavigationCameraModeChange}
+        navigationError={navigationError}
+        activePoiAlert={activePoiAlert}
+        getPoiDisplayName={getPoiDisplayName}
+        poiCategoryLabels={poiCategoryLabels}
+        onAddActivePoiAlertWaypoint={onAddActivePoiAlertWaypoint}
+        onDismissPoiAlert={onDismissPoiAlert}
+        isDesktop={isDesktop}
+        chromeFooterHeight={chromeFooterHeight}
+      />
     </Box>
   )
 }
-

@@ -5,7 +5,7 @@ import { CloudBackupNotFoundError, restoreBackupFromCloud, syncBackupToCloud } f
 import type { ParsedImportedData } from '../../data/dataPortability'
 import type { ImportedDataApplyResult } from '../../data/types'
 import type { ImportedApplyMode, PendingCloudRestore } from '../types'
-import { translateCloudError } from './errors'
+import { translateCloudError } from './cloudErrors'
 
 type CloudSyncFeedbackSetters = {
   setCloudSyncMessage: (value: string | null) => void

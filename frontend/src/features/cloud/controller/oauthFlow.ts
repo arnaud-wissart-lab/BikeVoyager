@@ -6,12 +6,70 @@ import {
   disconnectCloudSession,
   startCloudOAuth,
 } from '../api'
-import { translateCloudError } from './errors'
+import { translateCloudError } from './cloudErrors'
 import { clearCloudSyncFeedback } from './providers'
 
 type CloudSyncFeedbackSetters = {
   setCloudSyncMessage: (value: string | null) => void
   setCloudSyncError: (value: string | null) => void
+}
+
+const base64UrlEncode = (value: Uint8Array) => {
+  let binary = ''
+  for (const byte of value) {
+    binary += String.fromCharCode(byte)
+  }
+
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
+}
+
+export const createCloudOAuthState = (byteLength = 24) => {
+  const safeLength = Math.max(16, Math.min(96, Math.floor(byteLength)))
+  const bytes = new Uint8Array(safeLength)
+  crypto.getRandomValues(bytes)
+  return base64UrlEncode(bytes)
+}
+
+export const createCloudPkceCodeVerifier = (byteLength = 64) => {
+  const safeLength = Math.max(32, Math.min(96, Math.floor(byteLength)))
+  const bytes = new Uint8Array(safeLength)
+  crypto.getRandomValues(bytes)
+  return base64UrlEncode(bytes)
+}
+
+export const createCloudPkceCodeChallenge = async (verifier: string) => {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))
+  return base64UrlEncode(new Uint8Array(digest))
+}
+
+export type CloudOAuthCallbackParams = {
+  code: string | null
+  state: string | null
+  error: string | null
+  errorDescription: string | null
+}
+
+export const parseCloudOAuthCallbackParams = (
+  urlOrHref: URL | string,
+): CloudOAuthCallbackParams | null => {
+  const url = typeof urlOrHref === 'string' ? new URL(urlOrHref) : urlOrHref
+  const code = url.searchParams.get('code')
+  const error = url.searchParams.get('error')
+
+  if (!code && !error) {
+    return null
+  }
+
+  const state = url.searchParams.get('state')
+  const errorDescription = url.searchParams.get('error_description')
+
+  return {
+    code,
+    state: state && state.trim().length > 0 ? state : null,
+    error,
+    errorDescription:
+      errorDescription && errorDescription.trim().length > 0 ? errorDescription : null,
+  }
 }
 
 export const connectCloudProvider = async (params: {

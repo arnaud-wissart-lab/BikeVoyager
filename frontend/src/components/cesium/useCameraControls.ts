@@ -56,7 +56,7 @@ export default function useCameraControls({
     if (!navigationActive) {
       smoothedHeadingRef.current = null
     }
-  }, [navigationActive])
+  }, [navigationActive, smoothedHeadingRef])
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -130,7 +130,15 @@ export default function useCameraControls({
       },
     })
     viewer.scene.requestRender()
-  }, [navigationActive, navigationCameraMode, navigationProgress, status])
+  }, [
+    cesiumRef,
+    navigationActive,
+    navigationCameraMode,
+    navigationProgress,
+    smoothedHeadingRef,
+    status,
+    viewerRef,
+  ])
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -216,5 +224,18 @@ export default function useCameraControls({
       },
     })
     viewer.scene.requestRender()
-  }, [activePoiId, bounds, mapCommand, mapCommandSeq, navigationActive, pois, status, viewMode])
+  }, [
+    activePoiId,
+    bounds,
+    cesiumRef,
+    lastProcessedCommandSeqRef,
+    mapCommand,
+    mapCommandSeq,
+    navigationActive,
+    pois,
+    routeEntityRef,
+    status,
+    viewMode,
+    viewerRef,
+  ])
 }

@@ -117,7 +117,17 @@ export default function useRouteEntities({
     }
 
     viewer.scene.requestRender()
-  }, [bounds, elevationProfile, geometry, navigationActive, status])
+  }, [
+    bounds,
+    cesiumRef,
+    elevationProfile,
+    geometry,
+    lastRouteSignatureRef,
+    navigationActive,
+    routeEntityRef,
+    status,
+    viewerRef,
+  ])
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -155,7 +165,7 @@ export default function useRouteEntities({
     }
 
     viewer.scene.requestRender()
-  }, [activePoiId, pois, status])
+  }, [activePoiId, cesiumRef, poiEntitiesRef, pois, status, viewerRef])
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -213,7 +223,7 @@ export default function useRouteEntities({
       },
     })
     viewer.scene.requestRender()
-  }, [activePoiId, pois, status, viewMode])
+  }, [activePoiId, cesiumRef, poiEntitiesRef, pois, status, viewMode, viewerRef])
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -253,5 +263,12 @@ export default function useRouteEntities({
     })
 
     viewer.scene.requestRender()
-  }, [navigationActive, navigationProgress, status])
+  }, [
+    cesiumRef,
+    navigationActive,
+    navigationEntityRef,
+    navigationProgress,
+    status,
+    viewerRef,
+  ])
 }

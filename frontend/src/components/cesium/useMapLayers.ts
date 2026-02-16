@@ -34,5 +34,5 @@ export default function useMapLayers({
       viewer.scene.morphTo3D(0)
     }
     viewer.scene.requestRender()
-  }, [navigationActive, status, viewMode])
+  }, [cesiumRef, navigationActive, status, viewMode, viewerRef])
 }

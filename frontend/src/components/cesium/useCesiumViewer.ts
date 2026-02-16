@@ -136,7 +136,17 @@ export default function useCesiumViewer({
       lastRouteSignatureRef.current = null
       cesiumRef.current = null
     }
-  }, [])
+  }, [
+    cesiumRef,
+    containerRef,
+    lastRouteSignatureRef,
+    navigationEntityRef,
+    poiClickHandlerRef,
+    poiEntitiesRef,
+    routeEntityRef,
+    smoothedHeadingRef,
+    viewerRef,
+  ])
 
   return status
 }

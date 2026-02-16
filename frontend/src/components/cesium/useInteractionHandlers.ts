@@ -62,5 +62,5 @@ export default function useInteractionHandlers({
       }
       poiClickHandlerRef.current = null
     }
-  }, [onPoiSelect, status])
+  }, [cesiumRef, onPoiSelect, poiClickHandlerRef, status, viewerRef])
 }

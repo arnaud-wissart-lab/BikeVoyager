@@ -856,46 +856,7 @@ export default function App() {
     return () => {
       isCancelled = true
     }
-  }, [cloudDataRouteHash, initialAppPreferences.cloudProvider, isDesktop, t])
-
-  useEffect(() => {
-    if (cloudOAuthCallbackHandledRef.current) {
-      return
-    }
-
-    cloudOAuthCallbackHandledRef.current = true
-
-    const handleCloudCallback = async () => {
-      const result = await completeCloudOAuthCallback()
-      if (result.status === 'none') {
-        return
-      }
-
-      clearOAuthCallbackQueryParams()
-
-      if (result.status === 'error') {
-        setCloudSyncMessage(null)
-        setCloudSyncError(
-          t('cloudConnectError', {
-            message: result.message,
-          }),
-        )
-        return
-      }
-
-      setCloudAuthState(result.authState)
-      setCloudProvider(result.authState.provider)
-      setCloudSyncError(null)
-      setCloudSyncMessage(t('cloudConnectSuccess'))
-      setDataAccordionValue('backup-cloud')
-      setShouldRevealCloudPanel(true)
-      window.location.hash = cloudDataRouteHash
-
-      await tryRestoreCloudBackupAfterConnect(result.authState)
-    }
-
-    void handleCloudCallback()
-  }, [cloudDataRouteHash, t])
+  }, [initialAppPreferences.cloudProvider, isDesktop, t])
 
   useEffect(() => {
     if (route !== 'aide') {
@@ -1238,10 +1199,14 @@ export default function App() {
   } as const
   const toastPosition = isDesktop ? 'top-right' : 'top-center'
   const toastTopOffsetPx = showShellHeader ? headerHeight + 10 : 10
-  const toastStyle = {
-    marginTop: `${toastTopOffsetPx}px`,
-    maxWidth: isDesktop ? 'min(420px, calc(100vw - 40px))' : 'calc(100vw - 24px)',
-  } as const
+  const toastStyle = useMemo(
+    () =>
+      ({
+        marginTop: `${toastTopOffsetPx}px`,
+        maxWidth: isDesktop ? 'min(420px, calc(100vw - 40px))' : 'calc(100vw - 24px)',
+      }) as const,
+    [isDesktop, toastTopOffsetPx],
+  )
   const showSuccessToast = useCallback(
     (message: string, options?: { title?: string; durationMs?: number }) => {
       notifications.show({
@@ -2760,25 +2725,6 @@ export default function App() {
     )
   }
 
-  const buildPlannerDraftSnapshot = (): PlannerDraft => ({
-    mode,
-    tripType,
-    onewayStartValue,
-    onewayStartPlace,
-    loopStartValue,
-    loopStartPlace,
-    endValue,
-    endPlace,
-    targetDistanceKm,
-  })
-
-  const buildExportedPreferencesSnapshot = (): ExportedPreferences => ({
-    profileSettings,
-    appPreferences,
-    language: (language === 'en' ? 'en' : 'fr') as SupportedLanguage,
-    themeMode: themeMode as ThemeModePreference,
-  })
-
   const buildDateStamp = () => new Date().toISOString().slice(0, 10)
 
   const serializeJsonContent = (payload: unknown) =>
@@ -2790,17 +2736,30 @@ export default function App() {
     downloadBlob(blob, fileName)
   }
 
-  const buildBackupPayload = () =>
-    buildBackupExport({
-      preferences: buildExportedPreferencesSnapshot(),
-      plannerDraft: buildPlannerDraftSnapshot(),
-      currentRoute: routeResult,
-      savedTrips: sortAndLimitSavedTrips(savedTrips),
-      addressBook: sortAndLimitAddressBook(addressBook),
-    })
-
-  const cloudBackupPayloadContent = useMemo(
-    () => serializeJsonContent(buildBackupPayload()),
+  const buildBackupPayload = useCallback(
+    () =>
+      buildBackupExport({
+        preferences: {
+          profileSettings,
+          appPreferences,
+          language: (language === 'en' ? 'en' : 'fr') as SupportedLanguage,
+          themeMode: themeMode as ThemeModePreference,
+        } satisfies ExportedPreferences,
+        plannerDraft: {
+          mode,
+          tripType,
+          onewayStartValue,
+          onewayStartPlace,
+          loopStartValue,
+          loopStartPlace,
+          endValue,
+          endPlace,
+          targetDistanceKm,
+        } satisfies PlannerDraft,
+        currentRoute: routeResult,
+        savedTrips: sortAndLimitSavedTrips(savedTrips),
+        addressBook: sortAndLimitAddressBook(addressBook),
+      }),
     [
       addressBook,
       appPreferences,
@@ -2819,6 +2778,11 @@ export default function App() {
       themeMode,
       tripType,
     ],
+  )
+
+  const cloudBackupPayloadContent = useMemo(
+    () => serializeJsonContent(buildBackupPayload()),
+    [buildBackupPayload],
   )
 
   const exportPayloadAsJsonFile = async (params: {
@@ -3179,6 +3143,47 @@ export default function App() {
       setIsCloudSyncLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (cloudOAuthCallbackHandledRef.current) {
+      return
+    }
+
+    cloudOAuthCallbackHandledRef.current = true
+
+    const handleCloudCallback = async () => {
+      const result = await completeCloudOAuthCallback()
+      if (result.status === 'none') {
+        return
+      }
+
+      clearOAuthCallbackQueryParams()
+
+      if (result.status === 'error') {
+        setCloudSyncMessage(null)
+        setCloudSyncError(
+          t('cloudConnectError', {
+            message: result.message,
+          }),
+        )
+        return
+      }
+
+      setCloudAuthState(result.authState)
+      setCloudProvider(result.authState.provider)
+      setCloudSyncError(null)
+      setCloudSyncMessage(t('cloudConnectSuccess'))
+      setDataAccordionValue('backup-cloud')
+      setShouldRevealCloudPanel(true)
+      window.location.hash = cloudDataRouteHash
+
+      await tryRestoreCloudBackupAfterConnect(result.authState)
+    }
+
+    void handleCloudCallback()
+    // This effect is designed to run once and is guarded by cloudOAuthCallbackHandledRef.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t])
 
   const applyPendingCloudRestore = (modeToApply: ImportedApplyMode) => {
     if (!pendingCloudRestore) {

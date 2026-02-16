@@ -18,7 +18,7 @@ jobs:
       - name: Restaurer
         run: dotnet restore BikeVoyager.sln
       - name: Format (vérification)
-        run: dotnet format BikeVoyager.sln --check --no-restore
+        run: dotnet format BikeVoyager.sln --verify-no-changes --no-restore
       - name: Build
         run: dotnet build BikeVoyager.sln -c Release --no-restore
       - name: Tests

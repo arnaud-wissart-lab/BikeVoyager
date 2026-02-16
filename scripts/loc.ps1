@@ -8,9 +8,13 @@ Usage:
   pwsh scripts/loc.ps1 [patterns...] [--scope backend/frontend/docs] [--threshold N] [--top N] [--out docs/LOC_REPORT.md]
 
 Examples:
+  pwsh scripts/loc.ps1 --top 30 --threshold 400 --scope backend/frontend/docs --out docs/LOC_REPORT.md
   pwsh scripts/loc.ps1 --top 20 --threshold 400 --scope backend/frontend
   pwsh scripts/loc.ps1 frontend/src/**/*.tsx --top 10
-  pwsh scripts/loc.ps1 --top 20 --threshold 400 --out docs/LOC_REPORT.md
+  pwsh scripts/loc.ps1 *.cs *.md --top 20
+
+Par defaut:
+  Si aucun pattern n'est fourni, les patterns par defaut sont: *.cs, *.ts, *.tsx, *.md
 '@
 }
 
@@ -118,6 +122,7 @@ function New-MarkdownTable {
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $knownScopes = @('backend', 'frontend', 'docs')
+$defaultPatterns = @('*.cs', '*.ts', '*.tsx', '*.md')
 
 $patterns = New-Object System.Collections.Generic.List[string]
 $scopes = New-Object System.Collections.Generic.List[string]
@@ -203,6 +208,12 @@ foreach ($scope in $scopes) {
     }
 }
 
+if ($patterns.Count -eq 0) {
+    foreach ($defaultPattern in $defaultPatterns) {
+        $patterns.Add($defaultPattern)
+    }
+}
+
 $items = New-Object System.Collections.Generic.List[object]
 $seen = @{}
 
@@ -273,7 +284,7 @@ if (-not [string]::IsNullOrWhiteSpace($outPath)) {
     $scopeLabel = ($scopes -join ', ')
     $thresholdLabel = if ($threshold -ge 0) { $threshold } else { '(none)' }
     $topLabel = if ($top -gt 0) { $top } else { '(none)' }
-    $patternLabel = if ($patterns.Count -gt 0) { ($patterns -join ', ') } else { '(all files in scopes)' }
+    $patternLabel = ($patterns -join ', ')
 
     $reportLines = New-Object System.Collections.Generic.List[string]
     $reportLines.Add('# LOC Report')

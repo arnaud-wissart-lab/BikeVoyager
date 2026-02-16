@@ -1,7 +1,7 @@
 # LOC Report
 
-- Date: 2026-02-16 17:47:18 +01:00
-- Commit: `28800f4`
+- Date: 2026-02-16 18:43:36 +01:00
+- Commit: `b364a2d`
 - Methode: lecture Raw + comptage des caracteres `n` (lignes = count(`n`) + 1, 0 si fichier vide).
 - Scope: `backend, frontend, docs`
 - Threshold: `400`

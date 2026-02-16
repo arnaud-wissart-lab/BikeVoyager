@@ -7,9 +7,13 @@ Usage:
   ./scripts/loc.sh [patterns...] [--scope backend/frontend/docs] [--threshold N] [--top N] [--out docs/LOC_REPORT.md]
 
 Examples:
+  ./scripts/loc.sh --top 30 --threshold 400 --scope backend/frontend/docs --out docs/LOC_REPORT.md
   ./scripts/loc.sh --top 20 --threshold 400 --scope backend/frontend
   ./scripts/loc.sh 'frontend/src/**/*.tsx' --top 10
-  ./scripts/loc.sh --top 20 --threshold 400 --out docs/LOC_REPORT.md
+  ./scripts/loc.sh '*.cs' '*.md' --top 20
+
+Par defaut:
+  Si aucun pattern n'est fourni, les patterns par defaut sont: *.cs, *.ts, *.tsx, *.md
 EOF
 }
 
@@ -22,6 +26,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
 
 declare -a patterns=()
+declare -a default_patterns=('*.cs' '*.ts' '*.tsx' '*.md')
 declare -a scopes=()
 top=""
 threshold=""
@@ -71,6 +76,10 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+if [[ ${#patterns[@]} -eq 0 ]]; then
+  patterns=("${default_patterns[@]}")
+fi
 
 if [[ ${#scopes[@]} -eq 0 ]]; then
   scopes=(backend frontend docs)
@@ -188,11 +197,7 @@ if [[ -n "$out_path" ]]; then
   scope_label="$(IFS=', '; echo "${scopes[*]}")"
   threshold_label="${threshold:-"(none)"}"
   top_label="${top:-"(none)"}"
-  if [[ ${#patterns[@]} -gt 0 ]]; then
-    pattern_label="$(IFS=', '; echo "${patterns[*]}")"
-  else
-    pattern_label="(all files in scopes)"
-  fi
+  pattern_label="$(IFS=', '; echo "${patterns[*]}")"
 
   {
     echo "# LOC Report"

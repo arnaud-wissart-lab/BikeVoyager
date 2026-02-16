@@ -1,40 +1,33 @@
 # DECISIONS
 
-## 2026-02-05 — Socle technique
+Registre ADR court : decisions d'architecture uniquement.
 
-- Backend en .NET 10 (LTS) avec Minimal API et OpenAPI/Swagger.
-- Architecture propre : `Api -> Application -> Infrastructure -> Domain`.
-- Serilog en JSON + `X-Correlation-Id` + `ProblemDetails`.
-- Validation des DTO via FluentValidation et endpoint filters.
-- HttpClientFactory avec Polly (retry/circuit breaker léger) et timeouts.
+## ADR-0001 - Architecture backend en couches
+- Date : 2026-02-05
+- Statut : Acceptee
+- Decision : backend en .NET 10 Minimal API avec separation `Api -> Application -> Infrastructure -> Domain`.
+- Consequences : frontieres claires, testabilite amelioree, evolution par couche simplifiee.
 
-## 2026-02-05 — Frontend
+## ADR-0002 - Architecture frontend React TypeScript
+- Date : 2026-02-05
+- Statut : Acceptee
+- Decision : frontend en React + TypeScript + Vite + Mantine, organise par domaines (`features/*`, `ui/*`, `app/*`).
+- Consequences : socle moderne, build rapide, separation UI/orchestration plus lisible.
 
-- Stack : React + TypeScript + Vite + Mantine.
-- i18n via `react-i18next` (FR par défaut, switch FR/EN).
-- Thème clair/sombre, palette sobre et neutre.
-- Mobile-first avec drawer/bottom-sheet pour actions rapides.
+## ADR-0003 - Versioning API canonique en /api/v1
+- Date : 2026-02-16
+- Statut : Acceptee
+- Decision : tous les endpoints publics sont exposes en `/api/v1/*`; un rewrite legacy `/api/*` reste temporairement actif.
+- Consequences : contrat API explicite, migration client progressive, retrait du rewrite a planifier.
 
-## 2026-02-05 — Qualité
+## ADR-0004 - Pipeline qualite et CI obligatoires
+- Date : 2026-02-05
+- Statut : Acceptee
+- Decision : CI GitHub unique backend/frontend avec lint, build, tests unitaires/API, E2E et audit de dependances.
+- Consequences : regression detectee plus tot, niveau de qualite verifiable en continu.
 
-- Tests unitaires + tests API (xUnit).
-- Tests front via Vitest + Testing Library.
-- Lint/format côté front (ESLint + Prettier).
-- Outil `dotnet-format` ajouté en tool manifest.
-
-## 2026-02-05 — Orchestration F5 (Visual Studio)
-
-- Choix : .NET Aspire AppHost pour l’orchestration “un clic” (F5).
-- Le frontend Vite est lancé par l’AppHost via `AddExecutable` (pas de dépendance au SDK JavaScript VS).
-- Le proxy Vite route `/api` vers l’API HTTPS par défaut.
-- Pas de projet ServiceDefaults pour l’instant afin de limiter les changements backend.
-- Variables OTLP Aspire configurées pour éviter l’erreur du dashboard.
-- Frontend visible dans la solution via un projet .NET “contenu” sans build.
-
-## 2026-02-16 — Justification temporaire des fichiers frontend > 600 lignes
-
-- `frontend/src/i18n.ts` : fichier majoritairement déclaratif (catalogues de traduction). Le découpage par namespaces est prévu dans une PR dédiée pour éviter une régression i18n transversale.
-- `frontend/src/ui/pages/MapPage.tsx` : composant d’assemblage UI dense. Son extraction en sous-sections est reportée à une PR UI ciblée avec tests visuels/E2E.
-- `frontend/src/components/CesiumRouteMap.tsx` : logique impérative fortement couplée au cycle de vie Cesium. Refacto planifiée avec scénario de non-régression map 2D/3D.
-- `frontend/src/features/data/dataPortability.ts` : module de compatibilité import/export (schéma + migration). Découpage reporté pour préserver la stabilité des sauvegardes existantes.
-- `frontend/src/features/cloud/useCloudController.ts` : orchestrateur OAuth/sync multi-fournisseurs. Fractionnement prévu avec tests d’intégration cloud pour limiter le risque de régression.
+## ADR-0005 - Orchestration locale via AppHost
+- Date : 2026-02-05
+- Statut : Acceptee
+- Decision : usage de .NET Aspire AppHost pour l'orchestration locale (API + frontend Vite) sans ajouter de stack d'orchestration externe.
+- Consequences : demarrage local coherent, complexite d'outillage limitee.

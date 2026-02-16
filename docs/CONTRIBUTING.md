@@ -29,5 +29,6 @@ Ce depot vise une vitrine GitHub : code propre, auditable et documentation clair
 - Plan de rollback (si pertinent)
 
 ## Documentation projet
-- `docs/DECISIONS.md` : cadre ADR et template de decision.
+- `DECISIONS.md` (racine) : registre ADR court et decisions d'architecture.
 - `docs/ROADMAP.md` : priorites P0 / P1 / P2.
+

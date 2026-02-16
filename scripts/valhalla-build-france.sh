@@ -15,7 +15,7 @@ logs_dir="$valhalla_dir/logs"
 status_path="$valhalla_dir/build-status.json"
 cleanup_script="$repo_root/scripts/valhalla-cleanup.sh"
 france_url="https://download.geofabrik.de/europe/france-latest.osm.pbf"
-valhalla_image="ghcr.io/valhalla/valhalla:latest"
+valhalla_image="ghcr.io/valhalla/valhalla@sha256:4e287d4e78ee9e44911d282c33b52f6d916381d705f59b0a875d5b71ef565d2a"
 
 mkdir -p "$data_dir"
 mkdir -p "$logs_dir"

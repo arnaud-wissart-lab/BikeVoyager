@@ -1,6 +1,6 @@
 services:
   valhalla:
-    image: ghcr.io/valhalla/valhalla:latest
+    image: ghcr.io/valhalla/valhalla@sha256:4e287d4e78ee9e44911d282c33b52f6d916381d705f59b0a875d5b71ef565d2a
     container_name: bikevoyager-valhalla
     ports:
       - "8002:8002"

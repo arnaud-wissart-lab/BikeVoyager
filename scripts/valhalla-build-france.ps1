@@ -22,7 +22,7 @@ $updateMarkerPath = Join-Path $valhallaDir '.valhalla_update_available'
 $buildLockPath = Join-Path $valhallaDir '.build.lock'
 $cleanupScriptPath = Join-Path $repoRoot 'scripts' 'valhalla-cleanup.ps1'
 $franceUrl = 'https://download.geofabrik.de/europe/france-latest.osm.pbf'
-$valhallaImage = 'ghcr.io/valhalla/valhalla:latest'
+$valhallaImage = 'ghcr.io/valhalla/valhalla@sha256:4e287d4e78ee9e44911d282c33b52f6d916381d705f59b0a875d5b71ef565d2a'
 
 New-Item -ItemType Directory -Force -Path $dataDir | Out-Null
 New-Item -ItemType Directory -Force -Path $releasesDir | Out-Null

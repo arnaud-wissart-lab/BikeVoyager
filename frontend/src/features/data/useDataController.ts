@@ -4,33 +4,38 @@ import type { AppStore } from '../../state/appStore'
 import { useDataFeatureSlice } from './useDataFeatureSlice'
 import {
   buildBackupExport,
-  parseImportedBikeVoyagerData,
   sortAndLimitAddressBook,
   sortAndLimitSavedTrips,
-  upsertAddressBookEntry,
-  upsertSavedTrip,
   type AddressBookEntry,
   type AppPreferences,
-  type ExportedPreferences,
   type ParsedImportedData,
-  type SavedTripRecord,
-  type SupportedLanguage,
-  type ThemeModePreference,
 } from './dataPortability'
 import { addressBookFilterAll } from './addressBookUtils'
-import { hasPlannerDraftData, toCanonicalJson } from './importDataUtils'
-import { isEncryptedBikeVoyagerPayload } from './dataEncryption'
 import {
   normalizeNumericInput,
   type DetourPoint,
   type MapViewMode,
-  type PlannerDraft,
   type RouteRequestPayload,
 } from '../routing/domain'
 import type { ImportedDataApplyMode, ImportedDataApplyResult } from './types'
 import { createDataAddressBookActions } from './useDataController.addressBookActions'
 import { useDataControllerPersistence } from './useDataController.persistence'
 import { createDataRouteActions } from './useDataController.routeDataActions'
+import {
+  applyParsedImportedData as applyParsedImportedDataCore,
+  getCloudRestoreSuccessMessageByKind,
+  parseImportedPayload as parseImportedPayloadCore,
+  serializeJsonContent,
+  wouldCloudBackupMergeChangeLocal as wouldCloudBackupMergeChangeLocalCore,
+} from './controller/importExport'
+import {
+  buildExportedPreferences,
+  buildPlannerDraftSnapshot,
+} from './controller/mappers'
+import {
+  hasAnyLocalBackupData,
+  hasPlannerDraftSnapshotData,
+} from './controller/validators'
 
 type UseDataControllerParams = {
   store: AppStore
@@ -54,8 +59,6 @@ type UseDataControllerParams = {
     nextDetours?: DetourPoint[],
   ) => Promise<boolean>
 }
-
-const serializeJsonContent = (payload: unknown) => `${JSON.stringify(payload, null, 2)}\n`
 
 export const useDataController = ({
   store,
@@ -98,37 +101,10 @@ export const useDataController = ({
     poiCorridorMeters,
     navigationMode,
     navigationCameraMode,
-    setSavedTrips,
-    setAddressBook,
     setAddressBookFilterTag,
     setDeliveryStartAddressId,
     setDeliveryStopAddressIds,
     setDeliveryDraggedStopId,
-    setMode,
-    setTripType,
-    setOnewayStartValue,
-    setOnewayStartPlace,
-    setLoopStartValue,
-    setLoopStartPlace,
-    setEndValue,
-    setEndPlace,
-    setTargetDistanceKm,
-    setProfileSettings,
-    setCloudProvider,
-    setCloudAutoBackupEnabled,
-    setPoiAlertEnabled,
-    setPoiAlertDistanceMeters,
-    setPoiAlertCategories,
-    setPoiCategories,
-    setPoiCorridorMeters,
-    setRouteResult,
-    setHasResult,
-    setIsDirty,
-    setDetourPoints,
-    setRouteAlternativeIndex,
-    setLoopAlternativeIndex,
-    setRouteErrorKey,
-    setRouteErrorMessage,
   } = store
 
   const {
@@ -193,13 +169,13 @@ export const useDataController = ({
   const buildBackupPayload = useCallback(
     () =>
       buildBackupExport({
-        preferences: {
+        preferences: buildExportedPreferences({
           profileSettings,
           appPreferences,
-          language: (language === 'en' ? 'en' : 'fr') as SupportedLanguage,
-          themeMode: themeMode as ThemeModePreference,
-        } satisfies ExportedPreferences,
-        plannerDraft: {
+          language,
+          themeMode,
+        }),
+        plannerDraft: buildPlannerDraftSnapshot({
           mode,
           tripType,
           onewayStartValue,
@@ -209,7 +185,7 @@ export const useDataController = ({
           endValue,
           endPlace,
           targetDistanceKm,
-        } satisfies PlannerDraft,
+        }),
         currentRoute: routeResult,
         savedTrips: sortAndLimitSavedTrips(savedTrips),
         addressBook: sortAndLimitAddressBook(addressBook),
@@ -239,118 +215,55 @@ export const useDataController = ({
     [buildBackupPayload],
   )
 
-  const applyImportedPreferences = (preferences: ExportedPreferences) => {
-    setProfileSettings(preferences.profileSettings)
-    setPoiAlertEnabled(preferences.appPreferences.poiAlertEnabled)
-    setPoiAlertDistanceMeters(preferences.appPreferences.poiAlertDistanceMeters)
-    setPoiAlertCategories(preferences.appPreferences.poiAlertCategories)
-    setPoiCategories(preferences.appPreferences.poiCategories)
-    setPoiCorridorMeters(preferences.appPreferences.poiCorridorMeters)
-    setCloudProvider(preferences.appPreferences.cloudProvider)
-    setCloudAutoBackupEnabled(preferences.appPreferences.cloudAutoBackupEnabled)
-    setThemeMode(preferences.themeMode)
-  }
+  const plannerDraftSnapshot = useMemo(
+    () =>
+      buildPlannerDraftSnapshot({
+        mode,
+        tripType,
+        onewayStartValue,
+        onewayStartPlace,
+        loopStartValue,
+        loopStartPlace,
+        endValue,
+        endPlace,
+        targetDistanceKm,
+      }),
+    [
+      endPlace,
+      endValue,
+      loopStartPlace,
+      loopStartValue,
+      mode,
+      onewayStartPlace,
+      onewayStartValue,
+      targetDistanceKm,
+      tripType,
+    ],
+  )
 
-  const applyImportedPlannerDraft = (draft: PlannerDraft) => {
-    setMode(draft.mode)
-    setTripType(draft.tripType)
-    setOnewayStartValue(draft.onewayStartValue)
-    setOnewayStartPlace(draft.onewayStartPlace)
-    setLoopStartValue(draft.loopStartValue)
-    setLoopStartPlace(draft.loopStartPlace)
-    setEndValue(draft.endValue)
-    setEndPlace(draft.endPlace)
-    setTargetDistanceKm(draft.targetDistanceKm)
-  }
+  const hasPlannerDraftContent = hasPlannerDraftSnapshotData(plannerDraftSnapshot)
 
-  const hasPlannerDraftContent =
-    mode !== null ||
-    tripType !== null ||
-    onewayStartValue.trim().length > 0 ||
-    loopStartValue.trim().length > 0 ||
-    endValue.trim().length > 0 ||
-    typeof targetDistanceKm === 'number'
-
-  const hasLocalBackupData =
-    hasPlannerDraftContent ||
-    routeResult !== null ||
-    savedTrips.length > 0 ||
-    addressBook.length > 0
+  const hasLocalBackupData = hasAnyLocalBackupData({
+    hasPlannerDraftContent,
+    routeResult,
+    savedTrips,
+    addressBook,
+  })
 
   const applyParsedImportedData = (
     imported: ParsedImportedData,
     options?: { mode?: ImportedDataApplyMode },
-  ): ImportedDataApplyResult => {
-    const modeToApply = options?.mode ?? 'replace'
-    if (imported.kind === 'preferences') {
-      applyImportedPreferences(imported.preferences)
-      return imported.kind
-    }
-    if (imported.kind === 'trip') {
-      setSavedTrips((current) => upsertSavedTrip(current, imported.trip))
-      return imported.kind
-    }
-    if (modeToApply === 'merge') {
-      setSavedTrips((current) => {
-        const byId = new Map<string, SavedTripRecord>()
-        for (const trip of current) {
-          byId.set(trip.id, trip)
-        }
-        for (const trip of imported.savedTrips) {
-          byId.set(trip.id, trip)
-        }
-        return sortAndLimitSavedTrips(Array.from(byId.values()))
-      })
-      setAddressBook((current) => {
-        let merged = current
-        for (const entry of imported.addressBook) {
-          merged = upsertAddressBookEntry(merged, entry)
-        }
-        return merged
-      })
-      if (!hasPlannerDraftContent) {
-        applyImportedPlannerDraft(imported.plannerDraft)
-      }
-      if (!routeResult && imported.currentRoute) {
-        setRouteResult(imported.currentRoute)
-        setHasResult(true)
-        setIsDirty(false)
-        setDetourPoints([])
-        setRouteAlternativeIndex(0)
-        setLoopAlternativeIndex(0)
-        setRouteErrorKey(null)
-        setRouteErrorMessage(null)
-      }
-      return imported.kind
-    }
+  ): ImportedDataApplyResult =>
+    applyParsedImportedDataCore({
+      store,
+      setThemeMode,
+      imported,
+      hasPlannerDraftContent,
+      options,
+    })
 
-    applyImportedPreferences(imported.preferences)
-    applyImportedPlannerDraft(imported.plannerDraft)
-    setSavedTrips(sortAndLimitSavedTrips(imported.savedTrips))
-    setAddressBook(sortAndLimitAddressBook(imported.addressBook))
-    setRouteResult(imported.currentRoute)
-    setHasResult(Boolean(imported.currentRoute))
-    setIsDirty(false)
-    setDetourPoints([])
-    setDeliveryStartAddressId(null)
-    setDeliveryStopAddressIds([])
-    setRouteAlternativeIndex(0)
-    setLoopAlternativeIndex(0)
-    setRouteErrorKey(null)
-    setRouteErrorMessage(null)
-    return imported.kind
-  }
-
-  const parseImportedPayload = (payload: unknown) => {
-    if (isEncryptedBikeVoyagerPayload(payload)) {
-      throw new Error(t('dataImportEncryptedUnsupported'))
-    }
-    const imported = parseImportedBikeVoyagerData(payload)
-    if (!imported) {
-      throw new Error(t('dataImportInvalid'))
-    }
-    return imported
-  }
+  const parseImportedPayload = (payload: unknown) =>
+    parseImportedPayloadCore(payload, t)
 
   const importPayload = async (
     payload: unknown,
@@ -362,51 +275,17 @@ export const useDataController = ({
 
   const wouldCloudBackupMergeChangeLocal = (
     imported: Extract<ParsedImportedData, { kind: 'backup' }>,
-  ) => {
-    const mergedSavedTrips = (() => {
-      const byId = new Map<string, SavedTripRecord>()
-      for (const trip of savedTrips) {
-        byId.set(trip.id, trip)
-      }
-      for (const trip of imported.savedTrips) {
-        byId.set(trip.id, trip)
-      }
-      return sortAndLimitSavedTrips(Array.from(byId.values()))
-    })()
+  ) =>
+    wouldCloudBackupMergeChangeLocalCore({
+      importedBackup: imported,
+      currentSavedTrips: savedTrips,
+      currentAddressBook: addressBook,
+      currentRouteResult: routeResult,
+      hasPlannerDraftContent,
+    })
 
-    const mergedAddressBook = (() => {
-      let merged = addressBook
-      for (const entry of imported.addressBook) {
-        merged = upsertAddressBookEntry(merged, entry)
-      }
-      return merged
-    })()
-
-    const savedTripsChanged =
-      toCanonicalJson(mergedSavedTrips) !== toCanonicalJson(savedTrips)
-    const addressBookChanged =
-      toCanonicalJson(mergedAddressBook) !== toCanonicalJson(addressBook)
-    const plannerDraftWouldBeImported =
-      !hasPlannerDraftContent && hasPlannerDraftData(imported.plannerDraft)
-    const routeWouldBeImported = !routeResult && imported.currentRoute !== null
-
-    return (
-      savedTripsChanged ||
-      addressBookChanged ||
-      plannerDraftWouldBeImported ||
-      routeWouldBeImported
-    )
-  }
-
-  const cloudRestoreSuccessMessageByKind = (kind: ParsedImportedData['kind']) => {
-    if (kind === 'preferences') {
-      return t('cloudRestorePreferencesSuccess')
-    }
-    if (kind === 'trip') {
-      return t('cloudRestoreTripSuccess')
-    }
-    return t('cloudRestoreBackupSuccess')
-  }
+  const cloudRestoreSuccessMessageByKind = (kind: ParsedImportedData['kind']) =>
+    getCloudRestoreSuccessMessageByKind(kind, t)
 
   const routeDataActions = createDataRouteActions({
     store,

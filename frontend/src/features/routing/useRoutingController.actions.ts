@@ -1,19 +1,30 @@
 import type { TFunction } from 'i18next'
 import type { AppStore } from '../../state/appStore'
 import {
-  apiModeByUi,
   buildLoopRequest,
   loopTelemetryEvents,
-  routeOptionVariants,
-  trackLoopEvent,
-  type AssistLevel,
   type DetourPoint,
-  type LoopRequestPayload,
-  type RouteLocation,
-  type RouteRequestPayload,
   type RouteKey,
+  trackLoopEvent,
 } from './domain'
-import { fetchLoop, fetchRoute, readApiMessage } from './api'
+import {
+  clearRouteErrors,
+  setLoopFailedError,
+  setRouteMissingPlaceError,
+} from './actions.errors'
+import {
+  buildLoopRequestPayload,
+  createLoopRequestAction,
+  resolveEbikeAssistForMode,
+  resolveLoopDistanceKm,
+  resolveLoopStartLocation,
+} from './actions.loop'
+import { appendDetourPoint } from './actions.poi'
+import {
+  buildRouteRequestPayload,
+  createRouteRequestAction,
+  resolveRouteLocations,
+} from './actions.route'
 import { createRoutingControllerFormActions } from './useRoutingController.formActions'
 import type { MapContext } from './useRoutingController.types'
 
@@ -95,148 +106,41 @@ export const createRoutingControllerActions = ({
     setRouteAlternativeIndex,
   } = store
 
-  const buildRouteOptionsVariant = (variantIndex: number) =>
-    routeOptionVariants[variantIndex % routeOptionVariants.length]
-  const resolveEbikeAssistForMode = (nextMode: typeof mode): AssistLevel | undefined =>
-    nextMode === 'ebike' ? profileSettings.ebikeAssist : undefined
-  const toWaypointPayload = (points: DetourPoint[]) =>
-    points.map(({ lat, lon, label }) => ({ lat, lon, label }))
-
-  const requestRoute = async (
-    requestBody: RouteRequestPayload,
-    nextDetours: DetourPoint[] = [],
-  ) => {
-    setIsRouteLoading(true)
-    lastRouteRequestRef.current = {
-      type: 'route',
-      payload: requestBody,
-    }
-
-    try {
-      const result = await fetchRoute(requestBody)
-      if (!result.ok) {
-        const response = result.response
-        if (response.status === 503) {
-          const message = await readApiMessage(response)
-          if (message) {
-            setRouteErrorMessage(message)
-            setRouteErrorKey(null)
-          } else {
-            setRouteErrorMessage(null)
-            setRouteErrorKey('routeErrorUnavailable')
-          }
-          return false
-        }
-
-        if (response.status === 504) {
-          setRouteErrorMessage(null)
-          setRouteErrorKey('routeErrorTimeout')
-          return false
-        }
-
-        if (response.status === 502) {
-          setRouteErrorMessage(null)
-          setRouteErrorKey('routeErrorGateway')
-          return false
-        }
-
-        setRouteErrorMessage(null)
-        setRouteErrorKey('routeErrorFailed')
-        return false
-      }
-
-      setRouteResult(result.result)
-      setHasResult(true)
-      setIsDirty(false)
-      setDetourPoints(nextDetours)
-      onNavigate('carte', true)
-      return true
-    } catch {
-      setRouteErrorMessage(null)
-      setRouteErrorKey('routeErrorFailed')
-      return false
-    } finally {
-      setIsRouteLoading(false)
-    }
+  const errorSetters = {
+    setRouteErrorMessage,
+    setRouteErrorKey,
   }
 
-  const requestLoop = async (
-    requestBody: LoopRequestPayload,
-    nextDetours: DetourPoint[] = [],
-  ) => {
-    setIsRouteLoading(true)
-    lastRouteRequestRef.current = {
-      type: 'loop',
-      payload: requestBody,
-    }
+  const requestRoute = createRouteRequestAction({
+    setIsRouteLoading,
+    lastRouteRequestRef,
+    setRouteErrorMessage,
+    setRouteErrorKey,
+    setRouteResult,
+    setHasResult,
+    setIsDirty,
+    setDetourPoints,
+    onNavigate,
+  })
 
-    try {
-      const result = await fetchLoop(requestBody)
-      if (!result.ok) {
-        const response = result.response
-        if (response.status === 503) {
-          const message = await readApiMessage(response)
-          if (message) {
-            setRouteErrorMessage(message)
-            setRouteErrorKey(null)
-          } else {
-            setRouteErrorMessage(null)
-            setRouteErrorKey('routeErrorUnavailable')
-          }
-          return false
-        }
-
-        if (response.status === 504) {
-          setRouteErrorMessage(null)
-          setRouteErrorKey('routeErrorTimeout')
-          return false
-        }
-
-        if (response.status === 502) {
-          setRouteErrorMessage(null)
-          setRouteErrorKey('routeErrorGateway')
-          return false
-        }
-
-        if (response.status === 422) {
-          const message = await readApiMessage(response)
-          if (message) {
-            setRouteErrorMessage(message)
-            setRouteErrorKey(null)
-          } else {
-            setRouteErrorMessage(null)
-            setRouteErrorKey('loopErrorFailed')
-          }
-          return false
-        }
-
-        setRouteErrorMessage(null)
-        setRouteErrorKey('loopErrorFailed')
-        return false
-      }
-
-      setRouteResult(result.result)
-      setHasResult(true)
-      setIsDirty(false)
-      setDetourPoints(nextDetours)
-      onNavigate('carte', true)
-      return true
-    } catch {
-      setRouteErrorMessage(null)
-      setRouteErrorKey('loopErrorFailed')
-      return false
-    } finally {
-      setIsRouteLoading(false)
-    }
-  }
+  const requestLoop = createLoopRequestAction({
+    setIsRouteLoading,
+    lastRouteRequestRef,
+    setRouteErrorMessage,
+    setRouteErrorKey,
+    setRouteResult,
+    setHasResult,
+    setIsDirty,
+    setDetourPoints,
+    onNavigate,
+  })
 
   const handleCalculate = async () => {
     if (!isFormReady || !mode || !tripType) {
       return
     }
 
-    setRouteErrorKey(null)
-    setRouteErrorMessage(null)
+    clearRouteErrors(errorSetters)
 
     if (tripType === 'loop') {
       const loopRequest = buildLoopRequest(
@@ -244,7 +148,7 @@ export const createRoutingControllerActions = ({
         targetDistanceKm,
         mode,
         profileSettings.speeds[mode],
-        resolveEbikeAssistForMode(mode),
+        resolveEbikeAssistForMode(mode, profileSettings.ebikeAssist),
         0,
       )
 
@@ -269,11 +173,11 @@ export const createRoutingControllerActions = ({
     }
 
     if (!onewayStartPlace || !endPlace) {
-      setRouteErrorKey('routeErrorMissingPlace')
+      setRouteMissingPlaceError(errorSetters)
       return
     }
 
-    const requestBody: RouteRequestPayload = {
+    const requestBody = buildRouteRequestPayload({
       from: {
         lat: onewayStartPlace.lat,
         lon: onewayStartPlace.lon,
@@ -284,15 +188,12 @@ export const createRoutingControllerActions = ({
         lon: endPlace.lon,
         label: endPlace.label,
       },
-      mode: apiModeByUi[mode],
-      options: buildRouteOptionsVariant(0),
+      mode,
       speedKmh: profileSettings.speeds[mode],
-      ...(mode === 'ebike'
-        ? {
-            ebikeAssist: profileSettings.ebikeAssist,
-          }
-        : {}),
-    }
+      ebikeAssist: profileSettings.ebikeAssist,
+      variantIndex: 0,
+      detourPoints: [],
+    })
 
     const success = await requestRoute(requestBody, [])
     if (success) {
@@ -306,127 +207,68 @@ export const createRoutingControllerActions = ({
     }
 
     const resolvedMode = mode ?? 'bike'
-    setRouteErrorKey(null)
-    setRouteErrorMessage(null)
+    clearRouteErrors(errorSetters)
 
     if (map.mapTripType === 'loop') {
-      const startLocation: RouteLocation | null = loopStartPlace
-        ? {
-            lat: loopStartPlace.lat,
-            lon: loopStartPlace.lon,
-            label: loopStartPlace.label,
-          }
-        : map.mapStartCoordinate
-          ? {
-              lat: map.mapStartCoordinate[1],
-              lon: map.mapStartCoordinate[0],
-              label: map.startLabel || t('poiStartFallback'),
-            }
-          : null
+      const startLocation = resolveLoopStartLocation({
+        loopStartPlace,
+        mapStartCoordinate: map.mapStartCoordinate,
+        startLabel: map.startLabel,
+        getStartFallbackLabel: () => t('poiStartFallback'),
+      })
 
       if (!startLocation) {
-        setRouteErrorKey('loopErrorFailed')
+        setLoopFailedError(errorSetters)
         return false
       }
 
-      const loopDistance =
-        typeof targetDistanceKm === 'number' && targetDistanceKm > 0
-          ? targetDistanceKm
-          : Math.max(1, Math.round(routeResult.distance_m / 1000))
-
-      const requestBody: LoopRequestPayload = {
+      const requestBody = buildLoopRequestPayload({
         start: startLocation,
-        targetDistanceKm: loopDistance,
-        mode: apiModeByUi[resolvedMode],
+        targetDistanceKm: resolveLoopDistanceKm(
+          targetDistanceKm,
+          routeResult.distance_m,
+        ),
+        mode: resolvedMode,
         speedKmh: profileSettings.speeds[resolvedMode],
-        ...(resolvedMode === 'ebike'
-          ? {
-              ebikeAssist: profileSettings.ebikeAssist,
-            }
-          : {}),
+        ebikeAssist: profileSettings.ebikeAssist,
         variation: loopAlternativeIndex,
-        ...(nextDetours.length > 0
-          ? {
-              waypoints: toWaypointPayload(nextDetours),
-            }
-          : {}),
-      }
+        detourPoints: nextDetours,
+      })
 
       return requestLoop(requestBody, nextDetours)
     }
 
-    const fromLocation: RouteLocation | null = onewayStartPlace
-      ? {
-          lat: onewayStartPlace.lat,
-          lon: onewayStartPlace.lon,
-          label: onewayStartPlace.label,
-        }
-      : map.mapStartCoordinate
-        ? {
-            lat: map.mapStartCoordinate[1],
-            lon: map.mapStartCoordinate[0],
-            label: map.startLabel || t('poiStartFallback'),
-          }
-        : null
-    const toLocation: RouteLocation | null = endPlace
-      ? {
-          lat: endPlace.lat,
-          lon: endPlace.lon,
-          label: endPlace.label,
-        }
-      : map.mapEndCoordinate
-        ? {
-            lat: map.mapEndCoordinate[1],
-            lon: map.mapEndCoordinate[0],
-            label: map.endLabel || t('poiEndFallback'),
-          }
-        : null
+    const { fromLocation, toLocation } = resolveRouteLocations({
+      onewayStartPlace,
+      endPlace,
+      mapStartCoordinate: map.mapStartCoordinate,
+      mapEndCoordinate: map.mapEndCoordinate,
+      startLabel: map.startLabel,
+      endLabel: map.endLabel,
+      getStartFallbackLabel: () => t('poiStartFallback'),
+      getEndFallbackLabel: () => t('poiEndFallback'),
+    })
 
     if (!fromLocation || !toLocation) {
-      setRouteErrorKey('routeErrorMissingPlace')
+      setRouteMissingPlaceError(errorSetters)
       return false
     }
 
-    const requestBody: RouteRequestPayload = {
+    const requestBody = buildRouteRequestPayload({
       from: fromLocation,
       to: toLocation,
-      ...(nextDetours.length > 0
-        ? {
-            waypoints: toWaypointPayload(nextDetours),
-          }
-        : {}),
-      mode: apiModeByUi[resolvedMode],
-      options: buildRouteOptionsVariant(routeAlternativeIndex),
+      mode: resolvedMode,
       speedKmh: profileSettings.speeds[resolvedMode],
-      ...(resolvedMode === 'ebike'
-        ? {
-            ebikeAssist: profileSettings.ebikeAssist,
-          }
-        : {}),
-    }
+      ebikeAssist: profileSettings.ebikeAssist,
+      variantIndex: routeAlternativeIndex,
+      detourPoints: nextDetours,
+    })
 
     return requestRoute(requestBody, nextDetours)
   }
 
-  const pointsAreClose = (
-    left: { lat: number; lon: number },
-    right: { lat: number; lon: number },
-  ) => Math.abs(left.lat - right.lat) < 0.00003 && Math.abs(left.lon - right.lon) < 0.00003
-
-  const appendDetourPoint = (point: DetourPoint) => {
-    if (detourPoints.some((existing) => existing.id === point.id)) {
-      return detourPoints
-    }
-
-    if (detourPoints.some((existing) => pointsAreClose(existing, point))) {
-      return detourPoints
-    }
-
-    return [...detourPoints, point]
-  }
-
   const addDetourPointAndRecalculate = async (point: DetourPoint) => {
-    const nextDetours = appendDetourPoint(point)
+    const nextDetours = appendDetourPoint(detourPoints, point)
     if (nextDetours === detourPoints) {
       return {
         status: 'unchanged' as const,
@@ -462,53 +304,37 @@ export const createRoutingControllerActions = ({
       return
     }
 
-    setRouteErrorKey(null)
-    setRouteErrorMessage(null)
+    clearRouteErrors(errorSetters)
 
     const resolvedMode = mode ?? 'bike'
     if (routeResult.kind === 'loop') {
-      const startLocation: RouteLocation | null = loopStartPlace
-        ? {
-            lat: loopStartPlace.lat,
-            lon: loopStartPlace.lon,
-            label: loopStartPlace.label,
-          }
-        : map.mapStartCoordinate
-          ? {
-              lat: map.mapStartCoordinate[1],
-              lon: map.mapStartCoordinate[0],
-              label: map.startLabel || t('poiStartFallback'),
-            }
-          : null
+      const startLocation = resolveLoopStartLocation({
+        loopStartPlace,
+        mapStartCoordinate: map.mapStartCoordinate,
+        startLabel: map.startLabel,
+        getStartFallbackLabel: () => t('poiStartFallback'),
+      })
 
-      const loopDistance =
-        typeof targetDistanceKm === 'number' && targetDistanceKm > 0
-          ? targetDistanceKm
-          : Math.max(1, Math.round(routeResult.distance_m / 1000))
+      const loopDistance = resolveLoopDistanceKm(
+        targetDistanceKm,
+        routeResult.distance_m,
+      )
 
       if (!startLocation) {
-        setRouteErrorKey('loopErrorFailed')
+        setLoopFailedError(errorSetters)
         return
       }
 
       const nextVariation = loopAlternativeIndex + 1
-      const requestBody: LoopRequestPayload = {
+      const requestBody = buildLoopRequestPayload({
         start: startLocation,
         targetDistanceKm: loopDistance,
-        mode: apiModeByUi[resolvedMode],
+        mode: resolvedMode,
         speedKmh: profileSettings.speeds[resolvedMode],
-        ...(resolvedMode === 'ebike'
-          ? {
-              ebikeAssist: profileSettings.ebikeAssist,
-            }
-          : {}),
+        ebikeAssist: profileSettings.ebikeAssist,
         variation: nextVariation,
-        ...(detourPoints.length > 0
-          ? {
-              waypoints: toWaypointPayload(detourPoints),
-            }
-          : {}),
-      }
+        detourPoints,
+      })
 
       const success = await requestLoop(requestBody, detourPoints)
       if (success) {
@@ -517,56 +343,32 @@ export const createRoutingControllerActions = ({
       return
     }
 
-    const fromLocation: RouteLocation | null = onewayStartPlace
-      ? {
-          lat: onewayStartPlace.lat,
-          lon: onewayStartPlace.lon,
-          label: onewayStartPlace.label,
-        }
-      : map.mapStartCoordinate
-        ? {
-            lat: map.mapStartCoordinate[1],
-            lon: map.mapStartCoordinate[0],
-            label: map.startLabel || t('poiStartFallback'),
-          }
-        : null
-    const toLocation: RouteLocation | null = endPlace
-      ? {
-          lat: endPlace.lat,
-          lon: endPlace.lon,
-          label: endPlace.label,
-        }
-      : map.mapEndCoordinate
-        ? {
-            lat: map.mapEndCoordinate[1],
-            lon: map.mapEndCoordinate[0],
-            label: map.endLabel || t('poiEndFallback'),
-          }
-        : null
+    const { fromLocation, toLocation } = resolveRouteLocations({
+      onewayStartPlace,
+      endPlace,
+      mapStartCoordinate: map.mapStartCoordinate,
+      mapEndCoordinate: map.mapEndCoordinate,
+      startLabel: map.startLabel,
+      endLabel: map.endLabel,
+      getStartFallbackLabel: () => t('poiStartFallback'),
+      getEndFallbackLabel: () => t('poiEndFallback'),
+    })
 
     if (!fromLocation || !toLocation) {
-      setRouteErrorKey('routeErrorMissingPlace')
+      setRouteMissingPlaceError(errorSetters)
       return
     }
 
     const nextVariant = routeAlternativeIndex + 1
-    const requestBody: RouteRequestPayload = {
+    const requestBody = buildRouteRequestPayload({
       from: fromLocation,
       to: toLocation,
-      ...(detourPoints.length > 0
-        ? {
-            waypoints: toWaypointPayload(detourPoints),
-          }
-        : {}),
-      mode: apiModeByUi[resolvedMode],
-      options: buildRouteOptionsVariant(nextVariant),
+      mode: resolvedMode,
       speedKmh: profileSettings.speeds[resolvedMode],
-      ...(resolvedMode === 'ebike'
-        ? {
-            ebikeAssist: profileSettings.ebikeAssist,
-          }
-        : {}),
-    }
+      ebikeAssist: profileSettings.ebikeAssist,
+      variantIndex: nextVariant,
+      detourPoints,
+    })
 
     const success = await requestRoute(requestBody, detourPoints)
     if (success) {

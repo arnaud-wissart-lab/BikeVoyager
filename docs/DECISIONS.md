@@ -93,13 +93,12 @@ Dependances retenues :
 - P1 : decouper les controllers les plus longs en sous-modules internes.
 
 ## Liste > 600 lignes (justification temporaire)
-- `frontend/src/app/AppRoot.tsx` : orchestration transitoire des props pages + shell durant la migration.
-- `frontend/src/features/routing/useRoutingController.ts` : extraction initiale complete du flux routing.
-- `frontend/src/features/data/useDataController.ts` : extraction initiale complete import/export + address book.
-- `frontend/src/features/map/useMapController.ts` : extraction initiale complete navigation + formatage map.
-- `frontend/src/features/cloud/useCloudController.ts` : orchestration cloud complete en un seul hook.
-- `frontend/src/features/routing/domain.ts` et `frontend/src/features/data/dataPortability.ts` : dette historique preexistante.
-- `frontend/src/i18n.ts` : dette historique preexistante (cf. P1 ci-dessus).
+- `frontend/src/i18n.ts` (**994**) : dette historique preexistante (cf. P1 ci-dessus).
+- `frontend/src/ui/pages/MapPage.tsx` (**838**) : composant ecran carte encore trop centralisateur.
+- `frontend/src/components/CesiumRouteMap.tsx` (**829**) : rendu carte et interactions encore couples dans le meme module.
+- `frontend/src/features/data/dataPortability.ts` (**749**) : orchestration import/export encore tres dense.
+- `frontend/src/features/cloud/useCloudController.ts` (**687**) : orchestration cloud complete en un seul hook.
+- `frontend/src/features/routing/useRoutingController.actions.ts` (**612**) : module d'actions routing encore volumineux apres extraction.
 
 ## Alternatives evaluees
 1. Deplacer integralement le composant dans un nouveau fichier unique : refuse (recree un god file).

@@ -15,30 +15,24 @@
 ### Risques actuels (priorises)
 1. **Hotspots frontend encore volumineux** :
    - `frontend/src/i18n.ts` : **994 lignes**
-   - `frontend/src/features/routing/domain/*.ts` (9 fichiers) : **1016 lignes cumulees**
-   - `frontend/src/features/data/useDataController.ts` : **516 lignes**
-   - `frontend/src/features/map/useMapController.ts` : **493 lignes**
-   - `frontend/src/features/routing/useRoutingController.ts` : **419 lignes**
    - `frontend/src/ui/pages/MapPage.tsx` : **838 lignes**
    - `frontend/src/components/CesiumRouteMap.tsx` : **829 lignes**
-2. **Coherence de versionnement API** :
-   - Mix actuel entre routes `/api/*` et `/api/v1/*`.
+   - `frontend/src/features/data/dataPortability.ts` : **749 lignes**
+   - `frontend/src/features/cloud/useCloudController.ts` : **687 lignes**
+   - `frontend/src/features/routing/useRoutingController.actions.ts` : **612 lignes**
 
-## 2) Etat des hotspots cibles (RESOLU vs RESTANT)
+## 2) Etat des hotspots frontend cibles
 
 Mesure LOC : `(Get-Content <fichier>).Count` au 2026-02-16.
 
 | Hotspot cible | Fichier exact | LOC reelles | Statut | Commentaire |
 |---|---|---:|---|---|
-| useDataController | `frontend/src/features/data/useDataController.ts` | 516 | **RESTANT** | Au-dessus du seuil cible de 400 LOC. |
-| useRoutingController | `frontend/src/features/routing/useRoutingController.ts` | 419 | **RESTANT** | Au-dessus du seuil cible de 400 LOC. |
-| useMapController | `frontend/src/features/map/useMapController.ts` | 493 | **RESTANT** | Au-dessus du seuil cible de 400 LOC. |
-| AppRoot | `frontend/src/app/AppRoot.tsx` | 298 | **RESOLU** | Repasse sous le seuil cible de 400 LOC. |
-| domain (barrel) | `frontend/src/features/routing/domain.ts` | 9 | **RESOLU** | Ancien fichier monolithique remplace par un re-export. |
-| domain (module) | `frontend/src/features/routing/domain/*.ts` (9 fichiers) | 1016 | **RESTANT** | Dette de taille repartie sur plusieurs fichiers metier. |
 | i18n | `frontend/src/i18n.ts` | 994 | **RESTANT** | Fichier de traductions central toujours monolithique. |
 | MapPage | `frontend/src/ui/pages/MapPage.tsx` | 838 | **RESTANT** | Composant encore tres large, decoupage en sous-modules a poursuivre. |
 | CesiumRouteMap | `frontend/src/components/CesiumRouteMap.tsx` | 829 | **RESTANT** | Plusieurs responsabilites (render map + interactions + etat) dans un seul fichier. |
+| dataPortability | `frontend/src/features/data/dataPortability.ts` | 749 | **RESTANT** | Regroupe encore plusieurs responsabilites de serialisation et migration de donnees. |
+| useCloudController | `frontend/src/features/cloud/useCloudController.ts` | 687 | **RESTANT** | Orchestration cloud toujours concentree dans un hook unique. |
+| useRoutingController.actions | `frontend/src/features/routing/useRoutingController.actions.ts` | 612 | **RESTANT** | Decoupage initie, mais le module d'actions reste volumineux. |
 
 ## 3) Constats corriges depuis l'audit precedent
 
@@ -52,6 +46,7 @@ Mesure LOC : `(Get-Content <fichier>).Count` au 2026-02-16.
 - Adresse email sensible remplacee par un placeholder (`contact@example.com`) cote configuration feedback.
 - Point de commentaire TODO en anglais obsolete : le TODO de reference est maintenant en francais.
 - Regles d'ignore renforcees pour `.vs` imbriques via `**/.vs/` dans `.gitignore`.
+- Versionnement API harmonise : `/api/v1/*` est canonique, avec middleware de compatibilite temporaire pour les routes legacy `/api/*`.
 - Headers de securite et HSTS deja formalises cote API :
   - `backend/src/BikeVoyager.Api/Extensions/WebApplicationExtensions.cs`
   - `backend/src/BikeVoyager.Api/Middleware/SecurityHeadersMiddleware.cs`
@@ -68,8 +63,8 @@ Conclusion : les artefacts locaux sont ignores et non versionnes dans l'etat cou
 
 ## 5) Priorites de PR (sans changement de comportement)
 
-1. **Poursuivre le decoupage frontend** (`i18n.ts`, `domain/*`, `MapPage.tsx`, `CesiumRouteMap.tsx`, `useDataController.ts`, `useMapController.ts`, `useRoutingController.ts`).
-2. **Harmoniser la strategie de routes API** (tout en `/api/v1/*` ou tout en `/api/*`) et documenter le choix.
+1. **Poursuivre le decoupage frontend** (`i18n.ts`, `MapPage.tsx`, `CesiumRouteMap.tsx`, `dataPortability.ts`, `useCloudController.ts`, `useRoutingController.actions.ts`).
+2. **Documenter la deprecation de l'alias `/api/*`** (criteres de retrait du middleware de compatibilite et calendrier de suppression).
 3. **Ajouter des tests de non-regression frontend** sur les zones en cours de decoupage (controllers, pages carte, i18n).
 
 ## 6) Hotspots LOC actuels
@@ -80,17 +75,12 @@ Conclusion : les artefacts locaux sont ignores et non versionnes dans l'etat cou
 - `backend/src/BikeVoyager.Infrastructure/Pois/OverpassGeometryHelper.cs` : **405**
 
 ### Frontend
-- `frontend/src/features/routing/domain/*.ts` (9 fichiers) : **1016**
 - `frontend/src/i18n.ts` : **994**
 - `frontend/src/ui/pages/MapPage.tsx` : **838**
 - `frontend/src/components/CesiumRouteMap.tsx` : **829**
 - `frontend/src/features/data/dataPortability.ts` : **749**
 - `frontend/src/features/cloud/useCloudController.ts` : **687**
-- `frontend/src/features/data/useDataController.ts` : **516**
-- `frontend/src/features/map/useMapController.ts` : **493**
-- `frontend/src/features/routing/useRoutingController.ts` : **419**
-- `frontend/src/app/AppRoot.tsx` : **298**
-- `frontend/src/features/routing/domain.ts` : **9**
+- `frontend/src/features/routing/useRoutingController.actions.ts` : **612**
 
 ---
 

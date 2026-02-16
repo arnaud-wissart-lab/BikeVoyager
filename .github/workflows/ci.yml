@@ -28,6 +28,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Verifier LOC report a jour
+        run: |
+          set -euo pipefail
+          bash scripts/loc.sh --top 30 --threshold 400 --scope backend/frontend/docs --out /tmp/LOC_REPORT.md
+          awk '/^\\| Fichier \\| LOC \\|/{capture=1} capture' docs/LOC_REPORT.md > /tmp/LOC_REPORT.expected.table.md
+          awk '/^\\| Fichier \\| LOC \\|/{capture=1} capture' /tmp/LOC_REPORT.md > /tmp/LOC_REPORT.actual.table.md
+          if ! diff -u /tmp/LOC_REPORT.expected.table.md /tmp/LOC_REPORT.actual.table.md; then
+            echo "::error::docs/LOC_REPORT.md n'est pas a jour. Regenerer avec: pwsh scripts/loc.ps1 --scope backend/frontend/docs --threshold 400 --top 30 --out docs/LOC_REPORT.md (ou bash scripts/loc.sh --top 30 --threshold 400 --scope backend/frontend/docs --out docs/LOC_REPORT.md), puis commit/push."
+            exit 1
+          fi
       - uses: actions/setup-node@v4
         with:
           node-version: '20'

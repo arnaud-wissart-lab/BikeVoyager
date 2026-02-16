@@ -82,6 +82,58 @@ Conclusion : les artefacts locaux sont ignores et non versionnes dans l'etat cou
 - `frontend/src/features/cloud/useCloudController.ts` : **687**
 - `frontend/src/features/routing/useRoutingController.actions.ts` : **612**
 
+## 7) Historique UI consolide (audit du 2026-02-15)
+
+Cette section remplace le document precedent `docs/ui-audit-2026-02-15.md`.
+
+### Perimetre
+- shell de navigation desktop/mobile
+- theme global (couleurs, typo, tailles, radius)
+- panneaux fonctionnels (navigation, POI, tournee)
+- ecran Aide (diagnostic cloud)
+
+### Changements utiles conserves
+- Systeme visuel frontend homogene (`frontend/src/theme.ts`) :
+  - echelle typographique explicite (`fontSizes`, `lineHeights`, `headings.sizes`)
+  - defaults composants harmonises (`Button`, `ActionIcon`, `SegmentedControl`, champs de saisie, `Paper`, `Badge`)
+- Ergonomie mobile renforcee dans `frontend/src/App.tsx` :
+  - menu bas sans debordement horizontal (`flex: 1`, `minWidth: 0`, `nowrap`, `gap=0`)
+  - etat actif plus lisible (`fontWeight` renforce)
+- Cohesion des panneaux :
+  - `frontend/src/features/app/components/MapCollapsibleSection.tsx`
+  - `frontend/src/features/app/components/NavigationOptionsPanel.tsx`
+  - `frontend/src/features/app/components/PoiPanel.tsx`
+  - `frontend/src/features/app/components/DeliveryPlannerPanel.tsx`
+  - actions : chevrons coherents, densite/padding homogenes, radius harmonises, espacement standardise
+- Nettoyage de l'ecran Aide :
+  - suppression de `Backend cache` et `Fallback`
+  - conservation du statut cloud utile (cache distribue, diagnostic, heure serveur)
+  - suppression des cles i18n devenues inutilisees
+- Maintenabilite des endpoints frontend :
+  - centralisation des chemins `/api/...` dans `frontend/src/features/app/apiPaths.ts`
+  - remplacement des chaines hardcodees dans app + tests
+
+### Couverture E2E ajoutee
+- Outillage Playwright :
+  - `frontend/playwright.config.ts`
+  - scripts npm `e2e` et `e2e:ui`
+  - exclusion `e2e/**` cote Vitest (`frontend/vite.config.ts`)
+- Scenarios introduits (`frontend/e2e/app-shell.spec.ts`) :
+  - footer mobile sans debordement horizontal
+  - aide affiche le statut cloud utile sans backend/fallback
+  - parcours utilisateur complet planifier -> carte
+- CI frontend : installation Chromium Playwright + execution `npm run e2e` dans `.github/workflows/ci.yml`
+
+### Validation executee (audit UI 2026-02-15)
+- `npm run lint` : OK
+- `npm run test` : OK
+- `npm run build` : OK
+- `npm run e2e` : OK
+
+### Risques residuels identifies
+- pas de snapshot visuel cross-browser (Safari/Firefox)
+- pas de parcours E2E contre API reelle (mocks `/api/*` assumes)
+
 ---
 
 Cet audit reflete l'etat observe du depot au **16 fevrier 2026**.

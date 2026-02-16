@@ -277,7 +277,7 @@ Scripts agreges :
 
 Passe UI documentee et auditable :
 
-- `docs/ui-audit-2026-02-15.md`
+- `docs/AUDIT_TECHNIQUE.md` (section "Historique UI consolide")
 
 ## Depannage rapide
 

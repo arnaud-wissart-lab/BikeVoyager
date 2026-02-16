@@ -53,7 +53,7 @@ Le frontend repose sur un thème Mantine centralisé dans `src/theme.ts`:
 - constantes techniques centralisées (endpoints API) dans
   `src/features/app/apiPaths.ts` pour éviter les chaînes dupliquées
 
-Audit détaillé de la passe UI: `docs/ui-audit-2026-02-15.md` (à la racine du repo).
+Audit détaillé de la passe UI: `../docs/AUDIT_TECHNIQUE.md` (section "Historique UI consolide").
 
 ## E2E (Playwright)
 
@@ -120,7 +120,7 @@ Quand une mise à jour est lancée, le backend construit en arrière-plan une re
 
 ## PWA
 
-Voir `docs/pwa.md` pour la stratégie d’installation et de cache.
+Voir `../README.md` (section "PWA") pour la stratégie d’installation et de cache.
 
 ## English quick note
 

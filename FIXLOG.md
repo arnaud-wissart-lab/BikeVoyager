@@ -42,7 +42,7 @@
   - `README.md`
   - `frontend/README.md`
   - `RUNBOOK.md`
-  - `docs/ui-audit-2026-02-15.md`
+  - `docs/AUDIT_TECHNIQUE.md` (historique UI consolidé)
   - `CHECKLIST.md`
 
 ## 2026-02-05 — Unification solution à la racine

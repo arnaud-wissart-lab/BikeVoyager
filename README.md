@@ -14,7 +14,7 @@ Le repo vise une base robuste, testable et exploitable localement avec orchestra
 - `frontend/` : application React/Vite
 - `infra/` : données et artefacts d’infrastructure (dont Valhalla)
 - `scripts/` : scripts de dev, build, audit, update Valhalla
-- `docs/` : documentation ciblée (PWA, etc.)
+- `docs/` : documentation projet (audit, API, sécurité, contribution)
 
 ## Solutions
 
@@ -137,10 +137,34 @@ npm --prefix frontend run test
 npm --prefix frontend run e2e
 ```
 
+## PWA
+
+Objectif : rendre l’application installable localement sans dégrader l’usage cartographique.
+
+- Activation via `vite-plugin-pwa` (manifest + service worker générés au build)
+- Enregistrement du service worker dans `frontend/src/main.tsx`
+- Icônes PWA dans `frontend/public/pwa-192.png` et `frontend/public/pwa-512.png`
+- Politique de cache : assets statiques frontend oui, tuiles OpenStreetMap non (évite volume disque excessif et données périmées)
+
+Vérification locale :
+
+```powershell
+cd frontend
+npm install
+npm run build
+npm run preview
+```
+
+Puis ouvrir l’URL de preview et vérifier la proposition d’installation du navigateur.
+
+Installation iOS : `Safari > Partager > Sur l’écran d’accueil`.
+
+Invite d’installation : `frontend/src/components/InstallPrompt.tsx` gère la popin FR/EN et le cas iOS sans `beforeinstallprompt`.
+
 ## Documentation liée
 
 - `RUNBOOK.md`
 - `docs/API.md`
-- `docs/pwa.md`
-- `docs/ui-audit-2026-02-15.md`
+- `docs/AUDIT_TECHNIQUE.md`
+- `docs/CONTRIBUTING.md`
 - `frontend/README.md`

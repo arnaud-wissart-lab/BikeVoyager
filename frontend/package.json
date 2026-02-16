@@ -21,8 +21,8 @@
     "@tabler/icons-react": "^3.36.1",
     "cesium": "^1.138.0",
     "i18next": "^25.8.5",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
     "react-i18next": "^16.5.4"
   },
   "devDependencies": {

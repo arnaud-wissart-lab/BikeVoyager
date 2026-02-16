@@ -7,7 +7,7 @@ public static class PlacesEndpoints
 {
     public static IEndpointRouteBuilder MapPlacesEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var places = endpoints.MapGroup("/api/places");
+        var places = endpoints.MapGroup("/api/v1/places");
 
         places.MapGet("/search",
                 async (string? q, int? limit, string? mode, IGeocodingService geocoding, CancellationToken cancellationToken) =>

@@ -4,7 +4,7 @@ public static class CloudSyncEndpoints
 {
     public static IEndpointRouteBuilder MapCloudSyncEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/api/cloud");
+        var group = endpoints.MapGroup("/api/v1/cloud");
 
         group.MapGet("/providers",
                 (CloudSyncEndpointHandlers handlers) => handlers.GetProviders())

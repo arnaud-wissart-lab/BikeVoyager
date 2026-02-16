@@ -11,7 +11,7 @@ public static class LoopEndpoints
 {
     public static IEndpointRouteBuilder MapLoopEndpoints(this IEndpointRouteBuilder endpoints, string? valhallaDataPath)
     {
-        var loop = endpoints.MapGroup("/api");
+        var loop = endpoints.MapGroup("/api/v1");
 
         loop.MapPost("/loop",
                 async (LoopRequest request,

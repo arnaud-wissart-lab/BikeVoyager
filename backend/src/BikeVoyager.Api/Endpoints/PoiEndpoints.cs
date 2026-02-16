@@ -12,7 +12,7 @@ public static class PoiEndpoints
 
     public static IEndpointRouteBuilder MapPoiEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var poi = endpoints.MapGroup("/api/poi");
+        var poi = endpoints.MapGroup("/api/v1/poi");
 
         poi.MapGet("/around-route",
                 async (string? geometry,

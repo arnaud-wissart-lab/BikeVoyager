@@ -9,7 +9,7 @@ public static class FeedbackEndpoints
 {
     public static IEndpointRouteBuilder MapFeedbackEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("/api/feedback",
+        endpoints.MapPost("/api/v1/feedback",
                 async (FeedbackSubmissionRequest request,
                     HttpContext context,
                     IFeedbackSender feedbackSender,

@@ -8,7 +8,7 @@ public static class ExportEndpoints
 {
     public static IEndpointRouteBuilder MapExportEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var exports = endpoints.MapGroup("/api/export");
+        var exports = endpoints.MapGroup("/api/v1/export");
 
         exports.MapPost("/gpx",
                 (ExportGpxRequest request, ILogger<global::Program> logger) =>

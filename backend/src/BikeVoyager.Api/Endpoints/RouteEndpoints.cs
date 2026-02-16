@@ -10,7 +10,7 @@ public static class RouteEndpoints
 {
     public static IEndpointRouteBuilder MapRouteEndpoints(this IEndpointRouteBuilder endpoints, string? valhallaDataPath)
     {
-        var route = endpoints.MapGroup("/api");
+        var route = endpoints.MapGroup("/api/v1");
 
         route.MapPost("/route",
                 async (RouteRequest request,

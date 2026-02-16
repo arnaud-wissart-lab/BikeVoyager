@@ -7,7 +7,7 @@ public static class ValhallaEndpoints
         string? valhallaDataPath,
         string? valhallaBaseUrl)
     {
-        var valhalla = endpoints.MapGroup("/api/valhalla");
+        var valhalla = endpoints.MapGroup("/api/v1/valhalla");
 
         valhalla.MapGet("/status",
                 async (CancellationToken cancellationToken) =>
@@ -114,7 +114,7 @@ public static class ValhallaEndpoints
                         forceRebuild);
 
                     return Results.Accepted(
-                        "/api/valhalla/status",
+                        "/api/v1/valhalla/status",
                         new
                         {
                             status = "started",

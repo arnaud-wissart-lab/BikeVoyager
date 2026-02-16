@@ -97,7 +97,7 @@ Principes :
 
 - Verification periodique : `scripts/valhalla-check-update.ps1` / `.sh`
 - Surveillance periodique : `scripts/valhalla-watch-updates.ps1` / `.sh`
-- Lancement manuel depuis l'app : `POST /api/valhalla/update/start`
+- Lancement manuel depuis l'app : `POST /api/v1/valhalla/update/start`
 
 Par defaut recommande :
 
@@ -167,14 +167,16 @@ Nettoyage disque :
 
 Valhalla :
 
-- `GET /api/valhalla/status`
-- `GET /api/valhalla/ready`
-- `POST /api/valhalla/update/start`
+- `GET /api/v1/valhalla/status`
+- `GET /api/v1/valhalla/ready`
+- `POST /api/v1/valhalla/update/start`
 
 Routage :
 
-- `POST /api/route`
-- `POST /api/loop`
+- `POST /api/v1/route`
+- `POST /api/v1/loop`
+
+Compatibilite legacy (temporaire) : les anciens chemins `/api/*` restent acceptes et reecrits vers `/api/v1/*`.
 
 ## Configuration feedback (email)
 
@@ -210,14 +212,14 @@ dotnet user-secrets set "Feedback:SenderEmail" "noreply@example.com" --project b
 
 L'API expose un garde-fou anti-abus:
 
-- validation d'origine pour les appels `/api/*` (`ApiOriginGuardMiddleware`)
+- validation d'origine pour les appels `/api/v1/*` (avec alias legacy `/api/*`) (`ApiOriginGuardMiddleware`)
 - session anonyme silencieuse (`AnonymousApiSessionMiddleware`) via cookie signe HttpOnly
 - rate limiting global
 - rate limiting renforce sur:
-  - `/api/route`
-  - `/api/loop`
-  - `/api/poi/around-route`
-  - `/api/export/gpx`
+  - `/api/v1/route`
+  - `/api/v1/loop`
+  - `/api/v1/poi/around-route`
+  - `/api/v1/export/gpx`
 
 Parametres `ApiSecurity` (dans `appsettings.json`):
 
@@ -231,7 +233,7 @@ Parametres `ApiSecurity` (dans `appsettings.json`):
 
 Comportement session anonyme:
 
-- sur `/api/*` (hors `OPTIONS`), un cookie de session est cree s'il est absent/invalide/expire
+- sur `/api/v1/*` (et alias legacy `/api/*`, hors `OPTIONS`), un cookie de session est cree s'il est absent/invalide/expire
 - la partition de rate limiting utilise cette session en priorite, puis l'IP en fallback
 - le frontend ne transmet plus `X-Session-Id`
 
@@ -285,7 +287,7 @@ Si un build a ete coupe :
 - Relancer une mise a jour manuelle via l'app ou script build.
 - Lancer `valhalla-cleanup` pour purger les candidats stale et vieux logs.
 
-Si `/api/loop` renvoie `422` alors que status est "ready" :
+Si `/api/v1/loop` renvoie `422` alors que status est "ready" :
 
 - Ce n'est pas un "Valhalla down" ; c'est une boucle non satisfaisante.
 - Reessayer avec une distance/zone differente.

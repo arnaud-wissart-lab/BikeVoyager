@@ -63,7 +63,7 @@ Comportement par défaut :
 - Détection des mises à jour OSM en arrière-plan (`valhalla-watch`)
 - Pas d’application automatique de la mise à jour (`VALHALLA_UPDATE_AUTO_BUILD=false`)
 - Notification visible dans l’onglet Aide du frontend
-- Lancement manuel via bouton côté front (`POST /api/valhalla/update/start`)
+- Lancement manuel via bouton côté front (`POST /api/v1/valhalla/update/start`)
 
 Pendant une mise à jour :
 
@@ -95,18 +95,20 @@ Variables d’environnement utiles :
 
 ## Endpoints utiles
 
-- `GET /api/valhalla/status`
-- `POST /api/valhalla/update/start`
-- `GET /api/valhalla/ready`
-- `POST /api/route`
-- `POST /api/loop`
+- `GET /api/v1/valhalla/status`
+- `POST /api/v1/valhalla/update/start`
+- `GET /api/v1/valhalla/ready`
+- `POST /api/v1/route`
+- `POST /api/v1/loop`
+
+Compatibilité legacy (temporaire) : les anciens chemins `/api/*` restent acceptés et redirigés côté backend vers `/api/v1/*`.
 
 ## Protection API (anti-abus)
 
 L'API applique trois niveaux de protection:
 
-- garde d'origine sur `/api/*` (origines autorisées via `ApiSecurity:AllowedOrigins`)
-- session anonyme silencieuse sur `/api/*` (cookie signé HttpOnly)
+- garde d'origine sur `/api/v1/*` (avec alias legacy `/api/*`, origines autorisées via `ApiSecurity:AllowedOrigins`)
+- session anonyme silencieuse sur `/api/v1/*` (avec alias legacy `/api/*`, cookie signé HttpOnly)
 - limitation de débit (rate limiting global + politique renforcée sur les endpoints de calcul)
 
 Configuration dans `backend/src/BikeVoyager.Api/appsettings.json` section `ApiSecurity`.
@@ -138,6 +140,7 @@ npm --prefix frontend run e2e
 ## Documentation liée
 
 - `RUNBOOK.md`
+- `docs/API.md`
 - `docs/pwa.md`
 - `docs/ui-audit-2026-02-15.md`
 - `frontend/README.md`

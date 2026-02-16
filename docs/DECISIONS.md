@@ -104,3 +104,42 @@ Dependances retenues :
 ## Alternatives evaluees
 1. Deplacer integralement le composant dans un nouveau fichier unique : refuse (recree un god file).
 2. Introduire Redux/Zustand pendant le decoupage : refuse pour limiter les regressions et garder une migration incrementale.
+
+# ADR-0002 - Versioning API unifie sur /api/v1
+
+- Date : 2026-02-16
+- Statut : Accepte
+- Portee : backend, frontend, documentation
+- References : harmonisation des routes API
+
+## Contexte
+Le backend exposait un mix de routes `/api/*` et `/api/v1/*`:
+- `/api/v1/*` etait deja utilise pour `health`, `trips`, `external/ping`.
+- la majorite des autres endpoints etait en `/api/*` (`route`, `loop`, `places`, `poi`, `export`, `cloud`, `feedback`, `valhalla`).
+
+Ce mix complique la lisibilite publique de l'API, la gouvernance de compatibilite et la maintenance des clients.
+
+Deux strategies ont ete evaluees :
+- Option A : tout exposer sous `/api/v1/*`.
+- Option B : conserver `/api/*` non versionne et gerer la version via headers/documentation.
+
+## Decision
+Option A est retenue.
+
+Le prefixe canonique devient `/api/v1/*` pour l'ensemble des endpoints.
+
+Pour eviter toute rupture immediate, un alias de compatibilite temporaire est active cote backend :
+- les routes legacy `/api/*` des familles historiques sont reecrites vers `/api/v1/*` (route, loop, places, poi, export, cloud, feedback, valhalla).
+- les routes deja en `/api/v1/*` restent inchangees.
+
+## Consequences
+- Positives :
+  - surface API unique et explicite pour la vitrine publique.
+  - evolution future simplifiee (`/api/v2/*` possible sans ambiguite).
+  - migration client progressive sans interruption.
+- Negatives :
+  - cout transitoire de maintien d'un alias legacy.
+  - besoin de suivre puis supprimer l'alias apres migration complete des clients.
+- Suivi necessaire :
+  - documenter la table canonique + mapping legacy dans la doc API.
+  - basculer progressivement tous les clients et tests vers `/api/v1/*`.

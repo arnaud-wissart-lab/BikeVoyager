@@ -1,62 +1,89 @@
-# Audit technique — BikeVoyager (mise à jour 2026-02-16)
+# Audit technique — BikeVoyager (mise a jour 2026-02-16)
 
 > Objectif : vitrine GitHub propre, auditable et maintenable.  
-> Périmètre : dépôt actuel (`backend/`, `frontend/`, `infra/`) sans changement fonctionnel.
+> Perimetre : depot actuel (`backend/`, `frontend/`, `infra/`) sans changement fonctionnel.
 
-## 1) Synthèse exécutable
+## 1) Synthese executable
 
 ### Points forts actuels
-- Architecture backend lisible (`Api -> Application -> Infrastructure -> Domain`) avec endpoints regroupés par feature.
-- Pipeline qualité en place : CI backend/frontend, tests automatiques, audits de dépendances.
-- Frontend structuré par domaines (`features/*`, `ui/pages/*`, `ui/shell/*`) avec i18n et tests.
-- Sécurité applicative présente : `ProblemDetails`, rate limiting, garde d'origine, session anonyme HttpOnly.
+- Architecture backend lisible (`Api -> Application -> Infrastructure -> Domain`) avec endpoints regroupes par feature.
+- Pipeline qualite en place : CI backend/frontend, tests automatiques, audits de dependances.
+- Frontend structure par domaines (`features/*`, `ui/pages/*`, `ui/shell/*`) avec i18n et tests.
+- Securite applicative deja presente : `ProblemDetails`, rate limiting, garde d'origine, session anonyme HttpOnly.
 
-### Risques actuels (priorisés)
-1. **Monolithes frontend encore importants** :
-   - `frontend/src/ui/shell/AppContainer.tsx` : **4107 lignes**.
-   - `frontend/src/i18n.ts` : **989 lignes**.
-   - `frontend/src/features/routing/domain.ts` : **862 lignes**.
-2. **Cohérence de versionnement API** :
+### Risques actuels (priorises)
+1. **Hotspots frontend encore volumineux** :
+   - `frontend/src/i18n.ts` : **994 lignes**
+   - `frontend/src/features/routing/domain.ts` : **977 lignes**
+   - `frontend/src/ui/pages/MapPage.tsx` : **838 lignes**
+   - `frontend/src/components/CesiumRouteMap.tsx` : **829 lignes**
+2. **Coherence de versionnement API** :
    - Mix actuel entre routes `/api/*` et `/api/v1/*`.
-3. **Gouvernance “vitrine open-source” incomplète** :
-   - Fichiers attendus encore absents à la racine (`LICENSE`, `CODE_OF_CONDUCT.md`, `SECURITY.md` racine).
+3. **Headers de securite HTTP/HSTS non formalises** :
+   - Pas de configuration explicite relevee pour HSTS et headers web standards.
+4. **Gouvernance vitrine open-source incomplete** :
+   - Fichiers absents a la racine : `LICENSE`, `CODE_OF_CONDUCT.md`, `SECURITY.md`.
 
-## 2) Constats corrigés depuis l'audit précédent
+## 2) Etat des hotspots cibles (RESOLU vs RESTANT)
 
-- Scripts `scripts/dev-test` et `scripts/dev-audit` alignés sur `BikeVoyager.sln`.
-- Adresse email sensible remplacée par un placeholder (`contact@example.com`) côté configuration feedback.
-- Point de commentaire “TODO en anglais” obsolète : le TODO de référence est maintenant en français.
-- Artefacts Visual Studio nettoyés du dépôt sous `backend/.vs`.
-- Règles d'ignore renforcées pour `.vs` imbriqués via `**/.vs/` dans `.gitignore`.
+Mesure LOC : `(Get-Content <fichier>).Length` au 2026-02-16.
 
-## 3) Hygiène des artefacts locaux (état actuel)
+| Hotspot cible | Fichier exact | LOC reelles | Statut | Commentaire |
+|---|---|---:|---|---|
+| AppContainerScreen | `frontend/src/ui/shell/AppContainerScreen.tsx` | 5 | **RESOLU** | Fichier reduit a un adaptateur minimal vers `AppRoot`. |
+| MapPage | `frontend/src/ui/pages/MapPage.tsx` | 838 | **RESTANT** | Composant encore tres large, decoupage en sous-modules a poursuivre. |
+| CesiumRouteMap | `frontend/src/components/CesiumRouteMap.tsx` | 829 | **RESTANT** | Plusieurs responsabilites (render map + interactions + etat) dans un seul fichier. |
+| i18n | `frontend/src/i18n.ts` | 994 | **RESTANT** | Fichier de traductions central toujours monolithique. |
+| domain | `frontend/src/features/routing/domain.ts` | 977 | **RESTANT** | Regles/metiers routing centralisees dans un seul module. |
 
-Vérification sur les fichiers **suivis** par Git : aucun artefact local détecté dans les catégories suivantes :
+## 3) Constats corriges depuis l'audit precedent
+
+- Demantelement shell frontend confirme : `frontend/src/ui/shell/AppContainerScreen.tsx` et `frontend/src/ui/shell/AppContainer.tsx` sont chacun a **5 lignes**.
+- Decoupage backend confirme :
+  - `backend/src/BikeVoyager.Api/Program.cs` : **37 lignes**
+  - `backend/src/BikeVoyager.Api/Cloud/CloudSyncEndpoints.cs` : **63 lignes**
+  - `backend/src/BikeVoyager.Infrastructure/Pois/OverpassPoiService.cs` : **237 lignes**
+- Conventions build/style presentes a la racine : `.editorconfig` et `Directory.Build.props`.
+- Scripts `scripts/dev-test` et `scripts/dev-audit` alignes sur `BikeVoyager.sln`.
+- Adresse email sensible remplacee par un placeholder (`contact@example.com`) cote configuration feedback.
+- Point de commentaire TODO en anglais obsolete : le TODO de reference est maintenant en francais.
+- Regles d'ignore renforcees pour `.vs` imbriques via `**/.vs/` dans `.gitignore`.
+
+## 4) Hygiene des artefacts locaux (etat actuel)
+
+Verification sur les fichiers **suivis** par Git : aucun artefact local detecte dans les categories suivantes :
 
 - dossiers `.dev/`, `.tmp/`, `.vs/`, `logs/`, `dist/`, `dist-ssr/`, `node_modules/`, `TestResults/`, `bin/`, `obj/`
 - fichiers `*.log`, `*.tmp`, `*.user`
 
-Conclusion : les artefacts locaux sont ignorés et non versionnés dans l'état courant du dépôt.
+Conclusion : les artefacts locaux sont ignores et non versionnes dans l'etat courant du depot.
 
-## 4) Priorités de PR (sans changement de comportement)
+## 5) Priorites de PR (sans changement de comportement)
 
-1. **Découper `AppContainer.tsx`** par domaines (routing, POI, cloud, data, navigation) pour limiter l'effet “god component”.
-2. **Harmoniser la stratégie de routes API** (tout en `/api/v1/*` ou tout en `/api/*`) et documenter le choix.
-3. **Finaliser les fichiers de gouvernance** (license, sécurité, contribution) pour crédibiliser la vitrine.
+1. **Poursuivre le decoupage frontend** (`i18n.ts`, `domain.ts`, `MapPage.tsx`, `CesiumRouteMap.tsx` puis controllers > 800 LOC).
+2. **Harmoniser la strategie de routes API** (tout en `/api/v1/*` ou tout en `/api/*`) et documenter le choix.
+3. **Ajouter les headers de securite/HSTS** cote API (avec activation conditionnelle par environnement).
+4. **Finaliser les fichiers de gouvernance OSS** (`LICENSE`, `CODE_OF_CONDUCT.md`, `SECURITY.md`).
 
-## 5) Hotspots LOC actuels
+## 6) Hotspots LOC actuels
 
 ### Backend
-- `backend/src/BikeVoyager.Infrastructure/Routing/ValhallaLoopService.cs` : **516**
+- `backend/src/BikeVoyager.Infrastructure/Routing/ValhallaLoopService.cs` : **618**
+- `backend/src/BikeVoyager.AppHost/Program.cs` : **459**
+- `backend/src/BikeVoyager.Infrastructure/Pois/OverpassGeometryHelper.cs` : **405**
 
 ### Frontend
-- `frontend/src/ui/shell/AppContainer.tsx` : **4107**
-- `frontend/src/i18n.ts` : **989**
-- `frontend/src/features/routing/domain.ts` : **862**
-- `frontend/src/ui/pages/MapPage.tsx` : **821**
-- `frontend/src/components/CesiumRouteMap.tsx` : **725**
-- `frontend/src/features/data/dataPortability.ts` : **644**
+- `frontend/src/features/data/useDataController.ts` : **1008**
+- `frontend/src/features/routing/useRoutingController.ts` : **998**
+- `frontend/src/i18n.ts` : **994**
+- `frontend/src/features/routing/domain.ts` : **977**
+- `frontend/src/features/map/useMapController.ts` : **887**
+- `frontend/src/app/AppRoot.tsx` : **885**
+- `frontend/src/ui/pages/MapPage.tsx` : **838**
+- `frontend/src/components/CesiumRouteMap.tsx` : **829**
+- `frontend/src/features/data/dataPortability.ts` : **749**
+- `frontend/src/features/cloud/useCloudController.ts` : **667**
 
 ---
 
-Cet audit reflète l'état observé du dépôt au **16 février 2026**.
+Cet audit reflete l'etat observe du depot au **16 fevrier 2026**.

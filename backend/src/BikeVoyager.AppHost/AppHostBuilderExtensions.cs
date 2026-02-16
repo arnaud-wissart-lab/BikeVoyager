@@ -2,6 +2,10 @@ using Aspire.Hosting.ApplicationModel;
 
 internal static class AppHostBuilderExtensions
 {
+    // A bump lors des updates Valhalla (garder aligne avec infra/valhalla.compose.yml).
+    private const string ValhallaImageReference =
+        "ghcr.io/valhalla/valhalla@sha256:4e287d4e78ee9e44911d282c33b52f6d916381d705f59b0a875d5b71ef565d2a";
+
     public static IResourceBuilder<ProjectResource> AddApi(
         this IDistributedApplicationBuilder builder,
         string valhallaDataPath)
@@ -88,7 +92,7 @@ internal static class AppHostBuilderExtensions
 
         if (hasValhallaData || shouldRunValhallaBuild)
         {
-            var valhalla = builder.AddContainer("valhalla", "ghcr.io/valhalla/valhalla:latest")
+            var valhalla = builder.AddContainer("valhalla", ValhallaImageReference)
                 .WithBindMount(valhallaDataPath, "/custom_files")
                 .WithEnvironment("VALHALLA_CONFIG", "/custom_files/live/valhalla.json")
                 .WithEntrypoint("/bin/sh")

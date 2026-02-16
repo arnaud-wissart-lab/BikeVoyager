@@ -26,7 +26,7 @@ Valhalla (build, mises a jour, et nettoyage disque).
 
 ## Version image Valhalla
 
-Pour mettre a jour Valhalla de facon reproductible, choisir un tag cible `ghcr.io/valhalla/valhalla:<tag>`, recuperer son digest via `docker buildx imagetools inspect ghcr.io/valhalla/valhalla:<tag>`, puis remplacer la reference epinglee `ghcr.io/valhalla/valhalla@sha256:...` dans `infra/valhalla.compose.yml`, `scripts/valhalla-build-france.ps1` et `scripts/valhalla-build-france.sh`; terminer par `docker compose -f infra/valhalla.compose.yml pull valhalla` avant de committer le bump.
+Pour mettre a jour Valhalla de facon reproductible, choisir un tag cible `ghcr.io/valhalla/valhalla:<tag>`, recuperer son digest via `docker buildx imagetools inspect ghcr.io/valhalla/valhalla:<tag>`, puis remplacer la reference epinglee `ghcr.io/valhalla/valhalla@sha256:...` dans `infra/valhalla.compose.yml`, `scripts/valhalla-build-france.ps1`, `scripts/valhalla-build-france.sh` et `backend/src/BikeVoyager.AppHost/AppHostBuilderExtensions.cs` (constante `ValhallaImageReference`); terminer par `docker compose -f infra/valhalla.compose.yml pull valhalla` avant de committer le bump.
 
 ## Demarrage local
 

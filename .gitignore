@@ -1,6 +1,6 @@
 # Build artifacts
 .dev/
-/.vs/
+**/.vs/
 /.tmp/
 **/bin/
 **/obj/

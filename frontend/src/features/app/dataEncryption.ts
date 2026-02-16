@@ -24,7 +24,7 @@ const generateRandomBytes = (length: number) => {
 
 const deriveAesKey = async (
   password: string,
-  salt: Uint8Array,
+  salt: Uint8Array<ArrayBuffer>,
   iterations: number,
 ) => {
   const imported = await crypto.subtle.importKey(

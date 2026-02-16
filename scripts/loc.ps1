@@ -91,16 +91,20 @@ function Test-MatchPattern {
 function Get-LocCount {
     param([Parameter(Mandatory = $true)][string]$FilePath)
 
-    $raw = [System.IO.File]::ReadAllText($FilePath)
-    if ($raw.Length -eq 0) {
+    $bytes = [System.IO.File]::ReadAllBytes($FilePath)
+    if ($bytes.Length -eq 0) {
         return 0
     }
 
     $lfCount = 0
-    foreach ($char in $raw.ToCharArray()) {
-        if ($char -eq "`n") {
+    foreach ($byte in $bytes) {
+        if ($byte -eq 10) {
             $lfCount++
         }
+    }
+
+    if ($bytes[$bytes.Length - 1] -eq 10) {
+        return $lfCount
     }
 
     return $lfCount + 1
@@ -291,7 +295,7 @@ if (-not [string]::IsNullOrWhiteSpace($outPath)) {
     $reportLines.Add('')
     $reportLines.Add(('- Date: {0}' -f $now))
     $reportLines.Add(('- Commit: `{0}`' -f $commitSha))
-    $reportLines.Add('- Methode: lecture Raw + comptage des caracteres `n` (lignes = count(`n`) + 1, 0 si fichier vide).')
+    $reportLines.Add('- Methode: comptage des LF (`\n`) ; lignes = LF + (0 si fin de fichier sur LF, sinon +1), 0 si fichier vide.')
     $reportLines.Add(('- Scope: `{0}`' -f $scopeLabel))
     $reportLines.Add(('- Threshold: `{0}`' -f $thresholdLabel))
     $reportLines.Add(('- Top: `{0}`' -f $topLabel))

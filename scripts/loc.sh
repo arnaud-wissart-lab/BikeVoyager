@@ -133,8 +133,15 @@ count_lines_editor_style() {
   fi
 
   local lf_count
+  local last_byte_hex
   lf_count="$(wc -l < "$file")"
-  echo $((lf_count + 1))
+  last_byte_hex="$(tail -c 1 "$file" | od -An -t x1 | tr -d '[:space:]')"
+
+  if [[ "$last_byte_hex" == "0a" ]]; then
+    echo "$lf_count"
+  else
+    echo $((lf_count + 1))
+  fi
 }
 
 tmp_rows="$(mktemp)"
@@ -204,7 +211,7 @@ if [[ -n "$out_path" ]]; then
     echo
     echo "- Date: $report_date"
     echo "- Commit: \`$commit_sha\`"
-    echo "- Methode: wc -l pour compter les LF, puis conversion editeur (lignes = LF + 1, 0 si fichier vide)."
+    echo '- Methode: comptage des LF (`\n`) via `wc -l`, puis lignes = LF + (0 si fin de fichier sur LF, sinon +1), 0 si fichier vide.'
     echo "- Scope: \`$scope_label\`"
     echo "- Threshold: \`$threshold_label\`"
     echo "- Top: \`$top_label\`"

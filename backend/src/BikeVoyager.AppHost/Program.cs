@@ -380,7 +380,7 @@ static string? ReadValhallaPendingUpdateReason(string dataPath)
     }
     catch
     {
-        // Ignore invalid status payload.
+        // Ignore les payloads de statut invalides.
     }
 
     return null;

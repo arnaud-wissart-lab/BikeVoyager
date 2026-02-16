@@ -4,7 +4,7 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
 
 Write-Host 'Tests backend...'
-dotnet test (Join-Path $repoRoot 'BikeVoyageur.sln')
+dotnet test (Join-Path $repoRoot 'BikeVoyager.sln')
 
 Write-Host 'Lint + tests frontend...'
 Push-Location (Join-Path $repoRoot 'frontend')

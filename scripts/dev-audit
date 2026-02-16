@@ -4,10 +4,10 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
 
 Write-Host 'Audit backend: vulnérabilités...'
-dotnet list (Join-Path $repoRoot 'BikeVoyageur.sln') package --vulnerable --include-transitive
+dotnet list (Join-Path $repoRoot 'BikeVoyager.sln') package --vulnerable --include-transitive
 
 Write-Host 'Audit backend: packages obsolètes...'
-dotnet list (Join-Path $repoRoot 'BikeVoyageur.sln') package --outdated
+dotnet list (Join-Path $repoRoot 'BikeVoyager.sln') package --outdated
 
 Write-Host 'Audit frontend: npm audit...'
 Push-Location (Join-Path $repoRoot 'frontend')

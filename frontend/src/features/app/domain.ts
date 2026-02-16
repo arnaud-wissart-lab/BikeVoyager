@@ -190,7 +190,7 @@ export const trackLoopEvent = (
 ) => {
   void event
   void payload
-  // TODO: wire loop telemetry events into the analytics pipeline.
+  // TODO: connecter les evenements de telemetrie de boucle au pipeline d'analyse.
 }
 
 export const buildLoopRequest = (

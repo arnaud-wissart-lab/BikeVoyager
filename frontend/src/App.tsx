@@ -3181,7 +3181,7 @@ export default function App() {
     }
 
     void handleCloudCallback()
-    // This effect is designed to run once and is guarded by cloudOAuthCallbackHandledRef.
+    // Cet effet doit s'executer une seule fois, protege par cloudOAuthCallbackHandledRef.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t])
 

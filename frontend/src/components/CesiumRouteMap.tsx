@@ -581,7 +581,7 @@ export default function CesiumRouteMap({
       return
     }
 
-    // Fallback when POI entity is not available yet.
+    // Repli si l'entite POI n'est pas encore disponible.
     viewer.camera.flyTo({
       destination: Cesium.Cartesian3.fromDegrees(activePoi.lon, activePoi.lat, 1200),
       duration: 1.1,

@@ -1231,8 +1231,8 @@ public partial class Program
             return true;
         }
 
-        // Un build actif met à jour build-status.json régulièrement (heartbeat ~30s).
-        // Si ce n'est pas le cas depuis plusieurs minutes, on considere le verrou comme stale.
+        // Un build actif met a jour build-status.json regulierement (signal de vie ~30s).
+        // Si ce n'est pas le cas depuis plusieurs minutes, on considere le verrou comme obsolete.
         const int staleAfterMinutes = 5;
         if (!IsBuildStatusStale(dataPath, staleAfterMinutes))
         {

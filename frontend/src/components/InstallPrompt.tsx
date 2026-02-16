@@ -124,7 +124,7 @@ export default function InstallPrompt() {
         return
       }
     } catch {
-      // ignore
+      // Ignore les erreurs du prompt d'installation.
     }
 
     dismissPrompt()

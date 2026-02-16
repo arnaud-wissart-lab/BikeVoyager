@@ -46,8 +46,12 @@ Comportement attendu :
 
 - AppHost demarre API, frontend, Redis, et ressources Aspire.
 - Dashboard Aspire disponible sur `https://localhost:17000`.
-- Frontend expose sur un port local detecte (`5173..5190`).
+- Frontend expose sur `http://localhost:5173` (port fixe via `VITE_DEV_PORT=5173` et `VITE_STRICT_PORT=true`).
 - Watch Valhalla actif (sauf desactivation explicite).
+
+Note :
+- L'AppHost sonde `5173..5190` pour detecter une instance frontend deja disponible.
+- En demarrage standard via AppHost, le frontend est force sur `5173`.
 
 ## Demarrage AppHost en CLI
 
@@ -171,6 +175,36 @@ Routage :
 
 - `POST /api/route`
 - `POST /api/loop`
+
+## Configuration feedback (email)
+
+La configuration versionnee utilise des placeholders (pas de donnees personnelles):
+- `Feedback:RecipientEmail = contact@example.com`
+- `Feedback:SenderEmail = ""`
+
+Surcharge via variables d'environnement:
+- `Feedback__RecipientEmail`
+- `Feedback__SenderEmail`
+- `Feedback__SenderName`
+- `Feedback__Smtp__Host`
+- `Feedback__Smtp__Port`
+- `Feedback__Smtp__UseSsl`
+- `Feedback__Smtp__Username`
+- `Feedback__Smtp__Password`
+
+Exemple PowerShell:
+
+```powershell
+$env:Feedback__RecipientEmail = "contact@example.com"
+$env:Feedback__SenderEmail = "noreply@example.com"
+```
+
+Exemple user-secrets (dev local):
+
+```powershell
+dotnet user-secrets set "Feedback:RecipientEmail" "contact@example.com" --project backend/src/BikeVoyager.Api/BikeVoyager.Api.csproj
+dotnet user-secrets set "Feedback:SenderEmail" "noreply@example.com" --project backend/src/BikeVoyager.Api/BikeVoyager.Api.csproj
+```
 
 ## Protection API
 

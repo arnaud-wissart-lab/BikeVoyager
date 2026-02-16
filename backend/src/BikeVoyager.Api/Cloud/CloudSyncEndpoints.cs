@@ -1473,7 +1473,7 @@ public sealed class CloudSyncService(
         }
         catch
         {
-            // ignore parse failures and use fallback
+            // Ignore les erreurs de parsing et conserve le message brut de repli.
         }
 
         return raw.Length > 240 ? raw[..240] : raw;

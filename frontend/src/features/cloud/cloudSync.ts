@@ -1,5 +1,14 @@
 import type { CloudProvider } from '../data/dataPortability'
 import { apiPaths } from '../routing/apiPaths'
+import { parseApiError } from './cloudSync.helpers'
+import {
+  mapCloudDiagnostics,
+  mapCloudOAuthCallback,
+  mapCloudProviderAvailability,
+  mapCloudRestore,
+  mapCloudSession,
+  mapCloudUpload,
+} from './cloudSync.mappers'
 
 export type ActiveCloudProvider = Exclude<CloudProvider, 'none'>
 
@@ -103,91 +112,6 @@ type CloudStatusResponse = {
   serverTimeUtc?: string
 }
 
-const isActiveProvider = (value: unknown): value is ActiveCloudProvider =>
-  value === 'onedrive' || value === 'google-drive'
-
-const parseApiError = async (response: Response) => {
-  const fallback = `${response.status} ${response.statusText}`.trim()
-  try {
-    const contentType = response.headers.get('content-type') ?? ''
-    if (contentType.includes('application/json')) {
-      const payload = (await response.json()) as {
-        message?: string
-        error?: string | { message?: string }
-        error_description?: string
-      }
-
-      if (typeof payload.message === 'string' && payload.message.trim()) {
-        return payload.message.trim()
-      }
-
-      if (
-        payload.error &&
-        typeof payload.error === 'object' &&
-        typeof payload.error.message === 'string' &&
-        payload.error.message.trim()
-      ) {
-        return payload.error.message.trim()
-      }
-
-      if (typeof payload.error === 'string' && payload.error.trim()) {
-        return payload.error.trim()
-      }
-
-      if (typeof payload.error_description === 'string' && payload.error_description.trim()) {
-        return payload.error_description.trim()
-      }
-    }
-
-    const text = (await response.text()).trim()
-    if (text) {
-      return text.slice(0, 240)
-    }
-  } catch {
-    return fallback
-  }
-
-  return fallback
-}
-
-const normalizeAuthState = (value: unknown): CloudAuthState | null => {
-  if (!value || typeof value !== 'object') {
-    return null
-  }
-
-  const candidate = value as Partial<CloudAuthState>
-  if (!isActiveProvider(candidate.provider)) {
-    return null
-  }
-
-  const connectedAt =
-    typeof candidate.connectedAt === 'string' && candidate.connectedAt.trim().length > 0
-      ? candidate.connectedAt
-      : null
-  const expiresAt =
-    typeof candidate.expiresAt === 'string' && candidate.expiresAt.trim().length > 0
-      ? candidate.expiresAt
-      : null
-
-  if (!connectedAt || !expiresAt) {
-    return null
-  }
-
-  return {
-    provider: candidate.provider,
-    accountEmail:
-      typeof candidate.accountEmail === 'string' && candidate.accountEmail.trim().length > 0
-        ? candidate.accountEmail
-        : null,
-    accountName:
-      typeof candidate.accountName === 'string' && candidate.accountName.trim().length > 0
-        ? candidate.accountName
-        : null,
-    connectedAt,
-    expiresAt,
-  }
-}
-
 const defaultProviderAvailability: CloudProviderAvailability = {
   onedrive: false,
   'google-drive': false,
@@ -209,10 +133,7 @@ export const fetchCloudProviderAvailability = async (): Promise<CloudProviderAva
   }
 
   const payload = (await response.json()) as CloudProvidersResponse
-  return {
-    onedrive: payload.providers?.onedrive === true,
-    'google-drive': payload.providers?.googleDrive === true,
-  }
+  return mapCloudProviderAvailability(payload.providers)
 }
 
 export const loadCloudSession = async (): Promise<CloudAuthState | null> => {
@@ -222,11 +143,7 @@ export const loadCloudSession = async (): Promise<CloudAuthState | null> => {
   }
 
   const payload = (await response.json()) as CloudSessionResponse
-  if (!payload.connected) {
-    return null
-  }
-
-  return normalizeAuthState(payload.authState)
+  return mapCloudSession(payload)
 }
 
 export const fetchCloudDiagnostics = async (): Promise<CloudDiagnostics> => {
@@ -236,40 +153,7 @@ export const fetchCloudDiagnostics = async (): Promise<CloudDiagnostics> => {
   }
 
   const payload = (await response.json()) as CloudStatusResponse
-  const authState = normalizeAuthState(payload.session?.authState)
-
-  const cache = payload.cache
-  const distributedCacheType =
-    typeof cache?.distributedCacheType === 'string' && cache.distributedCacheType.trim()
-      ? cache.distributedCacheType
-      : 'unknown'
-
-  return {
-    providers: {
-      onedrive: payload.providers?.onedrive === true,
-      'google-drive': payload.providers?.googleDrive === true,
-    },
-    session: {
-      connected: payload.session?.connected === true,
-      authState,
-    },
-    cache: {
-      distributedCacheType,
-      healthy: cache?.healthy === true,
-      message:
-        typeof cache?.message === 'string' && cache.message.trim().length > 0
-          ? cache.message
-          : null,
-      fallback:
-        typeof cache?.fallback === 'string' && cache.fallback.trim().length > 0
-          ? cache.fallback
-          : null,
-    },
-    serverTimeUtc:
-      typeof payload.serverTimeUtc === 'string' && payload.serverTimeUtc.trim()
-        ? payload.serverTimeUtc
-        : null,
-  }
+  return mapCloudDiagnostics(payload)
 }
 
 export const isCloudProviderConfigured = (
@@ -337,8 +221,8 @@ export const completeCloudOAuthCallback = async (): Promise<CloudOAuthCallbackRe
   }
 
   const payload = (await response.json()) as CloudOAuthCallbackResponse
-  const authState = normalizeAuthState(payload.authState)
-  if (!authState) {
+  const mapped = mapCloudOAuthCallback(payload)
+  if (!mapped.authState) {
     return {
       status: 'error',
       message: 'Cloud auth state is invalid',
@@ -347,8 +231,8 @@ export const completeCloudOAuthCallback = async (): Promise<CloudOAuthCallbackRe
 
   return {
     status: 'success',
-    authState,
-    returnHash: typeof payload.returnHash === 'string' ? payload.returnHash : '',
+    authState: mapped.authState,
+    returnHash: mapped.returnHash,
   }
 }
 
@@ -383,18 +267,7 @@ export const syncBackupToCloud = async (params: {
   }
 
   const payload = (await response.json()) as CloudUploadResponse
-  const authState = normalizeAuthState(payload.authState)
-  if (!authState) {
-    throw new Error('Cloud session missing after upload')
-  }
-
-  return {
-    authState,
-    modifiedAt:
-      typeof payload.modifiedAt === 'string' && payload.modifiedAt.trim()
-        ? payload.modifiedAt
-        : new Date().toISOString(),
-  }
+  return mapCloudUpload(payload)
 }
 
 export const restoreBackupFromCloud = async (params: {
@@ -411,23 +284,7 @@ export const restoreBackupFromCloud = async (params: {
   }
 
   const payload = (await response.json()) as CloudRestoreResponse
-  const authState = normalizeAuthState(payload.authState)
-  if (!authState) {
-    throw new Error('Cloud session missing after restore')
-  }
-
-  if (typeof payload.content !== 'string') {
-    throw new Error('Cloud restore payload is invalid')
-  }
-
-  return {
-    authState,
-    content: payload.content,
-    modifiedAt:
-      typeof payload.modifiedAt === 'string' && payload.modifiedAt.trim()
-        ? payload.modifiedAt
-        : null,
-  }
+  return mapCloudRestore(payload)
 }
 
 export const defaultCloudProviderAvailabilityState = defaultProviderAvailability

@@ -160,9 +160,15 @@ test('footer mobile sans debordement horizontal', async ({ page, isMobile }) => 
   const footer = page.locator('footer')
   await expect(footer).toBeVisible()
 
-  const labels = ['Planifier', 'Carte', 'Profils', 'Donnees', 'Aide'] as const
-  for (const label of labels) {
-    await expect(footer.getByRole('button', { name: label })).toBeVisible()
+  const labels = [
+    /^Planifier$|^Plan$/i,
+    /^Carte$|^Map$/i,
+    /^Profils$|^Profiles$/i,
+    /^Donn[ée]es$|^Data$/i,
+    /^Aide$|^Help$/i,
+  ] as const
+  for (const labelPattern of labels) {
+    await expect(footer.getByRole('button', { name: labelPattern })).toBeVisible()
   }
 
   const overflow = await footer.evaluate((node) => ({
@@ -177,8 +183,10 @@ test('footer mobile sans debordement horizontal', async ({ page, isMobile }) => 
     return
   }
 
-  for (const label of labels) {
-    const box = await footer.getByRole('button', { name: label }).boundingBox()
+  for (const labelPattern of labels) {
+    const box = await footer
+      .getByRole('button', { name: labelPattern })
+      .boundingBox()
     expect(box).not.toBeNull()
     if (!box) {
       continue
@@ -192,9 +200,11 @@ test('footer mobile sans debordement horizontal', async ({ page, isMobile }) => 
 test('aide affiche le statut cloud utile sans backend/fallback', async ({ page }) => {
   await page.goto('/#/aide')
 
-  await expect(page.getByText('Statut synchronisation cloud')).toBeVisible()
-  await expect(page.getByText('Cache distribue operationnel')).toBeVisible()
-  await expect(page.getByText('Heure serveur (UTC)')).toBeVisible()
+  await expect(page.getByText(/^Plateforme$|^Platform$/i)).toBeVisible()
+  await expect(
+    page.getByText(/Cache distribu[ée] op[ée]rationnel|Distributed cache healthy/i),
+  ).toBeVisible()
+  await expect(page.getByText(/Heure serveur \(UTC\)|Server time \(UTC\)/i)).toBeVisible()
 
   await expect(page.getByText('Backend cache')).toHaveCount(0)
   await expect(page.getByText('Cache backend')).toHaveCount(0)

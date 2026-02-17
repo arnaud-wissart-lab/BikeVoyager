@@ -12,19 +12,20 @@
 | Fichier | LOC audit précédent | LOC 2026-02-17 | Statut | Commentaire |
 |---|---:|---:|---|---|
 | `frontend/src/i18n.ts` | 994 | 30 | **RÉSOLU** | Le monolithe de traductions n'existe plus. |
-| `frontend/src/ui/pages/MapPage.tsx` | 838 | 361 | **RÉSOLU** | Plus au-dessus des seuils de risque structurel. |
+| `frontend/src/ui/pages/MapPage.tsx` | 838 | 358 | **RÉSOLU** | Fichier < 400 LOC. |
 | `frontend/src/components/CesiumRouteMap.tsx` | 829 | 124 | **RÉSOLU** | Fichier compact. |
-| `frontend/src/features/data/dataPortability.ts` | 749 | 44 | **RÉSOLU** | Découpage effectif. |
-| `frontend/src/ui/pages/DataPage.tsx` | 587 | 282 | **RÉSOLU** | Split effectif ; page sous le seuil de 400 LOC. |
+| `frontend/src/features/data/dataPortability.ts` | 749 | 40 | **RÉSOLU** | Fichier < 400 LOC. |
+| `frontend/src/ui/pages/DataPage.tsx` | 587 | 269 | **RÉSOLU** | Fichier < 400 LOC. |
 | `frontend/src/features/cloud/useCloudController.ts` | 687 | 115 | **RÉSOLU** | Split effectif ; fichier repasse largement sous 400 LOC. |
-| `frontend/src/features/routing/useRoutingController.actions.ts` | 612 | 394 | **RÉSOLU** | Repasse sous le seuil inclusif >= 400 LOC. |
+| `frontend/src/features/routing/useRoutingController.actions.ts` | 612 | 384 | **RÉSOLU** | Fichier < 400 LOC. |
 | `backend/src/BikeVoyager.Infrastructure/Routing/ValhallaLoopService.cs` | 618 | 297 | **RÉSOLU** | Taille maîtrisée. |
 | `backend/src/BikeVoyager.AppHost/Program.cs` | 459 | 21 | **RÉSOLU** | Bootstrapping minimal. |
 | `backend/src/BikeVoyager.Infrastructure/Pois/OverpassGeometryHelper.cs` | 405 | 20 | **RÉSOLU** | Helper extrait et fichier historique réduit. |
 
 Critère de statut :
-- `RÉSOLU` = hotspot historique réduit sous 400 LOC ET responsabilité unique.
-- `RESTANT` = hotspot historique encore au-dessus du seuil inclusif >= 400 LOC OU mélange de responsabilités.
+- `Hotspot` = fichier >= 400 LOC (seuil inclusif).
+- `Résolu` = fichier < 400 LOC.
+- `Restant` = fichier >= 400 LOC ou mélange de responsabilités.
 
 Vérification au 2026-02-17 : 10/10 anciens hotspots sont `RÉSOLU`, **0 restant**.
 

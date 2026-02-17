@@ -41,9 +41,9 @@ officiel, ou intervention en tant que représentant identifié du projet.
 Les incidents peuvent être signalés de manière confidentielle via :
 
 - GitHub Security Advisory (privé) :
-  `https://github.com/arnaud-wissart/BikeVoyager/security/advisories/new`
+  Utiliser l'onglet `Security` du dépôt pour ouvrir un advisory privé.
 - À défaut, une issue GitHub :
-  `https://github.com/arnaud-wissart/BikeVoyager/issues`
+  Ouvrir une issue via l'onglet `Issues` du dépôt.
   (préfixe recommandé : `[CoC]`, sans détails sensibles).
 
 Tous les signalements seront examinés et traités rapidement et équitablement.

@@ -7,10 +7,10 @@ Ce fichier est la source de vérité sécurité du dépôt.
 Ne publiez pas de détails exploitables dans une issue publique.
 
 Canal recommandé (privé) :
-- `https://github.com/arnaud-wissart/BikeVoyager/security/advisories/new`
+- Utiliser l'onglet `Security` du dépôt pour ouvrir un advisory privé.
 
 Canal de secours :
-- `https://github.com/arnaud-wissart/BikeVoyager/issues`
+- Ouvrir une issue via l'onglet `Issues` du dépôt.
 - Indiquer `[security]` dans le titre, sans détails sensibles, puis demander un canal privé.
 
 ## Portée technique

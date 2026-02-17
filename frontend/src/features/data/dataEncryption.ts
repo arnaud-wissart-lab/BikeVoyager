@@ -13,8 +13,7 @@ const toBase64 = (value: Uint8Array) => {
   return btoa(binary)
 }
 
-const fromBase64 = (value: string) =>
-  Uint8Array.from(atob(value), (char) => char.charCodeAt(0))
+const fromBase64 = (value: string) => Uint8Array.from(atob(value), (char) => char.charCodeAt(0))
 
 const generateRandomBytes = (length: number) => {
   const value = new Uint8Array(length)
@@ -91,11 +90,7 @@ export const encryptBikeVoyagerPayload = async (
   const iv = generateRandomBytes(12)
   const key = await deriveAesKey(trimmedPassword, salt, defaultPbkdf2Iterations)
   const plaintext = textEncoder.encode(JSON.stringify(payload))
-  const encrypted = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    plaintext,
-  )
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext)
 
   return {
     format: 'bikevoyager-encrypted',
@@ -133,11 +128,7 @@ export const decryptBikeVoyagerPayload = async (
   const iv = fromBase64(payload.cipher.iv_b64)
   const encrypted = fromBase64(payload.cipher.payload_b64)
   const key = await deriveAesKey(trimmedPassword, salt, payload.kdf.iterations)
-  const decrypted = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    encrypted,
-  )
+  const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, encrypted)
 
   return JSON.parse(textDecoder.decode(decrypted)) as unknown
 }

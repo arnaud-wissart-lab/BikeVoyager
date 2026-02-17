@@ -1,10 +1,5 @@
 import { Button, Group, Stack, Text } from '@mantine/core'
-import {
-  IconDeviceFloppy,
-  IconDownload,
-  IconPlayerPlay,
-  IconRefresh,
-} from '@tabler/icons-react'
+import { IconDeviceFloppy, IconDownload, IconPlayerPlay, IconRefresh } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
 
 type MapSummaryPanelProps = {

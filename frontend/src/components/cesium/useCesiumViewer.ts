@@ -55,8 +55,7 @@ export default function useCesiumViewer({
             ? CESIUM_BASE_URL
             : `${import.meta.env.BASE_URL ?? '/'}cesium/`
         if (typeof window !== 'undefined') {
-          ;(window as Window & { CESIUM_BASE_URL?: string }).CESIUM_BASE_URL =
-            baseUrl
+          ;(window as Window & { CESIUM_BASE_URL?: string }).CESIUM_BASE_URL = baseUrl
         }
 
         const ionToken = import.meta.env.VITE_CESIUM_ION_TOKEN

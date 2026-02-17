@@ -5,10 +5,7 @@ import {
   type SavedTripRecord,
 } from '../dataPortability'
 
-export const mergeSavedTripsById = (
-  current: SavedTripRecord[],
-  incoming: SavedTripRecord[],
-) => {
+export const mergeSavedTripsById = (current: SavedTripRecord[], incoming: SavedTripRecord[]) => {
   const byId = new Map<string, SavedTripRecord>()
   for (const trip of current) {
     byId.set(trip.id, trip)

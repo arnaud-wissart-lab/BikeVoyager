@@ -63,8 +63,7 @@ export default function MapRoute({
   poisController,
   detourHandlers,
 }: MapRouteProps) {
-  const overlapLabel =
-    store.routeResult?.kind === 'loop' ? store.routeResult.overlapScore : null
+  const overlapLabel = store.routeResult?.kind === 'loop' ? store.routeResult.overlapScore : null
   const overlapHint =
     overlapLabel === 'faible'
       ? t('mapOverlapLowHelp')
@@ -144,8 +143,7 @@ export default function MapRoute({
     isPoiLoading: store.isPoiLoading,
     onPoiRefresh: poisController.handlePoiRefresh,
     isCustomDetourPanelOpen: store.isCustomDetourPanelOpen,
-    onToggleCustomDetourPanel: () =>
-      store.setIsCustomDetourPanelOpen((current) => !current),
+    onToggleCustomDetourPanel: () => store.setIsCustomDetourPanelOpen((current) => !current),
     detourPoints: store.detourPoints,
     customDetourValue: store.customDetourValue,
     onCustomDetourValueChange: store.setCustomDetourValue,
@@ -233,9 +231,7 @@ export default function MapRoute({
     <MapPage
       availableViewportHeight={availableViewportHeight}
       mapBackgroundColor={isDarkTheme ? theme.colors.gray[9] : theme.colors.gray[1]}
-      loadingOverlayColor={
-        isDarkTheme ? 'rgba(18, 20, 24, 0.62)' : 'rgba(255, 255, 255, 0.64)'
-      }
+      loadingOverlayColor={isDarkTheme ? 'rgba(18, 20, 24, 0.62)' : 'rgba(255, 255, 255, 0.64)'}
       setupOverlayColor={isDarkTheme ? 'rgba(10, 12, 16, 0.62)' : 'rgba(255, 255, 255, 0.62)'}
       loadingSpinnerColor={theme.colors.blue[6]}
       routeResult={store.routeResult}

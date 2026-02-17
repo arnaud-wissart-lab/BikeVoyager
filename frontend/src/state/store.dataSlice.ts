@@ -4,10 +4,7 @@ import {
   type CloudAuthState,
   type CloudDiagnostics,
 } from '../features/cloud/cloudSync'
-import type {
-  ImportedApplyMode,
-  PendingCloudRestore,
-} from '../features/cloud/types'
+import type { ImportedApplyMode, PendingCloudRestore } from '../features/cloud/types'
 import { addressBookFilterAll } from '../features/data/addressBookUtils'
 import {
   loadAddressBook,
@@ -23,62 +20,42 @@ type UseDataSliceParams = {
 }
 
 export const useDataSlice = ({ initialAppPreferences }: UseDataSliceParams) => {
-  const [savedTrips, setSavedTrips] = useState<SavedTripRecord[]>(() =>
-    loadSavedTrips(),
-  )
-  const [addressBook, setAddressBook] = useState<AddressBookEntry[]>(() =>
-    loadAddressBook(),
-  )
-  const [dataAccordionValue, setDataAccordionValue] = useState<string | null>(
-    'address-book',
-  )
+  const [savedTrips, setSavedTrips] = useState<SavedTripRecord[]>(() => loadSavedTrips())
+  const [addressBook, setAddressBook] = useState<AddressBookEntry[]>(() => loadAddressBook())
+  const [dataAccordionValue, setDataAccordionValue] = useState<string | null>('address-book')
   const [addressBookNameValue, setAddressBookNameValue] = useState('')
   const [addressBookPlaceValue, setAddressBookPlaceValue] = useState('')
   const [addressBookTagsValue, setAddressBookTagsValue] = useState('')
-  const [addressBookFilterTag, setAddressBookFilterTag] =
-    useState(addressBookFilterAll)
-  const [addressBookPlaceCandidate, setAddressBookPlaceCandidate] =
-    useState<PlaceCandidate | null>(null)
-  const [deliveryStartAddressId, setDeliveryStartAddressId] = useState<
-    string | null
-  >(null)
-  const [deliveryStopAddressIds, setDeliveryStopAddressIds] = useState<
-    string[]
-  >([])
-  const [deliveryReturnToStart, setDeliveryReturnToStart] = useState(true)
-  const [deliveryOptimizeStops, setDeliveryOptimizeStops] = useState(true)
-  const [deliveryDraggedStopId, setDeliveryDraggedStopId] = useState<
-    string | null
-  >(null)
-  const [deliveryMode, setDeliveryMode] = useState<Mode>('bike')
-  const [cloudAuthState, setCloudAuthState] = useState<CloudAuthState | null>(
+  const [addressBookFilterTag, setAddressBookFilterTag] = useState(addressBookFilterAll)
+  const [addressBookPlaceCandidate, setAddressBookPlaceCandidate] = useState<PlaceCandidate | null>(
     null,
   )
-  const [cloudProviderAvailability, setCloudProviderAvailability] = useState(
-    () => ({ ...defaultCloudProviderAvailabilityState }),
-  )
+  const [deliveryStartAddressId, setDeliveryStartAddressId] = useState<string | null>(null)
+  const [deliveryStopAddressIds, setDeliveryStopAddressIds] = useState<string[]>([])
+  const [deliveryReturnToStart, setDeliveryReturnToStart] = useState(true)
+  const [deliveryOptimizeStops, setDeliveryOptimizeStops] = useState(true)
+  const [deliveryDraggedStopId, setDeliveryDraggedStopId] = useState<string | null>(null)
+  const [deliveryMode, setDeliveryMode] = useState<Mode>('bike')
+  const [cloudAuthState, setCloudAuthState] = useState<CloudAuthState | null>(null)
+  const [cloudProviderAvailability, setCloudProviderAvailability] = useState(() => ({
+    ...defaultCloudProviderAvailabilityState,
+  }))
   const [isCloudAuthLoading, setIsCloudAuthLoading] = useState(false)
   const [isCloudSyncLoading, setIsCloudSyncLoading] = useState(false)
   const [cloudSyncMessage, setCloudSyncMessage] = useState<string | null>(null)
   const [cloudSyncError, setCloudSyncError] = useState<string | null>(null)
   const [cloudLastSyncAt, setCloudLastSyncAt] = useState<string | null>(null)
-  const [pendingCloudRestore, setPendingCloudRestore] =
-    useState<PendingCloudRestore | null>(null)
+  const [pendingCloudRestore, setPendingCloudRestore] = useState<PendingCloudRestore | null>(null)
   const [pendingCloudMergeSyncAuthState, setPendingCloudMergeSyncAuthState] =
     useState<CloudAuthState | null>(null)
-  const [pendingCloudRestoreMode, setPendingCloudRestoreMode] =
-    useState<ImportedApplyMode | null>(null)
-  const [shouldRevealCloudPanel, setShouldRevealCloudPanel] = useState(false)
-  const [cloudDiagnostics, setCloudDiagnostics] =
-    useState<CloudDiagnostics | null>(null)
-  const [isCloudDiagnosticsLoading, setIsCloudDiagnosticsLoading] =
-    useState(false)
-  const [cloudDiagnosticsError, setCloudDiagnosticsError] = useState<
-    string | null
-  >(null)
-  const [cloudProvider, setCloudProvider] = useState(
-    () => initialAppPreferences.cloudProvider,
+  const [pendingCloudRestoreMode, setPendingCloudRestoreMode] = useState<ImportedApplyMode | null>(
+    null,
   )
+  const [shouldRevealCloudPanel, setShouldRevealCloudPanel] = useState(false)
+  const [cloudDiagnostics, setCloudDiagnostics] = useState<CloudDiagnostics | null>(null)
+  const [isCloudDiagnosticsLoading, setIsCloudDiagnosticsLoading] = useState(false)
+  const [cloudDiagnosticsError, setCloudDiagnosticsError] = useState<string | null>(null)
+  const [cloudProvider, setCloudProvider] = useState(() => initialAppPreferences.cloudProvider)
   const [cloudAutoBackupEnabled, setCloudAutoBackupEnabled] = useState(
     () => initialAppPreferences.cloudAutoBackupEnabled,
   )

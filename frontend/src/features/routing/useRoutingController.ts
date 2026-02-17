@@ -1,5 +1,11 @@
 import { useCallback, useEffect } from 'react'
-import { fetchValhallaStatus, readApiMessage, startValhallaUpdate, submitDeveloperFeedback, exportRouteAsGpx } from './api'
+import {
+  fetchValhallaStatus,
+  readApiMessage,
+  startValhallaUpdate,
+  submitDeveloperFeedback,
+  exportRouteAsGpx,
+} from './api'
 import {
   buildGpxFileName,
   defaultProfileSettings,
@@ -68,22 +74,17 @@ export const useRoutingController = ({
   const hasStartSelection = Boolean(activeStartPlace)
   const hasEndSelection = tripType === 'oneway' ? Boolean(endPlace) : true
   const showLocationInputs = Boolean(mode && tripType)
-  const {
-    helperItems,
-    helperHasMissing,
-    helperReadyLabel,
-    ctaLabel,
-    isFormReady,
-  } = useRoutingFeatureSlice({
-    mode,
-    tripType,
-    hasStartSelection,
-    hasEndSelection,
-    targetDistanceKm,
-    hasResult,
-    isDirty,
-    t,
-  })
+  const { helperItems, helperHasMissing, helperReadyLabel, ctaLabel, isFormReady } =
+    useRoutingFeatureSlice({
+      mode,
+      tripType,
+      hasStartSelection,
+      hasEndSelection,
+      targetDistanceKm,
+      hasResult,
+      isDirty,
+      t,
+    })
 
   const { panelTransitionDuration, panelTransitionTiming, panelStackStyle, getPanelStyle } =
     createPlannerPanelStyles()

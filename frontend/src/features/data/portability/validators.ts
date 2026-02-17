@@ -9,15 +9,9 @@ export const isMapViewMode = (value: unknown): value is MapViewMode =>
   value === '2d' || value === '3d'
 
 export const isPoiCategory = (value: unknown): value is PoiCategory =>
-  value === 'monuments' ||
-  value === 'paysages' ||
-  value === 'commerces' ||
-  value === 'services'
+  value === 'monuments' || value === 'paysages' || value === 'commerces' || value === 'services'
 
-export const normalizeCategoryList = (
-  value: unknown,
-  fallback: PoiCategory[],
-): PoiCategory[] => {
+export const normalizeCategoryList = (value: unknown, fallback: PoiCategory[]): PoiCategory[] => {
   if (!Array.isArray(value)) {
     return [...fallback]
   }
@@ -68,12 +62,7 @@ export const normalizeTripName = (value: unknown, tripType: TripType) => {
 }
 
 export const normalizeCoordinate = (value: unknown, min: number, max: number) => {
-  if (
-    typeof value !== 'number' ||
-    !Number.isFinite(value) ||
-    value < min ||
-    value > max
-  ) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
     return null
   }
 

@@ -10,12 +10,7 @@ import {
   getNavigationCameraPreset,
   normalizeHeadingDegrees,
 } from './math'
-import type {
-  CesiumModule,
-  CesiumStatus,
-  NavigationProgress,
-  PoiMarker,
-} from './types'
+import type { CesiumModule, CesiumStatus, NavigationProgress, PoiMarker } from './types'
 
 type UseCameraControlsParams = {
   status: CesiumStatus
@@ -61,13 +56,7 @@ export default function useCameraControls({
   useEffect(() => {
     const viewer = viewerRef.current
     const Cesium = cesiumRef.current
-    if (
-      status !== 'ready' ||
-      !viewer ||
-      !Cesium ||
-      !navigationActive ||
-      !navigationProgress
-    ) {
+    if (status !== 'ready' || !viewer || !Cesium || !navigationActive || !navigationProgress) {
       return
     }
 
@@ -77,9 +66,7 @@ export default function useCameraControls({
     if (previousHeadingDeg !== null) {
       const shortestDelta = ((targetHeadingDeg - previousHeadingDeg + 540) % 360) - 180
       const smoothingFactor = navigationProgress.source === 'gps' ? 0.28 : 0.45
-      headingDeg = normalizeHeadingDegrees(
-        previousHeadingDeg + shortestDelta * smoothingFactor,
-      )
+      headingDeg = normalizeHeadingDegrees(previousHeadingDeg + shortestDelta * smoothingFactor)
     }
     smoothedHeadingRef.current = headingDeg
     const heading = Cesium.Math.toRadians(headingDeg)
@@ -118,11 +105,7 @@ export default function useCameraControls({
     )
 
     viewer.camera.setView({
-      destination: Cesium.Cartesian3.fromDegrees(
-        cameraLon,
-        cameraLat,
-        preset.height_m,
-      ),
+      destination: Cesium.Cartesian3.fromDegrees(cameraLon, cameraLat, preset.height_m),
       orientation: {
         heading,
         pitch: Cesium.Math.toRadians(preset.pitchDeg),
@@ -195,31 +178,19 @@ export default function useCameraControls({
     const currentHeight = viewer.camera.positionCartographic.height
     const fallbackHeight = viewMode === '3d' ? 950 : 1350
     const safeCurrentHeight =
-      Number.isFinite(currentHeight) && currentHeight > 0
-        ? currentHeight
-        : fallbackHeight
+      Number.isFinite(currentHeight) && currentHeight > 0 ? currentHeight : fallbackHeight
     const heightFactor = mapCommand === 'zoomInPoi' ? 0.68 : 1.45
     const minHeight = viewMode === '3d' ? 120 : 220
     const maxHeight = 18000
-    const nextHeight = Math.min(
-      maxHeight,
-      Math.max(minHeight, safeCurrentHeight * heightFactor),
-    )
+    const nextHeight = Math.min(maxHeight, Math.max(minHeight, safeCurrentHeight * heightFactor))
 
     viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(
-        activePoi.lon,
-        activePoi.lat,
-        nextHeight,
-      ),
+      destination: Cesium.Cartesian3.fromDegrees(activePoi.lon, activePoi.lat, nextHeight),
       duration: 0.55,
       easingFunction: Cesium.EasingFunction.QUADRATIC_OUT,
       orientation: {
         heading: viewMode === '3d' ? viewer.camera.heading : 0,
-        pitch:
-          viewMode === '3d'
-            ? viewer.camera.pitch
-            : Cesium.Math.toRadians(-89.5),
+        pitch: viewMode === '3d' ? viewer.camera.pitch : Cesium.Math.toRadians(-89.5),
         roll: 0,
       },
     })

@@ -1,4 +1,14 @@
-import { ActionIcon, Badge, Button, Group, Loader, Paper, ScrollArea, Stack, Text } from '@mantine/core'
+import {
+  ActionIcon,
+  Badge,
+  Button,
+  Group,
+  Loader,
+  Paper,
+  ScrollArea,
+  Stack,
+  Text,
+} from '@mantine/core'
 import { IconMapPinPlus } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
 import type { PoiCategory, PoiItem } from '../../../features/routing/domain'

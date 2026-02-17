@@ -75,9 +75,7 @@ export const fetchRoute = async (requestBody: RouteRequestPayload) => {
     result: {
       ...data,
       kind: 'route' as const,
-      elevation_profile: Array.isArray(data.elevation_profile)
-        ? data.elevation_profile
-        : [],
+      elevation_profile: Array.isArray(data.elevation_profile) ? data.elevation_profile : [],
     },
   }
 }
@@ -104,9 +102,7 @@ export const fetchLoop = async (requestBody: LoopRequestPayload) => {
     result: {
       ...data,
       kind: 'loop' as const,
-      elevation_profile: Array.isArray(data.elevation_profile)
-        ? data.elevation_profile
-        : [],
+      elevation_profile: Array.isArray(data.elevation_profile) ? data.elevation_profile : [],
     },
   }
 }

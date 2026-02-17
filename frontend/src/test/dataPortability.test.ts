@@ -174,4 +174,3 @@ describe('dataPortability', () => {
     expect(imported.trip.trip.kind).toBe('route')
   })
 })
-

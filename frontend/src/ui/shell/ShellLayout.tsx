@@ -148,13 +148,7 @@ export default function ShellLayout({
                     </ActionIcon>
                     <ActionIcon
                       variant="light"
-                      color={
-                        themeMode === 'auto'
-                          ? 'gray'
-                          : isDarkTheme
-                            ? 'indigo'
-                            : 'orange'
-                      }
+                      color={themeMode === 'auto' ? 'gray' : isDarkTheme ? 'indigo' : 'orange'}
                       radius="xl"
                       size="lg"
                       onClick={() => onThemeModeChange(nextThemeMode)}
@@ -191,11 +185,7 @@ export default function ShellLayout({
                       >
                         <Tabs.List>
                           {navItems.map((item) => (
-                            <Tabs.Tab
-                              key={item.key}
-                              value={item.key}
-                              disabled={item.disabled}
-                            >
+                            <Tabs.Tab key={item.key} value={item.key} disabled={item.disabled}>
                               {item.label}
                             </Tabs.Tab>
                           ))}
@@ -232,9 +222,7 @@ export default function ShellLayout({
                       size="xs"
                       radius="xl"
                       value={themeMode}
-                      onChange={(value) =>
-                        onThemeModeChange(value as 'light' | 'dark' | 'auto')
-                      }
+                      onChange={(value) => onThemeModeChange(value as 'light' | 'dark' | 'auto')}
                       data={[
                         { label: themeAutoLabel, value: 'auto' },
                         { label: themeLightLabel, value: 'light' },
@@ -271,14 +259,7 @@ export default function ShellLayout({
             WebkitBackdropFilter: shellChromeFilter,
           }}
         >
-          <Group
-            justify="space-between"
-            align="center"
-            h="100%"
-            px="xs"
-            gap={0}
-            wrap="nowrap"
-          >
+          <Group justify="space-between" align="center" h="100%" px="xs" gap={0} wrap="nowrap">
             {navItems.map((item) => {
               const isActive = route === item.key
               const Icon = item.icon

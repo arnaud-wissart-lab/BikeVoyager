@@ -1,13 +1,8 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
-import PlaceSearchInput, {
-  type PlaceCandidate,
-} from '../components/PlaceSearchInput'
-import {
-  createJsonResponse,
-  renderWithProviders,
-} from './test-utils'
+import PlaceSearchInput, { type PlaceCandidate } from '../components/PlaceSearchInput'
+import { createJsonResponse, renderWithProviders } from './test-utils'
 
 function PlaceSearchInputHarness({
   onPlaceSelect,

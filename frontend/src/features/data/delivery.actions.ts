@@ -11,10 +11,7 @@ import {
   type RouteRequestPayload,
 } from '../routing/domain'
 
-type ToastHandler = (
-  message: string,
-  options?: { title?: string; durationMs?: number },
-) => void
+type ToastHandler = (message: string, options?: { title?: string; durationMs?: number }) => void
 
 export type DeliveryActionsStoreSlice = Pick<
   AppStore,
@@ -46,10 +43,7 @@ type CreateDeliveryActionsParams = {
   t: TFunction
   deliveryStartAddress: AddressBookEntry | null
   deliveryStopAddresses: AddressBookEntry[]
-  requestRoute: (
-    payload: RouteRequestPayload,
-    nextDetours?: DetourPoint[],
-  ) => Promise<boolean>
+  requestRoute: (payload: RouteRequestPayload, nextDetours?: DetourPoint[]) => Promise<boolean>
   showSuccessToast: ToastHandler
   showErrorToast: ToastHandler
 }
@@ -129,9 +123,7 @@ export const createDeliveryActions = ({
     }
 
     setDeliveryStopAddressIds((current) =>
-      current.includes(entryId)
-        ? current.filter((id) => id !== entryId)
-        : [...current, entryId],
+      current.includes(entryId) ? current.filter((id) => id !== entryId) : [...current, entryId],
     )
     setDeliveryDraggedStopId((current) => (current === entryId ? null : current))
   }
@@ -207,9 +199,7 @@ export const createDeliveryActions = ({
     const now = new Date().toISOString()
     setAddressBook((current) =>
       sortAndLimitAddressBook(
-        current.map((entry) =>
-          usedIds.has(entry.id) ? { ...entry, updatedAt: now } : entry,
-        ),
+        current.map((entry) => (usedIds.has(entry.id) ? { ...entry, updatedAt: now } : entry)),
       ),
     )
 

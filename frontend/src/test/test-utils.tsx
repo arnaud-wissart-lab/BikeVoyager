@@ -4,10 +4,7 @@ import type { ReactElement } from 'react'
 import '../i18n'
 import { theme } from '../theme'
 
-export const renderWithProviders = (
-  ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>,
-) =>
+export const renderWithProviders = (ui: ReactElement, options?: Omit<RenderOptions, 'wrapper'>) =>
   render(
     <MantineProvider theme={theme} defaultColorScheme="light" env="test">
       {ui}
@@ -16,11 +13,7 @@ export const renderWithProviders = (
   )
 
 export const resolveRequestUrl = (input: RequestInfo | URL) =>
-  typeof input === 'string'
-    ? input
-    : input instanceof URL
-      ? input.toString()
-      : input.url
+  typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
 
 export const createJsonResponse = <T,>(payload: T, status = 200) =>
   ({

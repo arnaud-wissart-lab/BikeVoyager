@@ -65,8 +65,7 @@ export const useMapRouteSummary = ({
       ? routeCumulativeDistances[routeCumulativeDistances.length - 1]
       : 0
   const routeDistanceMeters =
-    routeResult?.distance_m ??
-    (routeDistanceFromGeometry > 0 ? routeDistanceFromGeometry : null)
+    routeResult?.distance_m ?? (routeDistanceFromGeometry > 0 ? routeDistanceFromGeometry : null)
   const simulationSpeedKmh =
     mode !== null ? profileSettings.speeds[mode] : defaultProfileSettings.speeds.bike
   const fallbackNavigationSpeedMps = kmhToMps(simulationSpeedKmh)
@@ -78,7 +77,7 @@ export const useMapRouteSummary = ({
     isNavigationActive && navigationProgress
       ? Math.max(
           0,
-          (routeDistanceFromGeometry > 0 ? routeDistanceFromGeometry : routeDistanceMeters ?? 0) -
+          (routeDistanceFromGeometry > 0 ? routeDistanceFromGeometry : (routeDistanceMeters ?? 0)) -
             navigationProgress.distance_m,
         )
       : routeDistanceMeters
@@ -135,17 +134,12 @@ export const useMapRouteSummary = ({
       ? formatDistance(navigationRemainingMeters)
       : t('placeholderValue')
   const etaLabel =
-    navigationEtaSeconds !== null
-      ? formatDuration(navigationEtaSeconds)
-      : t('placeholderValue')
+    navigationEtaSeconds !== null ? formatDuration(navigationEtaSeconds) : t('placeholderValue')
   const navigationProgressPct =
     isNavigationActive && navigationProgress && routeDistanceFromGeometry > 0
       ? Math.max(
           0,
-          Math.min(
-            100,
-            (navigationProgress.distance_m / routeDistanceFromGeometry) * 100,
-          ),
+          Math.min(100, (navigationProgress.distance_m / routeDistanceFromGeometry) * 100),
         )
       : null
 

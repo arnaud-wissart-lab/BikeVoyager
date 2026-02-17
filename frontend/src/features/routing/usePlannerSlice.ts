@@ -59,9 +59,7 @@ export const usePlannerSlice = ({
 
   const helperHasMissing = helperItems.some((item) => item.show)
   const helperReadyLabel =
-    tripType === 'loop'
-      ? t('helper.title.ready.loop')
-      : t('helper.title.ready.route')
+    tripType === 'loop' ? t('helper.title.ready.loop') : t('helper.title.ready.route')
 
   const ctaLabel = useMemo(() => {
     const shouldRecalculate = hasResult && isDirty

@@ -53,26 +53,25 @@ describe('App routing', () => {
         const params = new URLSearchParams(url.split('?')[1] ?? '')
         const query = params.get('q') ?? ''
         const normalized = query.toLowerCase()
-        const candidates =
-          normalized.includes('paris')
-            ? [
-                {
-                  label: 'Paris',
-                  lat: 48.8566,
-                  lon: 2.3522,
-                  score: 0.9,
-                  source: 'test',
-                },
-              ]
-            : [
-                {
-                  label: 'Lyon',
-                  lat: 45.764,
-                  lon: 4.8357,
-                  score: 0.9,
-                  source: 'test',
-                },
-              ]
+        const candidates = normalized.includes('paris')
+          ? [
+              {
+                label: 'Paris',
+                lat: 48.8566,
+                lon: 2.3522,
+                score: 0.9,
+                source: 'test',
+              },
+            ]
+          : [
+              {
+                label: 'Lyon',
+                lat: 45.764,
+                lon: 4.8357,
+                score: 0.9,
+                source: 'test',
+              },
+            ]
 
         return createJsonResponse(candidates)
       }
@@ -105,15 +104,13 @@ describe('App routing', () => {
 
     const startInputs = screen.getAllByTestId('plan-start-input')
     const startInput =
-      startInputs.find((input) => !(input as HTMLInputElement).disabled) ??
-      startInputs[0]
+      startInputs.find((input) => !(input as HTMLInputElement).disabled) ?? startInputs[0]
     await user.type(startInput, 'Paris')
     await user.click(await screen.findByTestId('plan-start-option-0'))
 
     const endInputs = screen.getAllByTestId('plan-end-input')
     const endInput =
-      endInputs.find((input) => !(input as HTMLInputElement).disabled) ??
-      endInputs[0]
+      endInputs.find((input) => !(input as HTMLInputElement).disabled) ?? endInputs[0]
     await user.type(endInput, 'Lyon')
     await user.click(await screen.findByTestId('plan-end-option-0'))
 

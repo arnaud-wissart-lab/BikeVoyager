@@ -48,23 +48,18 @@ const streetKeywordPattern =
 const addressNumberPattern = /^\s*\d+/
 
 function getSearchMode(query: string) {
-  const looksLikeAddress =
-    addressNumberPattern.test(query) || streetKeywordPattern.test(query)
+  const looksLikeAddress = addressNumberPattern.test(query) || streetKeywordPattern.test(query)
   return looksLikeAddress ? 'address' : 'city'
 }
 
-function filterOptionsForMode(
-  mode: 'city' | 'address',
-  candidates: PlaceCandidate[],
-) {
+function filterOptionsForMode(mode: 'city' | 'address', candidates: PlaceCandidate[]) {
   if (mode !== 'city') {
     return candidates
   }
 
   return candidates.filter(
     (option) =>
-      !addressNumberPattern.test(option.label) &&
-      !streetKeywordPattern.test(option.label),
+      !addressNumberPattern.test(option.label) && !streetKeywordPattern.test(option.label),
   )
 }
 
@@ -84,9 +79,7 @@ export default function PlaceSearchInput({
   const cacheRef = useRef<Map<string, PlaceCandidate[]>>(new Map())
   const lastSelectedRef = useRef<string | null>(null)
   const skipNextSearchRef = useRef(false)
-  const hasUserEditedRef = useRef(
-    !suppressInitialSearch || value.trim().length < minQueryLength,
-  )
+  const hasUserEditedRef = useRef(!suppressInitialSearch || value.trim().length < minQueryLength)
   const requestIdRef = useRef(0)
   const activeControllerRef = useRef<AbortController | null>(null)
 
@@ -273,7 +266,6 @@ export default function PlaceSearchInput({
     combobox.closeDropdown()
   }
 
-
   const optionsList = optionItems.map(({ candidate, value }, index) => (
     <Combobox.Option
       value={value}
@@ -302,8 +294,7 @@ export default function PlaceSearchInput({
           onFocus={() => {
             if (
               (options.length > 0 || hasError) &&
-              (!lastSelectedRef.current ||
-                value.trim() !== lastSelectedRef.current)
+              (!lastSelectedRef.current || value.trim() !== lastSelectedRef.current)
             ) {
               combobox.openDropdown()
             }
@@ -341,11 +332,7 @@ export default function PlaceSearchInput({
             </Combobox.Option>
           )}
 
-          {!hasError &&
-            !loading &&
-            hasQuery &&
-            !isSelectedValue &&
-            options.length === 0 && (
+          {!hasError && !loading && hasQuery && !isSelectedValue && options.length === 0 && (
             <Combobox.Option value="empty" disabled data-testid={`${testId}-empty`}>
               <Text size="sm" c="dimmed">
                 {t('placesSearchEmpty')}
@@ -354,11 +341,7 @@ export default function PlaceSearchInput({
           )}
 
           {!hasError && loading && (
-            <Combobox.Option
-              value="loading"
-              disabled
-              data-testid={`${testId}-loading-state`}
-            >
+            <Combobox.Option value="loading" disabled data-testid={`${testId}-loading-state`}>
               <Text size="sm" c="dimmed">
                 {t('placesSearchLoading')}
               </Text>
@@ -383,4 +366,3 @@ export default function PlaceSearchInput({
     </Combobox>
   )
 }
-

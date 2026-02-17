@@ -40,9 +40,7 @@ export const parseAddressTagsInput = (
 
 export const toggleAddressTagInInput = (rawValue: string, tag: string): string => {
   const parsed = parseAddressTagsInput(rawValue)
-  const nextTags = parsed.includes(tag)
-    ? parsed.filter((item) => item !== tag)
-    : [...parsed, tag]
+  const nextTags = parsed.includes(tag) ? parsed.filter((item) => item !== tag) : [...parsed, tag]
 
   return nextTags.slice(0, maxAddressBookTagsPerEntry).join(', ')
 }
@@ -71,11 +69,7 @@ export const reorderIdsByDragAndDrop = (
   return next
 }
 
-export const moveIdByDirection = (
-  ids: string[],
-  id: string,
-  direction: -1 | 1,
-): string[] => {
+export const moveIdByDirection = (ids: string[], id: string, direction: -1 | 1): string[] => {
   const index = ids.indexOf(id)
   if (index < 0) {
     return ids

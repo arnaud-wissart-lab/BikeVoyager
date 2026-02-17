@@ -1,0 +1,6 @@
+dist/
+node_modules/
+obj/
+bin/
+playwright-report/
+test-results/

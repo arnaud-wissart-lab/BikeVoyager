@@ -13,10 +13,7 @@ import {
 } from './dataPortability'
 import type { PlaceCandidate } from '../routing/domain'
 
-type ToastHandler = (
-  message: string,
-  options?: { title?: string; durationMs?: number },
-) => void
+type ToastHandler = (message: string, options?: { title?: string; durationMs?: number }) => void
 
 export type AddressBookActionsStoreSlice = Pick<
   AppStore,
@@ -65,8 +62,7 @@ export const createAddressBookActions = ({
 
     return addressBook.some(
       (entry) =>
-        Math.abs(entry.lat - place.lat) < 0.00001 &&
-        Math.abs(entry.lon - place.lon) < 0.00001,
+        Math.abs(entry.lat - place.lat) < 0.00001 && Math.abs(entry.lon - place.lon) < 0.00001,
     )
   }
 
@@ -87,11 +83,7 @@ export const createAddressBookActions = ({
     return formatAddressTagFallbackLabel(tag)
   }
 
-  const savePlaceInAddressBook = (
-    place: PlaceCandidate,
-    customName?: string,
-    tags?: string[],
-  ) => {
+  const savePlaceInAddressBook = (place: PlaceCandidate, customName?: string, tags?: string[]) => {
     const prepared = createAddressBookEntry({
       name: customName ?? place.label,
       place,

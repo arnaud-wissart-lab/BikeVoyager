@@ -166,11 +166,7 @@ export default function HelpPage({
               )}
               {!isValhallaStatusLoading && !valhallaStatusError && valhallaStatus && (
                 <Stack gap={4}>
-                  <Text
-                    size="sm"
-                    fw={600}
-                    c={valhallaStatus.ready ? 'green.7' : 'orange.7'}
-                  >
+                  <Text size="sm" fw={600} c={valhallaStatus.ready ? 'green.7' : 'orange.7'}>
                     {valhallaStatus.ready
                       ? t('helpValhallaStatusReady')
                       : t('helpValhallaStatusNotReady')}
@@ -185,8 +181,7 @@ export default function HelpPage({
                           {t('helpValhallaProgressLabel')}
                         </Text>
                         <Text size="xs" fw={600}>
-                          {Math.max(0, Math.min(100, valhallaStatus.build.progress_pct))}
-                          %
+                          {Math.max(0, Math.min(100, valhallaStatus.build.progress_pct))}%
                         </Text>
                       </Group>
                       <Box
@@ -216,15 +211,13 @@ export default function HelpPage({
                       </Text>
                     </Stack>
                   )}
-                  {valhallaStatus.update &&
-                    (valhallaUpdateAvailable || isValhallaBuildRunning) && (
-                      <Stack gap={2}>
-                        <Text size="xs" c="dimmed">
-                          {t('helpRoutingEngineAutoUpdate')}{' '}
-                          {valhallaStatus.update.message}
-                        </Text>
-                      </Stack>
-                    )}
+                  {valhallaStatus.update && (valhallaUpdateAvailable || isValhallaBuildRunning) && (
+                    <Stack gap={2}>
+                      <Text size="xs" c="dimmed">
+                        {t('helpRoutingEngineAutoUpdate')} {valhallaStatus.update.message}
+                      </Text>
+                    </Stack>
+                  )}
                 </Stack>
               )}
             </Stack>
@@ -251,29 +244,27 @@ export default function HelpPage({
                   {t('helpPlatformStatusUnavailable')}
                 </Text>
               )}
-              {!isCloudDiagnosticsLoading &&
-                !cloudDiagnosticsError &&
-                cloudDiagnostics && (
-                  <Stack gap={4}>
-                    <Badge
-                      size="sm"
-                      variant="light"
-                      color={cloudDiagnostics.cache.healthy ? 'teal' : 'orange'}
-                    >
-                      {cloudDiagnostics.cache.healthy
-                        ? t('helpCloudCacheHealthy')
-                        : t('helpCloudCacheUnhealthy')}
-                    </Badge>
-                    {cloudDiagnostics.serverTimeUtc && (
-                      <Text size="xs" c="dimmed">
-                        {t('helpCloudServerTimeLabel')}:{' '}
-                        {new Date(cloudDiagnostics.serverTimeUtc).toLocaleString(
-                          isFrench ? 'fr-FR' : 'en-US',
-                        )}
-                      </Text>
-                    )}
-                  </Stack>
-                )}
+              {!isCloudDiagnosticsLoading && !cloudDiagnosticsError && cloudDiagnostics && (
+                <Stack gap={4}>
+                  <Badge
+                    size="sm"
+                    variant="light"
+                    color={cloudDiagnostics.cache.healthy ? 'teal' : 'orange'}
+                  >
+                    {cloudDiagnostics.cache.healthy
+                      ? t('helpCloudCacheHealthy')
+                      : t('helpCloudCacheUnhealthy')}
+                  </Badge>
+                  {cloudDiagnostics.serverTimeUtc && (
+                    <Text size="xs" c="dimmed">
+                      {t('helpCloudServerTimeLabel')}:{' '}
+                      {new Date(cloudDiagnostics.serverTimeUtc).toLocaleString(
+                        isFrench ? 'fr-FR' : 'en-US',
+                      )}
+                    </Text>
+                  )}
+                </Stack>
+              )}
             </Stack>
           </Stack>
         </Paper>
@@ -298,4 +289,3 @@ export default function HelpPage({
     </Container>
   )
 }
-

@@ -49,9 +49,7 @@ export const useCloudSlice = ({
     selectedCloudProvider !== null && cloudAuthState?.provider === selectedCloudProvider
 
   const cloudAccountLabel = cloudAuthState
-    ? cloudAuthState.accountEmail ??
-      cloudAuthState.accountName ??
-      t('cloudAccountUnknown')
+    ? (cloudAuthState.accountEmail ?? cloudAuthState.accountName ?? t('cloudAccountUnknown'))
     : null
 
   const toCloudProviderLabel = (provider: ActiveCloudProvider) =>

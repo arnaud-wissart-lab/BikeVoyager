@@ -167,8 +167,7 @@ export const startCloudOAuth = async (
 ) => {
   const params = new URLSearchParams({
     provider,
-    redirectUri:
-      options?.redirectUri ?? `${window.location.origin}${window.location.pathname}`,
+    redirectUri: options?.redirectUri ?? `${window.location.origin}${window.location.pathname}`,
     returnHash: options?.returnHash ?? window.location.hash,
   })
 

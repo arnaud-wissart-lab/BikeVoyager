@@ -1,15 +1,5 @@
-import {
-  Accordion,
-  Container,
-  Stack,
-  Text,
-  ThemeIcon,
-} from '@mantine/core'
-import {
-  IconDeviceFloppy,
-  IconMapPinPlus,
-  IconRoute,
-} from '@tabler/icons-react'
+import { Accordion, Container, Stack, Text, ThemeIcon } from '@mantine/core'
+import { IconDeviceFloppy, IconMapPinPlus, IconRoute } from '@tabler/icons-react'
 import { useState, type ChangeEvent, type ComponentProps, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ActiveCloudProvider, CloudAuthState } from '../../features/cloud/cloudSync'
@@ -103,9 +93,7 @@ export default function DataPage({
   addressBookPanelProps,
 }: DataPageProps) {
   const { t } = useTranslation()
-  const [deleteTripCandidate, setDeleteTripCandidate] = useState<SavedTripRecord | null>(
-    null,
-  )
+  const [deleteTripCandidate, setDeleteTripCandidate] = useState<SavedTripRecord | null>(null)
   const mobileActionButtonStyles = isDesktop
     ? undefined
     : ({
@@ -279,4 +267,3 @@ export default function DataPage({
     </Container>
   )
 }
-

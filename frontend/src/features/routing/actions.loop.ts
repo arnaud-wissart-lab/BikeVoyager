@@ -44,10 +44,8 @@ type BuildLoopRequestPayloadParams = {
   detourPoints: DetourPoint[]
 }
 
-export const resolveEbikeAssistForMode = (
-  mode: Mode,
-  ebikeAssist: AssistLevel,
-) => (mode === 'ebike' ? ebikeAssist : undefined)
+export const resolveEbikeAssistForMode = (mode: Mode, ebikeAssist: AssistLevel) =>
+  mode === 'ebike' ? ebikeAssist : undefined
 
 export const resolveLoopStartLocation = ({
   loopStartPlace,
@@ -119,10 +117,7 @@ export const createLoopRequestAction = ({
     setRouteErrorKey,
   }
 
-  return async (
-    requestBody: LoopRequestPayload,
-    nextDetours: DetourPoint[] = [],
-  ) => {
+  return async (requestBody: LoopRequestPayload, nextDetours: DetourPoint[] = []) => {
     setIsRouteLoading(true)
     lastRouteRequestRef.current = {
       type: 'loop',

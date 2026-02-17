@@ -10,9 +10,7 @@ import {
 import type { ParsedImportedData } from './types'
 import { isRecord } from './validators'
 
-export const parseImportedBikeVoyagerData = (
-  value: unknown,
-): ParsedImportedData | null => {
+export const parseImportedBikeVoyagerData = (value: unknown): ParsedImportedData | null => {
   if (!isRecord(value)) {
     return null
   }
@@ -44,9 +42,7 @@ export const parseImportedBikeVoyagerData = (
     return {
       kind: 'backup',
       preferences,
-      plannerDraft: normalizePlannerDraft(
-        value.plannerDraft as Partial<PlannerDraft> | null,
-      ),
+      plannerDraft: normalizePlannerDraft(value.plannerDraft as Partial<PlannerDraft> | null),
       currentRoute: toStoredTripResult(value.currentRoute),
       savedTrips: normalizeSavedTrips(value.savedTrips),
       addressBook: normalizeAddressBook(value.addressBook),
@@ -77,9 +73,7 @@ export const parseImportedBikeVoyagerData = (
     return {
       kind: 'backup',
       preferences,
-      plannerDraft: normalizePlannerDraft(
-        value.plannerDraft as Partial<PlannerDraft> | null,
-      ),
+      plannerDraft: normalizePlannerDraft(value.plannerDraft as Partial<PlannerDraft> | null),
       currentRoute: toStoredTripResult(value.currentRoute),
       savedTrips: normalizeSavedTrips(value.savedTrips),
       addressBook: normalizeAddressBook(value.addressBook),

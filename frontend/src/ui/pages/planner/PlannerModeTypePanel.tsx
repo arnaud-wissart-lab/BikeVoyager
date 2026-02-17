@@ -1,11 +1,5 @@
 import { Group, Paper, SegmentedControl, Stack, Text } from '@mantine/core'
-import {
-  IconArrowRight,
-  IconBike,
-  IconBolt,
-  IconRefresh,
-  IconWalk,
-} from '@tabler/icons-react'
+import { IconArrowRight, IconBike, IconBolt, IconRefresh, IconWalk } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
 import type { Mode, TripType } from '../../../features/routing/domain'
 

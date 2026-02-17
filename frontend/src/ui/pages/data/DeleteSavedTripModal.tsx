@@ -72,7 +72,12 @@ export default function DeleteSavedTripModal({
           <Button variant="outline" onClick={onClose}>
             {t('commonCancel')}
           </Button>
-          <Button color="red" variant="filled" leftSection={<IconTrash size={14} />} onClick={onConfirm}>
+          <Button
+            color="red"
+            variant="filled"
+            leftSection={<IconTrash size={14} />}
+            onClick={onConfirm}
+          >
             {t('dataSavedTripDeleteConfirmAction')}
           </Button>
         </Group>

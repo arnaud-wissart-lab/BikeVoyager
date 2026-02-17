@@ -36,11 +36,7 @@ export const normalizeRouteResponseError = async (
   setters: RouteErrorSetters,
 ) => {
   if (response.status === 503) {
-    await normalizeServiceUnavailableError(
-      response,
-      setters,
-      'routeErrorUnavailable',
-    )
+    await normalizeServiceUnavailableError(response, setters, 'routeErrorUnavailable')
     return
   }
 
@@ -62,11 +58,7 @@ export const normalizeLoopResponseError = async (
   setters: RouteErrorSetters,
 ) => {
   if (response.status === 503) {
-    await normalizeServiceUnavailableError(
-      response,
-      setters,
-      'routeErrorUnavailable',
-    )
+    await normalizeServiceUnavailableError(response, setters, 'routeErrorUnavailable')
     return
   }
 

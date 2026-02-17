@@ -1,17 +1,7 @@
-import {
-  useComputedColorScheme,
-  useMantineColorScheme,
-  useMantineTheme,
-} from '@mantine/core'
+import { useComputedColorScheme, useMantineColorScheme, useMantineTheme } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
-import {
-  IconDatabase,
-  IconHelpCircle,
-  IconMap2,
-  IconRoute,
-  IconUser,
-} from '@tabler/icons-react'
+import { IconDatabase, IconHelpCircle, IconMap2, IconRoute, IconUser } from '@tabler/icons-react'
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCloudController } from '../features/cloud/useCloudController'
@@ -48,14 +38,9 @@ export default function AppRoot() {
   const isFrench = language === 'fr'
   const themeMode = colorScheme
   const isDarkTheme = computedColorScheme === 'dark'
-  const nextThemeMode =
-    themeMode === 'auto' ? 'light' : themeMode === 'light' ? 'dark' : 'auto'
+  const nextThemeMode = themeMode === 'auto' ? 'light' : themeMode === 'light' ? 'dark' : 'auto'
   const mobileThemeModeLabel =
-    themeMode === 'auto'
-      ? t('themeAuto')
-      : themeMode === 'light'
-        ? t('themeLight')
-        : t('themeDark')
+    themeMode === 'auto' ? t('themeAuto') : themeMode === 'light' ? t('themeLight') : t('themeDark')
   const mobileThemeActionLabel = `${t('settingsThemeLabel')}: ${mobileThemeModeLabel}`
 
   const handleNavigate = (next: RouteKey, force = false) => {
@@ -103,9 +88,7 @@ export default function AppRoot() {
   const contentSize = isDesktop ? '84rem' : 'xl'
   const surfaceColor = isDarkTheme ? theme.colors.gray[9] : theme.white
   const borderColor = theme.colors.gray[isDarkTheme ? 8 : 3]
-  const shellChromeBackground = isDarkTheme
-    ? 'rgba(14, 17, 24, 0.84)'
-    : 'rgba(255, 255, 255, 0.86)'
+  const shellChromeBackground = isDarkTheme ? 'rgba(14, 17, 24, 0.84)' : 'rgba(255, 255, 255, 0.86)'
   const shellChromeFilter = 'saturate(1.15) blur(12px)'
   const shellMainBackground = isDarkTheme
     ? 'radial-gradient(1200px 520px at -15% -10%, rgba(35,87,153,0.34) 0%, rgba(13,19,30,0) 55%), radial-gradient(900px 420px at 110% -5%, rgba(29,120,89,0.22) 0%, rgba(12,18,28,0) 55%), linear-gradient(180deg, rgba(12,15,21,1) 0%, rgba(10,14,20,1) 100%)'
@@ -123,10 +106,7 @@ export default function AppRoot() {
       }) as const,
     [isDesktop, toastTopOffsetPx],
   )
-  const showSuccessToast = (
-    message: string,
-    options?: { title?: string; durationMs?: number },
-  ) => {
+  const showSuccessToast = (message: string, options?: { title?: string; durationMs?: number }) => {
     notifications.show({
       color: 'teal',
       position: toastPosition,
@@ -136,10 +116,7 @@ export default function AppRoot() {
       message,
     })
   }
-  const showErrorToast = (
-    message: string,
-    options?: { title?: string; durationMs?: number },
-  ) => {
+  const showErrorToast = (message: string, options?: { title?: string; durationMs?: number }) => {
     notifications.show({
       color: 'red',
       position: toastPosition,

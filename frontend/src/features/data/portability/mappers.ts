@@ -11,11 +11,7 @@ import {
   type ProfileSettings,
   type TripType,
 } from '../../routing/domain'
-import {
-  addressBookMaxItems,
-  defaultAppPreferences,
-  savedTripsMaxItems,
-} from './constants'
+import { addressBookMaxItems, defaultAppPreferences, savedTripsMaxItems } from './constants'
 import type {
   AddressBookEntry,
   AppPreferences,
@@ -50,21 +46,14 @@ export const normalizeAppPreferences = (
   }
 
   const alertDistance =
-    typeof value.poiAlertDistanceMeters === 'number' && Number.isFinite(value.poiAlertDistanceMeters)
-      ? clamp(
-          value.poiAlertDistanceMeters,
-          poiAlertDistanceRange.min,
-          poiAlertDistanceRange.max,
-        )
+    typeof value.poiAlertDistanceMeters === 'number' &&
+    Number.isFinite(value.poiAlertDistanceMeters)
+      ? clamp(value.poiAlertDistanceMeters, poiAlertDistanceRange.min, poiAlertDistanceRange.max)
       : defaultAppPreferences.poiAlertDistanceMeters
 
   const corridorDistance =
     typeof value.poiCorridorMeters === 'number' && Number.isFinite(value.poiCorridorMeters)
-      ? clamp(
-          value.poiCorridorMeters,
-          poiCorridorRange.min,
-          poiCorridorRange.max,
-        )
+      ? clamp(value.poiCorridorMeters, poiCorridorRange.min, poiCorridorRange.max)
       : defaultAppPreferences.poiCorridorMeters
 
   return {
@@ -86,10 +75,7 @@ export const normalizeAppPreferences = (
       value.poiAlertCategories,
       defaultAppPreferences.poiAlertCategories,
     ),
-    poiCategories: normalizeCategoryList(
-      value.poiCategories,
-      defaultAppPreferences.poiCategories,
-    ),
+    poiCategories: normalizeCategoryList(value.poiCategories, defaultAppPreferences.poiCategories),
     poiCorridorMeters: corridorDistance,
     cloudProvider: isCloudProvider(value.cloudProvider)
       ? value.cloudProvider
@@ -130,10 +116,7 @@ export const normalizeSavedTripRecord = (value: unknown): SavedTripRecord | null
   }
 }
 
-export const sortAndLimitSavedTrips = (
-  items: SavedTripRecord[],
-  maxItems = savedTripsMaxItems,
-) =>
+export const sortAndLimitSavedTrips = (items: SavedTripRecord[], maxItems = savedTripsMaxItems) =>
   [...items]
     .sort((left, right) => Date.parse(right.savedAt) - Date.parse(left.savedAt))
     .slice(0, Math.max(1, maxItems))
@@ -150,9 +133,7 @@ export const normalizeSavedTrips = (value: unknown): SavedTripRecord[] => {
   return sortAndLimitSavedTrips(parsed)
 }
 
-export const createSavedTripRecord = (
-  params: CreateSavedTripRecordParams,
-): SavedTripRecord => {
+export const createSavedTripRecord = (params: CreateSavedTripRecordParams): SavedTripRecord => {
   const tripType: TripType = params.trip.kind === 'loop' ? 'loop' : 'oneway'
 
   return {
@@ -172,10 +153,7 @@ export const upsertSavedTrip = (
   current: SavedTripRecord[],
   next: SavedTripRecord,
 ): SavedTripRecord[] =>
-  sortAndLimitSavedTrips([
-    next,
-    ...current.filter((item) => item.id !== next.id),
-  ])
+  sortAndLimitSavedTrips([next, ...current.filter((item) => item.id !== next.id)])
 
 const normalizeAddressBookEntry = (value: unknown): AddressBookEntry | null => {
   if (!isRecord(value)) {
@@ -232,9 +210,7 @@ export const normalizeAddressBook = (value: unknown): AddressBookEntry[] => {
   return sortAndLimitAddressBook(parsed)
 }
 
-export const createAddressBookEntry = (
-  params: CreateAddressBookEntryParams,
-): AddressBookEntry => {
+export const createAddressBookEntry = (params: CreateAddressBookEntryParams): AddressBookEntry => {
   const now = new Date().toISOString()
 
   return {
@@ -307,9 +283,7 @@ export const hasPreferenceFields = (value: Record<string, unknown>) =>
   'themeMode' in value ||
   'speeds' in value
 
-export const normalizeExportedPreferences = (
-  value: unknown,
-): ExportedPreferences | null => {
+export const normalizeExportedPreferences = (value: unknown): ExportedPreferences | null => {
   if (!isRecord(value)) {
     return null
   }
@@ -326,12 +300,8 @@ export const normalizeExportedPreferences = (
       : null
 
   return {
-    profileSettings: normalizeProfileSettings(
-      sourceProfile as Partial<ProfileSettings>,
-    ),
-    appPreferences: normalizeAppPreferences(
-      sourceApp as Partial<AppPreferences> | null,
-    ),
+    profileSettings: normalizeProfileSettings(sourceProfile as Partial<ProfileSettings>),
+    appPreferences: normalizeAppPreferences(sourceApp as Partial<AppPreferences> | null),
     language: normalizeLanguage(value.language),
     themeMode: normalizeThemeMode(value.themeMode),
   }

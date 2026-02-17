@@ -111,9 +111,7 @@ export const applyParsedImportedData = ({
 
   if (modeToApply === 'merge') {
     store.setSavedTrips((current) => mergeSavedTripsById(current, imported.savedTrips))
-    store.setAddressBook((current) =>
-      mergeAddressBookEntries(current, imported.addressBook),
-    )
+    store.setAddressBook((current) => mergeAddressBookEntries(current, imported.addressBook))
 
     if (shouldImportPlannerDraft(hasPlannerDraftContent, imported.plannerDraft)) {
       applyImportedPlannerDraft(store, imported.plannerDraft)
@@ -174,30 +172,19 @@ export const wouldCloudBackupMergeChangeLocal = ({
   currentRouteResult,
   hasPlannerDraftContent,
 }: CloudBackupMergeCheckParams) => {
-  const mergedSavedTrips = mergeSavedTripsById(
-    currentSavedTrips,
-    importedBackup.savedTrips,
-  )
-  const mergedAddressBook = mergeAddressBookEntries(
-    currentAddressBook,
-    importedBackup.addressBook,
-  )
-  const savedTripsChanged =
-    toCanonicalJson(mergedSavedTrips) !== toCanonicalJson(currentSavedTrips)
+  const mergedSavedTrips = mergeSavedTripsById(currentSavedTrips, importedBackup.savedTrips)
+  const mergedAddressBook = mergeAddressBookEntries(currentAddressBook, importedBackup.addressBook)
+  const savedTripsChanged = toCanonicalJson(mergedSavedTrips) !== toCanonicalJson(currentSavedTrips)
   const addressBookChanged =
     toCanonicalJson(mergedAddressBook) !== toCanonicalJson(currentAddressBook)
   const plannerDraftWouldBeImported = shouldImportPlannerDraft(
     hasPlannerDraftContent,
     importedBackup.plannerDraft,
   )
-  const routeWouldBeImported =
-    !currentRouteResult && importedBackup.currentRoute !== null
+  const routeWouldBeImported = !currentRouteResult && importedBackup.currentRoute !== null
 
   return (
-    savedTripsChanged ||
-    addressBookChanged ||
-    plannerDraftWouldBeImported ||
-    routeWouldBeImported
+    savedTripsChanged || addressBookChanged || plannerDraftWouldBeImported || routeWouldBeImported
   )
 }
 
@@ -214,5 +201,4 @@ export const getCloudRestoreSuccessMessageByKind = (
   return t('cloudRestoreBackupSuccess')
 }
 
-export const serializeJsonContent = (payload: unknown) =>
-  `${JSON.stringify(payload, null, 2)}\n`
+export const serializeJsonContent = (payload: unknown) => `${JSON.stringify(payload, null, 2)}\n`

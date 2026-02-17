@@ -23,28 +23,19 @@ type UseMapSliceParams = {
   initialAppPreferences: AppPreferences
 }
 
-export const useMapSlice = ({
-  initialPlannerDraft,
-  initialAppPreferences,
-}: UseMapSliceParams) => {
-  const [routeResult, setRouteResult] = useState<TripResult | null>(() =>
-    loadStoredRoute(),
-  )
+export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseMapSliceParams) => {
+  const [routeResult, setRouteResult] = useState<TripResult | null>(() => loadStoredRoute())
   const [hasResult, setHasResult] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [mode, setMode] = useState<Mode | null>(() => initialPlannerDraft.mode)
-  const [tripType, setTripType] = useState<TripType | null>(
-    () => initialPlannerDraft.tripType,
-  )
+  const [tripType, setTripType] = useState<TripType | null>(() => initialPlannerDraft.tripType)
   const [onewayStartValue, setOnewayStartValue] = useState(
     () => initialPlannerDraft.onewayStartValue,
   )
   const [onewayStartPlace, setOnewayStartPlace] = useState<PlaceCandidate | null>(
     () => initialPlannerDraft.onewayStartPlace,
   )
-  const [loopStartValue, setLoopStartValue] = useState(
-    () => initialPlannerDraft.loopStartValue,
-  )
+  const [loopStartValue, setLoopStartValue] = useState(() => initialPlannerDraft.loopStartValue)
   const [loopStartPlace, setLoopStartPlace] = useState<PlaceCandidate | null>(
     () => initialPlannerDraft.loopStartPlace,
   )
@@ -65,14 +56,11 @@ export const useMapSlice = ({
   const [valhallaStatusError, setValhallaStatusError] = useState(false)
   const [isNavigationActive, setIsNavigationActive] = useState(false)
   const [isNavigationSetupOpen, setIsNavigationSetupOpen] = useState(false)
-  const [navigationMode, setNavigationMode] = useState(
-    () => initialAppPreferences.navigationMode,
-  )
+  const [navigationMode, setNavigationMode] = useState(() => initialAppPreferences.navigationMode)
   const [navigationCameraMode, setNavigationCameraMode] = useState(
     () => initialAppPreferences.navigationCameraMode,
   )
-  const [navigationProgress, setNavigationProgress] =
-    useState<NavigationProgress | null>(null)
+  const [navigationProgress, setNavigationProgress] = useState<NavigationProgress | null>(null)
   const [navigationError, setNavigationError] = useState<string | null>(null)
   const [poiAlertEnabled, setPoiAlertEnabled] = useState(
     () => initialAppPreferences.poiAlertEnabled,
@@ -83,12 +71,9 @@ export const useMapSlice = ({
   const [poiAlertCategories, setPoiAlertCategories] = useState(
     () => initialAppPreferences.poiAlertCategories,
   )
-  const [systemNotificationsEnabled, setSystemNotificationsEnabled] =
-    useState(false)
+  const [systemNotificationsEnabled, setSystemNotificationsEnabled] = useState(false)
   const [activePoiAlertId, setActivePoiAlertId] = useState<string | null>(null)
-  const [poiCategories, setPoiCategories] = useState(
-    () => initialAppPreferences.poiCategories,
-  )
+  const [poiCategories, setPoiCategories] = useState(() => initialAppPreferences.poiCategories)
   const [poiCorridorMeters, setPoiCorridorMeters] = useState(
     () => initialAppPreferences.poiCorridorMeters,
   )
@@ -101,9 +86,7 @@ export const useMapSlice = ({
   const [detourPoints, setDetourPoints] = useState<DetourPoint[]>([])
   const [isCustomDetourPanelOpen, setIsCustomDetourPanelOpen] = useState(false)
   const [customDetourValue, setCustomDetourValue] = useState('')
-  const [customDetourPlace, setCustomDetourPlace] = useState<PlaceCandidate | null>(
-    null,
-  )
+  const [customDetourPlace, setCustomDetourPlace] = useState<PlaceCandidate | null>(null)
   const [customDetourLat, setCustomDetourLat] = useState<number | ''>('')
   const [customDetourLon, setCustomDetourLon] = useState<number | ''>('')
   const [routeAlternativeIndex, setRouteAlternativeIndex] = useState(0)

@@ -9,5 +9,4 @@ type UseMapFeatureSliceParams = {
   activePoiAlertId: string | null
 }
 
-export const useMapFeatureSlice = (params: UseMapFeatureSliceParams) =>
-  useMapPageController(params)
+export const useMapFeatureSlice = (params: UseMapFeatureSliceParams) => useMapPageController(params)

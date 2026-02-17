@@ -1,9 +1,7 @@
 import type { TFunction } from 'i18next'
 
 export const resolveCloudErrorMessage = (error: unknown, fallback: string) =>
-  error instanceof Error && error.message.trim().length > 0
-    ? error.message
-    : fallback
+  error instanceof Error && error.message.trim().length > 0 ? error.message : fallback
 
 export const translateCloudError = (params: {
   t: TFunction

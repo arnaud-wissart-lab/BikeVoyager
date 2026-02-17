@@ -1,10 +1,4 @@
-import type {
-  AssistLevel,
-  Mode,
-  NavigationCameraMode,
-  NavigationMode,
-  TripType,
-} from './types'
+import type { AssistLevel, Mode, NavigationCameraMode, NavigationMode, TripType } from './types'
 
 export const isAssistLevel = (value: unknown): value is AssistLevel =>
   value === 'low' || value === 'medium' || value === 'high'

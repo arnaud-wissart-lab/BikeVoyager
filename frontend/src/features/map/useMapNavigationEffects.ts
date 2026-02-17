@@ -92,14 +92,7 @@ export const useMapNavigationEffects = ({
     if (!isPoiModalOpen) {
       setIsMobileMapPanelExpanded(true)
     }
-  }, [
-    hasRoute,
-    isDesktop,
-    isNavigationActive,
-    isPoiModalOpen,
-    route,
-    setIsMobileMapPanelExpanded,
-  ])
+  }, [hasRoute, isDesktop, isNavigationActive, isPoiModalOpen, route, setIsMobileMapPanelExpanded])
 
   useEffect(() => {
     if (!selectedPoiId) {
@@ -114,12 +107,7 @@ export const useMapNavigationEffects = ({
 
     setIsPoiModalOpen(false)
     setIsMobilePoiDetailsExpanded(true)
-  }, [
-    selectedPoiId,
-    setIsMobilePoiDetailsExpanded,
-    setIsPoiModalOpen,
-    visiblePoiItems,
-  ])
+  }, [selectedPoiId, setIsMobilePoiDetailsExpanded, setIsPoiModalOpen, visiblePoiItems])
 
   useEffect(() => {
     if (isNavigationActive) {
@@ -154,11 +142,7 @@ export const useMapNavigationEffects = ({
     setActivePoiAlertId(null)
     setNavigationError(null)
 
-    const initialPoint = sampleRouteAtDistance(
-      routeCoordinates,
-      routeCumulativeDistances,
-      0,
-    )
+    const initialPoint = sampleRouteAtDistance(routeCoordinates, routeCumulativeDistances, 0)
     if (!initialPoint) {
       return
     }
@@ -328,10 +312,7 @@ export const useMapNavigationEffects = ({
 
     let closestPoi: (typeof poiItems)[number] | null = null
     let closestDistance = Number.POSITIVE_INFINITY
-    const currentCoordinate: [number, number] = [
-      navigationProgress.lon,
-      navigationProgress.lat,
-    ]
+    const currentCoordinate: [number, number] = [navigationProgress.lon, navigationProgress.lat]
 
     for (const poi of poiItems) {
       if (!poiAlertCategories.includes(poi.category)) {

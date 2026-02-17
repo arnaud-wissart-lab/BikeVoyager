@@ -4,11 +4,7 @@ import {
   defaultAppPreferences,
   savedTripsStorageKey,
 } from './constants'
-import {
-  normalizeAddressBook,
-  normalizeAppPreferences,
-  normalizeSavedTrips,
-} from './mappers'
+import { normalizeAddressBook, normalizeAppPreferences, normalizeSavedTrips } from './mappers'
 import type { AddressBookEntry, AppPreferences, SavedTripRecord } from './types'
 
 const loadRawStorageValue = (storageKey: string) => {

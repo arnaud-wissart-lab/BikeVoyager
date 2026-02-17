@@ -138,9 +138,7 @@ export default function CloudSyncSection({
                 </Text>
                 <Switch
                   checked={cloudAutoBackupEnabled}
-                  onChange={(event) =>
-                    onCloudAutoBackupEnabledChange(event.currentTarget.checked)
-                  }
+                  onChange={(event) => onCloudAutoBackupEnabledChange(event.currentTarget.checked)}
                   label={t('cloudAutoBackupToggle')}
                   description={t('cloudAutoBackupToggleHint')}
                 />

@@ -1,12 +1,8 @@
 import { hasPlannerDraftData } from '../importDataUtils'
-import type {
-  AddressBookEntry,
-  SavedTripRecord,
-} from '../dataPortability'
+import type { AddressBookEntry, SavedTripRecord } from '../dataPortability'
 import type { PlannerDraft, TripResult } from '../../routing/domain'
 
-export const hasPlannerDraftSnapshotData = (draft: PlannerDraft) =>
-  hasPlannerDraftData(draft)
+export const hasPlannerDraftSnapshotData = (draft: PlannerDraft) => hasPlannerDraftData(draft)
 
 type LocalBackupDataParams = {
   hasPlannerDraftContent: boolean
@@ -21,10 +17,7 @@ export const hasAnyLocalBackupData = ({
   savedTrips,
   addressBook,
 }: LocalBackupDataParams) =>
-  hasPlannerDraftContent ||
-  routeResult !== null ||
-  savedTrips.length > 0 ||
-  addressBook.length > 0
+  hasPlannerDraftContent || routeResult !== null || savedTrips.length > 0 || addressBook.length > 0
 
 export const shouldImportPlannerDraft = (
   currentHasPlannerDraftContent: boolean,

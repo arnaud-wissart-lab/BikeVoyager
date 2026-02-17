@@ -6,5 +6,4 @@ type UsePoisFeatureSliceParams = {
   poiItems: PoiItem[]
 }
 
-export const usePoisFeatureSlice = (params: UsePoisFeatureSliceParams) =>
-  useVisiblePois(params)
+export const usePoisFeatureSlice = (params: UsePoisFeatureSliceParams) => useVisiblePois(params)

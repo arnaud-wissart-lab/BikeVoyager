@@ -10,8 +10,14 @@ test('routing: calcul one-way affiche un résultat exploitable', async ({ page, 
 
   await page.goto('/#/planifier')
 
-  await page.getByText(/^Vélo$|^Bike$/).first().click()
-  await page.getByText(/^Aller simple$|^One-way$/).first().click()
+  await page
+    .getByText(/^Vélo$|^Bike$/)
+    .first()
+    .click()
+  await page
+    .getByText(/^Aller simple$|^One-way$/)
+    .first()
+    .click()
 
   const startInput = page.locator('[data-testid="plan-start-input"]:not([disabled])')
   await startInput.fill('Paris')

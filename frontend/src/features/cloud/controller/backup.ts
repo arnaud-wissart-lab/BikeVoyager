@@ -75,9 +75,7 @@ export const restoreCloudBackupAfterConnect = async (params: {
     params.setCloudProvider(response.authState.provider)
     params.cloudLastAutoSyncPayloadRef.current = null
     params.setters.setCloudSyncError(null)
-    params.setters.setCloudSyncMessage(
-      params.cloudRestoreSuccessMessageByKind(importedKind),
-    )
+    params.setters.setCloudSyncMessage(params.cloudRestoreSuccessMessageByKind(importedKind))
   } catch (error) {
     if (error instanceof CloudBackupNotFoundError) {
       params.setters.setCloudSyncError(null)

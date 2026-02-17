@@ -182,9 +182,7 @@ export const useMapController = ({
   })
 
   const notificationsSupported = typeof Notification !== 'undefined'
-  const notificationsPermission = notificationsSupported
-    ? Notification.permission
-    : 'default'
+  const notificationsPermission = notificationsSupported ? Notification.permission : 'default'
 
   const handleNavigationModeChange = (value: string) => {
     if (!isNavigationMode(value)) {

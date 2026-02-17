@@ -7,11 +7,7 @@ import {
   type RouteKey,
   trackLoopEvent,
 } from './domain'
-import {
-  clearRouteErrors,
-  setLoopFailedError,
-  setRouteMissingPlaceError,
-} from './actions.errors'
+import { clearRouteErrors, setLoopFailedError, setRouteMissingPlaceError } from './actions.errors'
 import {
   buildLoopRequestPayload,
   createLoopRequestAction,
@@ -220,10 +216,7 @@ export const createRoutingControllerActions = ({
 
       const requestBody = buildLoopRequestPayload({
         start: startLocation,
-        targetDistanceKm: resolveLoopDistanceKm(
-          targetDistanceKm,
-          routeResult.distance_m,
-        ),
+        targetDistanceKm: resolveLoopDistanceKm(targetDistanceKm, routeResult.distance_m),
         mode: resolvedMode,
         speedKmh: profileSettings.speeds[resolvedMode],
         ebikeAssist: profileSettings.ebikeAssist,
@@ -295,10 +288,7 @@ export const createRoutingControllerActions = ({
         getStartFallbackLabel: () => t('poiStartFallback'),
       })
 
-      const loopDistance = resolveLoopDistanceKm(
-        targetDistanceKm,
-        routeResult.distance_m,
-      )
+      const loopDistance = resolveLoopDistanceKm(targetDistanceKm, routeResult.distance_m)
 
       if (!startLocation) {
         setLoopFailedError(errorSetters)

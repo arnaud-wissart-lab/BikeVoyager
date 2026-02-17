@@ -60,11 +60,7 @@ export const ensureCloudProviderReady = (params: {
   }
 
   if (!params.selectedCloudConfigured) {
-    setCloudSyncValidationError(
-      'cloudProviderMissingClientId',
-      params.t,
-      params.setters,
-    )
+    setCloudSyncValidationError('cloudProviderMissingClientId', params.t, params.setters)
     return null
   }
 
@@ -77,10 +73,7 @@ export const ensureCloudUploadSession = (params: {
   t: TFunction
   setters: CloudSyncFeedbackSetters
 }): CloudAuthState | null => {
-  if (
-    !params.cloudAuthState ||
-    params.cloudAuthState.provider !== params.selectedCloudProvider
-  ) {
+  if (!params.cloudAuthState || params.cloudAuthState.provider !== params.selectedCloudProvider) {
     setCloudSyncValidationError('cloudNotConnected', params.t, params.setters)
     return null
   }

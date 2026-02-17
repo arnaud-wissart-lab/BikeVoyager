@@ -38,9 +38,7 @@ export const computeCanSubmitFeedback = (
   feedbackMessage: string,
   isFeedbackSubmitting: boolean,
 ) =>
-  feedbackSubject.trim().length >= 6 &&
-  feedbackMessage.trim().length >= 20 &&
-  !isFeedbackSubmitting
+  feedbackSubject.trim().length >= 6 && feedbackMessage.trim().length >= 20 && !isFeedbackSubmitting
 
 export const resolveRouteErrorDisplayMessage = (
   routeErrorMessage: string | null,
@@ -48,13 +46,8 @@ export const resolveRouteErrorDisplayMessage = (
   t: TFunction,
 ) => routeErrorMessage ?? (routeErrorKey ? t(routeErrorKey) : null)
 
-export const resolveAlternativeRouteLabel = (
-  routeResult: TripResult | null,
-  t: TFunction,
-) =>
-  routeResult?.kind === 'loop'
-    ? t('mapRegenerateLoopVariant')
-    : t('mapRecalculateRouteVariant')
+export const resolveAlternativeRouteLabel = (routeResult: TripResult | null, t: TFunction) =>
+  routeResult?.kind === 'loop' ? t('mapRegenerateLoopVariant') : t('mapRecalculateRouteVariant')
 
 export const toRouteLocation = (place: PlaceCandidate) => ({
   lat: place.lat,

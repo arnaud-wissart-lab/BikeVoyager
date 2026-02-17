@@ -2,10 +2,7 @@ import { useEffect } from 'react'
 import type { TFunction } from 'i18next'
 import type { AppStore } from '../../../state/appStore'
 import type { ActiveCloudProvider } from '../cloudSync'
-import {
-  syncCloudAutoBackup,
-  syncCloudBackupAfterMerge,
-} from './backup'
+import { syncCloudAutoBackup, syncCloudBackupAfterMerge } from './backup'
 import { cloudBackupFileName } from './providers'
 
 type UseCloudSyncEffectsParams = {

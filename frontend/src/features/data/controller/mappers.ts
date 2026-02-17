@@ -39,9 +39,7 @@ type PlannerDraftSnapshotParams = Pick<
   | 'targetDistanceKm'
 >
 
-export const buildPlannerDraftSnapshot = (
-  params: PlannerDraftSnapshotParams,
-) =>
+export const buildPlannerDraftSnapshot = (params: PlannerDraftSnapshotParams) =>
   ({
     mode: params.mode,
     tripType: params.tripType,

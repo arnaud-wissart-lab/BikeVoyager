@@ -137,10 +137,7 @@ export const useAppDetourHandlers = ({
     store.setActivePoiAlertId(null)
   }
 
-  const handleDeliveryStopDragStart = (
-    event: DragEvent<HTMLDivElement>,
-    entryId: string,
-  ) => {
+  const handleDeliveryStopDragStart = (event: DragEvent<HTMLDivElement>, entryId: string) => {
     event.dataTransfer.effectAllowed = 'move'
     event.dataTransfer.setData('text/plain', entryId)
     dataController.setDeliveryDraggedStopId(entryId)
@@ -153,8 +150,7 @@ export const useAppDetourHandlers = ({
 
   const handleDeliveryStopDrop = (event: DragEvent<HTMLDivElement>, targetId: string) => {
     event.preventDefault()
-    const sourceId =
-      store.deliveryDraggedStopId ?? event.dataTransfer.getData('text/plain')
+    const sourceId = store.deliveryDraggedStopId ?? event.dataTransfer.getData('text/plain')
     if (!sourceId) {
       return
     }

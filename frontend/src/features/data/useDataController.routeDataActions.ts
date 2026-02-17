@@ -49,14 +49,8 @@ type CreateDataRouteActionsParams = {
     payload: unknown,
     options?: { mode?: ImportedDataApplyMode },
   ) => Promise<ImportedDataApplyResult>
-  showSuccessToast: (
-    message: string,
-    options?: { title?: string; durationMs?: number },
-  ) => void
-  showErrorToast: (
-    message: string,
-    options?: { title?: string; durationMs?: number },
-  ) => void
+  showSuccessToast: (message: string, options?: { title?: string; durationMs?: number }) => void
+  showErrorToast: (message: string, options?: { title?: string; durationMs?: number }) => void
 }
 
 export const createDataRouteActions = ({
@@ -142,9 +136,7 @@ export const createDataRouteActions = ({
     setOnewayStartPlace(null)
     setLoopStartPlace(null)
     setEndPlace(null)
-    setTargetDistanceKm(
-      typeof trip.targetDistanceKm === 'number' ? trip.targetDistanceKm : '',
-    )
+    setTargetDistanceKm(typeof trip.targetDistanceKm === 'number' ? trip.targetDistanceKm : '')
     if (trip.tripType === 'loop') {
       setLoopStartValue(trip.startLabel ?? '')
       setOnewayStartValue('')
@@ -214,9 +206,7 @@ export const createDataRouteActions = ({
       )
     } catch (error) {
       showErrorToast(
-        error instanceof Error && error.message.trim()
-          ? error.message
-          : t('dataImportInvalid'),
+        error instanceof Error && error.message.trim() ? error.message : t('dataImportInvalid'),
       )
     }
   }

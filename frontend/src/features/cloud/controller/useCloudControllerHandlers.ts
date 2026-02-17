@@ -1,13 +1,8 @@
 import { useCallback } from 'react'
 import type { AppStore } from '../../../state/appStore'
 import type { ActiveCloudProvider } from '../cloudSync'
-import {
-  uploadCloudBackup,
-} from './backup'
-import {
-  connectCloudProvider,
-  disconnectCloudProvider,
-} from './oauthFlow'
+import { uploadCloudBackup } from './backup'
+import { connectCloudProvider, disconnectCloudProvider } from './oauthFlow'
 import {
   cloudBackupFileName,
   cloudDataRouteHash,
@@ -93,28 +88,20 @@ export const useCloudControllerHandlers = ({
 
   const handleCloudProviderChange = useCallback(
     (value: string) => {
-      updateCloudProviderPreference(
-        value,
-        setCloudProvider,
-        {
-          setCloudSyncMessage,
-          setCloudSyncError,
-        },
-      )
+      updateCloudProviderPreference(value, setCloudProvider, {
+        setCloudSyncMessage,
+        setCloudSyncError,
+      })
     },
     [setCloudProvider, setCloudSyncError, setCloudSyncMessage],
   )
 
   const handleCloudAutoBackupEnabledChange = useCallback(
     (value: boolean) => {
-      updateCloudAutoBackupPreference(
-        value,
-        setCloudAutoBackupEnabled,
-        {
-          setCloudSyncMessage,
-          setCloudSyncError,
-        },
-      )
+      updateCloudAutoBackupPreference(value, setCloudAutoBackupEnabled, {
+        setCloudSyncMessage,
+        setCloudSyncError,
+      })
     },
     [setCloudAutoBackupEnabled, setCloudSyncError, setCloudSyncMessage],
   )

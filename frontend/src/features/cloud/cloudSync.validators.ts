@@ -1,8 +1,7 @@
 import type { ActiveCloudProvider, CloudAuthState } from './cloudSync'
 
-export const isActiveCloudProvider = (
-  value: unknown,
-): value is ActiveCloudProvider => value === 'onedrive' || value === 'google-drive'
+export const isActiveCloudProvider = (value: unknown): value is ActiveCloudProvider =>
+  value === 'onedrive' || value === 'google-drive'
 
 const toRequiredString = (value: unknown) =>
   typeof value === 'string' && value.trim().length > 0 ? value : null

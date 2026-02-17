@@ -107,13 +107,9 @@ if (filesToCheck.length === 0) {
 }
 
 console.log(`Prettier: verification de ${filesToCheck.length} fichier(s) modifies.`)
-const result = spawnSync(
-  'npx',
-  ['prettier', '--check', ...filesToCheck],
-  {
-    stdio: 'inherit',
-    shell: process.platform === 'win32',
-  },
-)
+const result = spawnSync('npx', ['prettier', '--check', ...filesToCheck], {
+  stdio: 'inherit',
+  shell: process.platform === 'win32',
+})
 
 process.exit(result.status ?? 1)

@@ -85,9 +85,7 @@ export const toStoredPlaceCandidate = (value: unknown): PlaceCandidate | null =>
     lat: candidate.lat,
     lon: candidate.lon,
     score:
-      typeof candidate.score === 'number' && Number.isFinite(candidate.score)
-        ? candidate.score
-        : 1,
+      typeof candidate.score === 'number' && Number.isFinite(candidate.score) ? candidate.score : 1,
     source:
       typeof candidate.source === 'string' && candidate.source.trim().length > 0
         ? candidate.source
@@ -132,8 +130,7 @@ export const normalizePlannerDraft = (
   return {
     mode: isMode(value.mode) ? value.mode : null,
     tripType: isTripType(value.tripType) ? value.tripType : null,
-    onewayStartValue:
-      typeof value.onewayStartValue === 'string' ? value.onewayStartValue : '',
+    onewayStartValue: typeof value.onewayStartValue === 'string' ? value.onewayStartValue : '',
     onewayStartPlace: toStoredPlaceCandidate(value.onewayStartPlace),
     loopStartValue: typeof value.loopStartValue === 'string' ? value.loopStartValue : '',
     loopStartPlace: toStoredPlaceCandidate(value.loopStartPlace),

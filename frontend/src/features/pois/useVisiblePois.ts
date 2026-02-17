@@ -7,10 +7,7 @@ type UseVisiblePoisParams = {
   poiItems: PoiItem[]
 }
 
-export const useVisiblePois = ({
-  poiCategories,
-  poiItems,
-}: UseVisiblePoisParams) => {
+export const useVisiblePois = ({ poiCategories, poiItems }: UseVisiblePoisParams) => {
   const hasPoiCategories = poiCategories.length > 0
 
   const visiblePoiItems = useMemo(() => {

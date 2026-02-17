@@ -1,13 +1,4 @@
-import {
-  ActionIcon,
-  Button,
-  Group,
-  Paper,
-  ScrollArea,
-  Stack,
-  Text,
-  TextInput,
-} from '@mantine/core'
+import { ActionIcon, Button, Group, Paper, ScrollArea, Stack, Text, TextInput } from '@mantine/core'
 import { IconMapPinPlus, IconTrash } from '@tabler/icons-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -69,7 +60,7 @@ export default function AddressBookPanel({
   const [tagDraftValue, setTagDraftValue] = useState('')
   const [tagDraftError, setTagDraftError] = useState<string | null>(null)
   const tagEditorEntry = tagEditorEntryId
-    ? entries.find((entry) => entry.id === tagEditorEntryId) ?? null
+    ? (entries.find((entry) => entry.id === tagEditorEntryId) ?? null)
     : null
 
   const closeDeleteModal = () => {
@@ -240,4 +231,3 @@ export default function AddressBookPanel({
     </Stack>
   )
 }
-

@@ -6,11 +6,7 @@ export {
   savedTripsMaxItems,
   savedTripsStorageKey,
 } from './portability/constants'
-export {
-  loadAddressBook,
-  loadAppPreferences,
-  loadSavedTrips,
-} from './portability/io'
+export { loadAddressBook, loadAppPreferences, loadSavedTrips } from './portability/io'
 export {
   createAddressBookEntry,
   createSavedTripRecord,

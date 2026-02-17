@@ -106,10 +106,7 @@ export const createRoutingControllerFormActions = ({
     markDirty()
   }
 
-  const handleSpeedChange = (
-    targetMode: 'walk' | 'bike' | 'ebike',
-    value: number | '',
-  ) => {
+  const handleSpeedChange = (targetMode: 'walk' | 'bike' | 'ebike', value: number | '') => {
     if (typeof value !== 'number') {
       return
     }

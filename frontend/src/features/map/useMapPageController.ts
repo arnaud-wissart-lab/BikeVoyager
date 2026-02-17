@@ -41,19 +41,15 @@ export default function useMapPageController({
   poiItems,
   activePoiAlertId,
 }: UseMapPageControllerParams): UseMapPageControllerResult {
-  const [mapViewModeState, setMapViewModeState] = useState<MapViewMode>(
-    initialMapViewMode,
-  )
+  const [mapViewModeState, setMapViewModeState] = useState<MapViewMode>(initialMapViewMode)
   const [mapCommand, setMapCommand] = useState<MapCommand | null>(null)
   const [mapCommandSeq, setMapCommandSeq] = useState(0)
   const [isSummaryPanelExpanded, setIsSummaryPanelExpanded] = useState(true)
   const [isPoiPanelExpanded, setIsPoiPanelExpanded] = useState(false)
-  const [isMobileMapPanelExpanded, setIsMobileMapPanelExpandedState] =
-    useState(false)
+  const [isMobileMapPanelExpanded, setIsMobileMapPanelExpandedState] = useState(false)
   const [selectedPoiId, setSelectedPoiIdState] = useState<string | null>(null)
   const [isPoiModalOpen, setIsPoiModalOpenState] = useState(false)
-  const [isMobilePoiDetailsExpanded, setIsMobilePoiDetailsExpandedState] =
-    useState(true)
+  const [isMobilePoiDetailsExpanded, setIsMobilePoiDetailsExpandedState] = useState(true)
 
   const selectedPoi = useMemo(
     () => visiblePoiItems.find((poi) => poi.id === selectedPoiId) ?? null,

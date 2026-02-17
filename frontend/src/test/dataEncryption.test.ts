@@ -22,10 +22,7 @@ describe('dataEncryption', () => {
     expect(isEncryptedBikeVoyagerPayload(encrypted)).toBe(true)
     expect(encrypted.wrappedFormat).toBe('bikevoyager-backup')
 
-    const decrypted = await decryptBikeVoyagerPayload(
-      encrypted,
-      'motdepasse-solide',
-    )
+    const decrypted = await decryptBikeVoyagerPayload(encrypted, 'motdepasse-solide')
 
     expect(decrypted).toEqual(payload)
   })
@@ -37,10 +34,6 @@ describe('dataEncryption', () => {
       'bikevoyager-trip',
     )
 
-    await expect(
-      decryptBikeVoyagerPayload(encrypted, 'mauvais-motdepasse'),
-    ).rejects.toThrow()
+    await expect(decryptBikeVoyagerPayload(encrypted, 'mauvais-motdepasse')).rejects.toThrow()
   })
 })
-
-

@@ -38,9 +38,7 @@ type DiagnosticsPayload = {
 const toOptionalString = (value: unknown) =>
   typeof value === 'string' && value.trim().length > 0 ? value : null
 
-export const mapCloudDiagnostics = (
-  payload: DiagnosticsPayload,
-): CloudDiagnostics => {
+export const mapCloudDiagnostics = (payload: DiagnosticsPayload): CloudDiagnostics => {
   const cache = payload.cache
   const distributedCacheType =
     typeof cache?.distributedCacheType === 'string' && cache.distributedCacheType.trim()

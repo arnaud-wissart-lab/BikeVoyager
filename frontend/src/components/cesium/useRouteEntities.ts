@@ -1,16 +1,12 @@
 import { useEffect, type MutableRefObject } from 'react'
-import type { MapViewMode, RouteBounds, RouteElevationPoint, RouteGeometry } from '../../features/routing/domain'
-import {
-  buildRouteHeights,
-  buildRouteSignature,
-  haversineDistanceMeters,
-} from './math'
 import type {
-  CesiumModule,
-  CesiumStatus,
-  NavigationProgress,
-  PoiMarker,
-} from './types'
+  MapViewMode,
+  RouteBounds,
+  RouteElevationPoint,
+  RouteGeometry,
+} from '../../features/routing/domain'
+import { buildRouteHeights, buildRouteSignature, haversineDistanceMeters } from './math'
+import type { CesiumModule, CesiumStatus, NavigationProgress, PoiMarker } from './types'
 
 type UseRouteEntitiesParams = {
   status: CesiumStatus
@@ -55,10 +51,7 @@ export default function useRouteEntities({
     }
 
     const nextSignature = buildRouteSignature(geometry, elevationProfile)
-    if (
-      nextSignature === lastRouteSignatureRef.current &&
-      routeEntityRef.current
-    ) {
+    if (nextSignature === lastRouteSignatureRef.current && routeEntityRef.current) {
       viewer.scene.requestRender()
       return
     }
@@ -75,11 +68,7 @@ export default function useRouteEntities({
 
     const heights = buildRouteHeights(geometry.coordinates, elevationProfile)
     const positions = geometry.coordinates.map(([lon, lat], index) =>
-      Cesium.Cartesian3.fromDegrees(
-        lon,
-        lat,
-        heights ? heights[index] ?? 0 : 0,
-      ),
+      Cesium.Cartesian3.fromDegrees(lon, lat, heights ? (heights[index] ?? 0) : 0),
     )
 
     const hasAltitude = Boolean(heights)
@@ -201,9 +190,7 @@ export default function useRouteEntities({
         duration: 1.15,
         offset: new Cesium.HeadingPitchRange(
           viewMode === '3d' ? viewer.camera.heading : 0,
-          viewMode === '3d'
-            ? Cesium.Math.toRadians(-72)
-            : Cesium.Math.toRadians(-89.5),
+          viewMode === '3d' ? Cesium.Math.toRadians(-72) : Cesium.Math.toRadians(-89.5),
           viewMode === '3d' ? 950 : 1350,
         ),
       })
@@ -248,11 +235,7 @@ export default function useRouteEntities({
         : Cesium.Color.fromCssColorString('#12b886')
 
     navigationEntityRef.current = viewer.entities.add({
-      position: Cesium.Cartesian3.fromDegrees(
-        navigationProgress.lon,
-        navigationProgress.lat,
-        0,
-      ),
+      position: Cesium.Cartesian3.fromDegrees(navigationProgress.lon, navigationProgress.lat, 0),
       point: {
         pixelSize: 12,
         color: pointColor,
@@ -263,12 +246,5 @@ export default function useRouteEntities({
     })
 
     viewer.scene.requestRender()
-  }, [
-    cesiumRef,
-    navigationActive,
-    navigationEntityRef,
-    navigationProgress,
-    status,
-    viewerRef,
-  ])
+  }, [cesiumRef, navigationActive, navigationEntityRef, navigationProgress, status, viewerRef])
 }

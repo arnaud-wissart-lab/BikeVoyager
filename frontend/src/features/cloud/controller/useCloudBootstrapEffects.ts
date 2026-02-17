@@ -2,11 +2,7 @@ import { useEffect } from 'react'
 import type { TFunction } from 'i18next'
 import type { AppStore } from '../../../state/appStore'
 import type { RouteKey } from '../../routing/domain'
-import {
-  fetchCloudProviderAvailability,
-  isCloudProviderConfigured,
-  loadCloudSession,
-} from '../api'
+import { fetchCloudProviderAvailability, isCloudProviderConfigured, loadCloudSession } from '../api'
 import type { CloudAuthState } from '../cloudSync'
 import { processCloudOAuthCallback } from './oauthFlow'
 import { cloudDataRouteHash } from './providers'
@@ -57,8 +53,7 @@ export const useCloudBootstrapEffects = ({
 
         setCloudProviderAvailability(availability)
         const pageUrl = new URL(window.location.href)
-        const hasOAuthQuery =
-          pageUrl.searchParams.has('code') || pageUrl.searchParams.has('error')
+        const hasOAuthQuery = pageUrl.searchParams.has('code') || pageUrl.searchParams.has('error')
         if (hasOAuthQuery) {
           return
         }
@@ -75,10 +70,7 @@ export const useCloudBootstrapEffects = ({
         }
 
         const preferredProvider = cloudProvider
-        if (
-          preferredProvider === 'none' ||
-          availability[preferredProvider] !== true
-        ) {
+        if (preferredProvider === 'none' || availability[preferredProvider] !== true) {
           return
         }
 

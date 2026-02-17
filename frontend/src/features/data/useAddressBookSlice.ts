@@ -7,10 +7,7 @@ type UseAddressBookSliceParams = {
   filterTag: string
 }
 
-export const useAddressBookSlice = ({
-  addressBook,
-  filterTag,
-}: UseAddressBookSliceParams) => {
+export const useAddressBookSlice = ({ addressBook, filterTag }: UseAddressBookSliceParams) => {
   const addressBookById = useMemo(() => {
     const map = new Map<string, AddressBookEntry>()
     for (const entry of addressBook) {

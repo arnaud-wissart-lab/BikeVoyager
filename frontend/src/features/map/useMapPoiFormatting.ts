@@ -14,11 +14,7 @@ type UseMapPoiFormattingParams = {
   isFrench: boolean
 }
 
-export const useMapPoiFormatting = ({
-  selectedPoi,
-  t,
-  isFrench,
-}: UseMapPoiFormattingParams) => {
+export const useMapPoiFormatting = ({ selectedPoi, t, isFrench }: UseMapPoiFormattingParams) => {
   const toTitleCase = (value: string) => {
     const trimmed = value.trim()
     if (!trimmed) {
@@ -124,9 +120,7 @@ export const useMapPoiFormatting = ({
     }),
     [t],
   )
-  const selectedPoiCategoryLabel = selectedPoi
-    ? poiCategoryLabels[selectedPoi.category]
-    : null
+  const selectedPoiCategoryLabel = selectedPoi ? poiCategoryLabels[selectedPoi.category] : null
   const selectedPoiTags = useMemo(() => {
     if (!selectedPoi?.tags) {
       return [] as Array<[string, string]>

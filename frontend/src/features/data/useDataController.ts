@@ -28,14 +28,8 @@ import {
   serializeJsonContent,
   wouldCloudBackupMergeChangeLocal as wouldCloudBackupMergeChangeLocalCore,
 } from './controller/importExport'
-import {
-  buildExportedPreferences,
-  buildPlannerDraftSnapshot,
-} from './controller/mappers'
-import {
-  hasAnyLocalBackupData,
-  hasPlannerDraftSnapshotData,
-} from './controller/validators'
+import { buildExportedPreferences, buildPlannerDraftSnapshot } from './controller/mappers'
+import { hasAnyLocalBackupData, hasPlannerDraftSnapshotData } from './controller/validators'
 
 type UseDataControllerParams = {
   store: AppStore
@@ -46,18 +40,9 @@ type UseDataControllerParams = {
   mapViewMode: MapViewMode
   mapHeaderTitle: string
   startLabel: string
-  showSuccessToast: (
-    message: string,
-    options?: { title?: string; durationMs?: number },
-  ) => void
-  showErrorToast: (
-    message: string,
-    options?: { title?: string; durationMs?: number },
-  ) => void
-  requestRoute: (
-    payload: RouteRequestPayload,
-    nextDetours?: DetourPoint[],
-  ) => Promise<boolean>
+  showSuccessToast: (message: string, options?: { title?: string; durationMs?: number }) => void
+  showErrorToast: (message: string, options?: { title?: string; durationMs?: number }) => void
+  requestRoute: (payload: RouteRequestPayload, nextDetours?: DetourPoint[]) => Promise<boolean>
 }
 
 export const useDataController = ({
@@ -145,7 +130,7 @@ export const useDataController = ({
   )
 
   const deliveryStartAddress = deliveryStartAddressId
-    ? addressBookById.get(deliveryStartAddressId) ?? null
+    ? (addressBookById.get(deliveryStartAddressId) ?? null)
     : null
   const deliveryStopAddresses = useMemo(
     () =>
@@ -262,13 +247,9 @@ export const useDataController = ({
       options,
     })
 
-  const parseImportedPayload = (payload: unknown) =>
-    parseImportedPayloadCore(payload, t)
+  const parseImportedPayload = (payload: unknown) => parseImportedPayloadCore(payload, t)
 
-  const importPayload = async (
-    payload: unknown,
-    options?: { mode?: ImportedDataApplyMode },
-  ) => {
+  const importPayload = async (payload: unknown, options?: { mode?: ImportedDataApplyMode }) => {
     const imported = parseImportedPayload(payload)
     return applyParsedImportedData(imported, options)
   }
@@ -317,8 +298,7 @@ export const useDataController = ({
   const canQuickSaveOnewayEnd =
     endPlace !== null && !addressBookActions.isPlaceAlreadySavedInAddressBook(endPlace)
   const canQuickSaveLoopStart =
-    loopStartPlace !== null &&
-    !addressBookActions.isPlaceAlreadySavedInAddressBook(loopStartPlace)
+    loopStartPlace !== null && !addressBookActions.isPlaceAlreadySavedInAddressBook(loopStartPlace)
   const canSaveAddressBookEntry =
     store.addressBookPlaceCandidate !== null &&
     !addressBookActions.isPlaceAlreadySavedInAddressBook(store.addressBookPlaceCandidate)

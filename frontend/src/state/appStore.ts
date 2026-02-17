@@ -11,10 +11,7 @@ type UseAppStoreParams = {
   initialAppPreferences: AppPreferences
 }
 
-export const useAppStore = ({
-  initialPlannerDraft,
-  initialAppPreferences,
-}: UseAppStoreParams) => {
+export const useAppStore = ({ initialPlannerDraft, initialAppPreferences }: UseAppStoreParams) => {
   const mapSlice = useMapSlice({
     initialPlannerDraft,
     initialAppPreferences,

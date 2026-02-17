@@ -15,8 +15,7 @@ export const hasWebglSupport = () => {
 
   try {
     const canvas = document.createElement('canvas')
-    const webgl =
-      canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+    const webgl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
     return Boolean(webgl)
   } catch {
     return false
@@ -25,10 +24,7 @@ export const hasWebglSupport = () => {
 
 const toRadians = (value: number) => (value * Math.PI) / 180
 
-export const haversineDistanceMeters = (
-  a: [number, number],
-  b: [number, number],
-) => {
+export const haversineDistanceMeters = (a: [number, number], b: [number, number]) => {
   const [lon1, lat1] = a
   const [lon2, lat2] = b
   const earthRadius = 6371000
@@ -39,9 +35,7 @@ export const haversineDistanceMeters = (
 
   const sinLat = Math.sin(dLat / 2)
   const sinLon = Math.sin(dLon / 2)
-  const h =
-    sinLat * sinLat +
-    Math.cos(lat1Rad) * Math.cos(lat2Rad) * sinLon * sinLon
+  const h = sinLat * sinLat + Math.cos(lat1Rad) * Math.cos(lat2Rad) * sinLon * sinLon
   return 2 * earthRadius * Math.asin(Math.min(1, Math.sqrt(h)))
 }
 
@@ -58,10 +52,7 @@ const buildCumulativeDistances = (coordinates: [number, number][]) => {
   return distances
 }
 
-const interpolateElevation = (
-  profile: RouteElevationPoint[],
-  distance: number,
-) => {
+const interpolateElevation = (profile: RouteElevationPoint[], distance: number) => {
   if (profile.length === 0) {
     return 0
   }

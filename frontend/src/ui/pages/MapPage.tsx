@@ -80,10 +80,7 @@ type MapPageProps = {
   mobilePoiPanelTransition: string
   isNavigationSetupOpen: boolean
   onCloseNavigationSetup: () => void
-  navigationOptionsPanelProps: Omit<
-    ComponentProps<typeof NavigationOptionsPanel>,
-    'isCompact'
-  >
+  navigationOptionsPanelProps: Omit<ComponentProps<typeof NavigationOptionsPanel>, 'isCompact'>
   onStartNavigation: () => void
   navigationMode: NavigationMode
   onExitNavigation: () => void

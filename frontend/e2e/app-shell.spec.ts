@@ -37,9 +37,7 @@ test('footer mobile sans debordement horizontal', async ({ page, isMobile }) => 
   }
 
   for (const labelPattern of labels) {
-    const box = await footer
-      .getByRole('button', { name: labelPattern })
-      .boundingBox()
+    const box = await footer.getByRole('button', { name: labelPattern }).boundingBox()
     expect(box).not.toBeNull()
     if (!box) {
       continue
@@ -69,8 +67,14 @@ test('parcours utilisateur complet planifier vers carte', async ({ page, isMobil
 
   await page.goto('/#/planifier')
 
-  await page.getByText(/^Vélo$|^Bike$/).first().click()
-  await page.getByText(/^Aller simple$|^One-way$/).first().click()
+  await page
+    .getByText(/^Vélo$|^Bike$/)
+    .first()
+    .click()
+  await page
+    .getByText(/^Aller simple$|^One-way$/)
+    .first()
+    .click()
 
   const startInput = page.locator('[data-testid="plan-start-input"]:not([disabled])')
   await startInput.fill('Paris')

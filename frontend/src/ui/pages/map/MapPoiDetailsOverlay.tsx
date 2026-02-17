@@ -129,9 +129,7 @@ export default function MapPoiDetailsOverlay({
                 variant="default"
                 size="sm"
                 onClick={onToggleMobilePoiDetails}
-                aria-label={t(
-                  isMobilePoiDetailsExpanded ? 'mapPanelCollapse' : 'mapPanelExpand',
-                )}
+                aria-label={t(isMobilePoiDetailsExpanded ? 'mapPanelCollapse' : 'mapPanelExpand')}
               >
                 {isMobilePoiDetailsExpanded ? (
                   <IconChevronDown size={14} />

@@ -67,7 +67,10 @@ export const poiPreferredTagOrder = [
   'addr:city',
 ]
 
-export const speedRanges: Record<Mode, { min: number; max: number; step: number; precision: number }> = {
+export const speedRanges: Record<
+  Mode,
+  { min: number; max: number; step: number; precision: number }
+> = {
   walk: { min: 3, max: 7, step: 0.5, precision: 1 },
   bike: { min: 10, max: 30, step: 1, precision: 0 },
   ebike: { min: 15, max: 25, step: 1, precision: 0 },

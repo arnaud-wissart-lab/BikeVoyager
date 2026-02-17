@@ -111,9 +111,7 @@ export const usePoisController = ({
 
     const shouldLoadVisiblePois = poiCategories.length > 0
     const shouldLoadAlertPois =
-      isNavigationActive &&
-      poiAlertEnabled &&
-      poiAlertCategories.length > 0
+      isNavigationActive && poiAlertEnabled && poiAlertCategories.length > 0
 
     const requestedCategories = Array.from(
       new Set([

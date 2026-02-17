@@ -105,10 +105,7 @@ export default function InstallPrompt() {
   const dismissPrompt = () => {
     setPromptEvent(null)
     setIsVisible(false)
-    localStorage.setItem(
-      dismissKey,
-      (Date.now() + dismissDurationMs).toString(),
-    )
+    localStorage.setItem(dismissKey, (Date.now() + dismissDurationMs).toString())
   }
 
   const handleInstall = async () => {
@@ -134,9 +131,7 @@ export default function InstallPrompt() {
     () => ({
       position: 'fixed',
       zIndex: 1200,
-      bottom: isDesktop
-        ? 24
-        : 'calc(96px + env(safe-area-inset-bottom, 0px))',
+      bottom: isDesktop ? 24 : 'calc(96px + env(safe-area-inset-bottom, 0px))',
       right: isDesktop ? 24 : 16,
       left: isDesktop ? 'auto' : 16,
       pointerEvents: 'auto',
@@ -146,11 +141,9 @@ export default function InstallPrompt() {
 
   const cardStyle = useMemo<React.CSSProperties>(
     () => ({
-      backgroundColor:
-        colorScheme === 'dark' ? theme.colors.gray[8] : theme.white,
+      backgroundColor: colorScheme === 'dark' ? theme.colors.gray[8] : theme.white,
       maxWidth: isDesktop ? 360 : '100%',
-      borderColor:
-        colorScheme === 'dark' ? theme.colors.gray[7] : theme.colors.gray[3],
+      borderColor: colorScheme === 'dark' ? theme.colors.gray[7] : theme.colors.gray[3],
     }),
     [colorScheme, isDesktop, theme.colors.gray, theme.white],
   )

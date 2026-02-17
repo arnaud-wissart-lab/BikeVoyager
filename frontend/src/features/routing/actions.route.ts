@@ -138,10 +138,7 @@ export const createRouteRequestAction = ({
     setRouteErrorKey,
   }
 
-  return async (
-    requestBody: RouteRequestPayload,
-    nextDetours: DetourPoint[] = [],
-  ) => {
+  return async (requestBody: RouteRequestPayload, nextDetours: DetourPoint[] = []) => {
     setIsRouteLoading(true)
     lastRouteRequestRef.current = {
       type: 'route',

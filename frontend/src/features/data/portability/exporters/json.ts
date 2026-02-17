@@ -1,8 +1,5 @@
 import { normalizePlannerDraft } from '../../../routing/domain'
-import {
-  sortAndLimitAddressBook,
-  sortAndLimitSavedTrips,
-} from '../mappers'
+import { sortAndLimitAddressBook, sortAndLimitSavedTrips } from '../mappers'
 import type {
   BikeVoyagerBackupExport,
   BikeVoyagerPreferencesExport,

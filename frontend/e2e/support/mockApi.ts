@@ -88,28 +88,27 @@ export const mockApi = async (page: Page) => {
     const url = new URL(route.request().url())
     const query = (url.searchParams.get('q') ?? '').toLowerCase()
 
-    const candidates =
-      query.includes('paris')
+    const candidates = query.includes('paris')
+      ? [
+          {
+            label: 'Paris',
+            lat: 48.8566,
+            lon: 2.3522,
+            score: 0.9,
+            source: 'test',
+          },
+        ]
+      : query.includes('lyon')
         ? [
             {
-              label: 'Paris',
-              lat: 48.8566,
-              lon: 2.3522,
+              label: 'Lyon',
+              lat: 45.764,
+              lon: 4.8357,
               score: 0.9,
               source: 'test',
             },
           ]
-        : query.includes('lyon')
-          ? [
-              {
-                label: 'Lyon',
-                lat: 45.764,
-                lon: 4.8357,
-                score: 0.9,
-                source: 'test',
-              },
-            ]
-          : []
+        : []
 
     await route.fulfill({
       status: 200,

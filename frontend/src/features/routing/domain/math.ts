@@ -16,10 +16,7 @@ export const normalizeNumericInput = (value: number | string): number | '' => {
 
 export const toRadians = (value: number) => (value * Math.PI) / 180
 
-export const haversineDistanceMeters = (
-  left: [number, number],
-  right: [number, number],
-) => {
+export const haversineDistanceMeters = (left: [number, number], right: [number, number]) => {
   const [leftLon, leftLat] = left
   const [rightLon, rightLat] = right
   const earthRadius = 6371000
@@ -30,9 +27,7 @@ export const haversineDistanceMeters = (
 
   const sinLat = Math.sin(dLat / 2)
   const sinLon = Math.sin(dLon / 2)
-  const h =
-    sinLat * sinLat +
-    Math.cos(leftLatRad) * Math.cos(rightLatRad) * sinLon * sinLon
+  const h = sinLat * sinLat + Math.cos(leftLatRad) * Math.cos(rightLatRad) * sinLon * sinLon
 
   return 2 * earthRadius * Math.asin(Math.min(1, Math.sqrt(h)))
 }
@@ -44,10 +39,7 @@ export const buildCumulativeDistances = (coordinates: [number, number][]) => {
 
   const distances = [0]
   for (let index = 1; index < coordinates.length; index += 1) {
-    const segmentDistance = haversineDistanceMeters(
-      coordinates[index - 1],
-      coordinates[index],
-    )
+    const segmentDistance = haversineDistanceMeters(coordinates[index - 1], coordinates[index])
     distances.push(distances[index - 1] + segmentDistance)
   }
   return distances
@@ -62,10 +54,7 @@ export const normalizeHeadingDegrees = (value: number) => {
   return wrapped < 0 ? wrapped + 360 : wrapped
 }
 
-export const computeHeadingDegrees = (
-  start: [number, number],
-  end: [number, number],
-) => {
+export const computeHeadingDegrees = (start: [number, number], end: [number, number]) => {
   const [startLon, startLat] = start
   const [endLon, endLat] = end
   const startLatRad = toRadians(startLat)
@@ -107,10 +96,7 @@ export const sampleRouteAtDistance = (
 
   const clampedDistance = Math.max(
     0,
-    Math.min(
-      targetDistance,
-      cumulativeDistances[cumulativeDistances.length - 1] ?? 0,
-    ),
+    Math.min(targetDistance, cumulativeDistances[cumulativeDistances.length - 1] ?? 0),
   )
 
   for (let index = 1; index < cumulativeDistances.length; index += 1) {
@@ -159,10 +145,7 @@ export const projectCoordinateOnRoute = (
   routeCoordinates: [number, number][],
   cumulativeDistances: number[],
 ): RouteProjection | null => {
-  if (
-    routeCoordinates.length < 2 ||
-    cumulativeDistances.length !== routeCoordinates.length
-  ) {
+  if (routeCoordinates.length < 2 || cumulativeDistances.length !== routeCoordinates.length) {
     return null
   }
 
@@ -195,8 +178,7 @@ export const projectCoordinateOnRoute = (
     }
 
     const rawRatio =
-      ((targetX - startX) * segmentX + (targetY - startY) * segmentY) /
-      segmentLengthSquared
+      ((targetX - startX) * segmentX + (targetY - startY) * segmentY) / segmentLengthSquared
     const ratio = Math.max(0, Math.min(1, rawRatio))
     const projectedX = startX + ratio * segmentX
     const projectedY = startY + ratio * segmentY
@@ -221,8 +203,7 @@ export const projectCoordinateOnRoute = (
 
   const segmentDistance =
     cumulativeDistances[bestSegmentIndex + 1] - cumulativeDistances[bestSegmentIndex]
-  const distanceAlong =
-    cumulativeDistances[bestSegmentIndex] + segmentDistance * bestRatio
+  const distanceAlong = cumulativeDistances[bestSegmentIndex] + segmentDistance * bestRatio
   const headingDeg = computeHeadingDegrees(
     routeCoordinates[bestSegmentIndex],
     routeCoordinates[bestSegmentIndex + 1],

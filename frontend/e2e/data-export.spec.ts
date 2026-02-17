@@ -23,5 +23,7 @@ test('data export: déclenche un téléchargement et un feedback utilisateur', a
   const download = await downloadPromise
 
   expect(download.suggestedFilename()).toMatch(/^bikevoyager-backup-\d{4}-\d{2}-\d{2}\.json$/)
-  await expect(page.getByText(/Sauvegarde complète exportée\.|Full backup exported\./i)).toBeVisible()
+  await expect(
+    page.getByText(/Sauvegarde complète exportée\.|Full backup exported\./i),
+  ).toBeVisible()
 })

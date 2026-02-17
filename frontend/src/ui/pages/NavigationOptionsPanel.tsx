@@ -1,6 +1,10 @@
 import { Checkbox, Group, Paper, SegmentedControl, Slider, Stack, Text } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
-import type { NavigationCameraMode, NavigationMode, PoiCategory } from '../../features/routing/domain'
+import type {
+  NavigationCameraMode,
+  NavigationMode,
+  PoiCategory,
+} from '../../features/routing/domain'
 
 type PoiCategoryOption = {
   value: string
@@ -109,10 +113,7 @@ export default function NavigationOptionsPanel({
             <Text size="xs" c="dimmed">
               {t('poiAlertCategoryLabel')}
             </Text>
-            <Checkbox.Group
-              value={poiAlertCategories}
-              onChange={onPoiAlertCategoryChange}
-            >
+            <Checkbox.Group value={poiAlertCategories} onChange={onPoiAlertCategoryChange}>
               <Group gap="xs" wrap="wrap">
                 {poiCategoryOptions.map((category) => (
                   <Checkbox
@@ -170,4 +171,3 @@ export default function NavigationOptionsPanel({
     </Paper>
   )
 }
-

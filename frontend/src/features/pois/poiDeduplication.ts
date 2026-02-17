@@ -72,7 +72,9 @@ export const deduplicatePoiItems = (items: PoiItem[]) => {
     }
 
     const duplicateIndex = bucket.findIndex((existing) => {
-      if (Math.abs(existing.distance_m - poi.distance_m) > maxPoiDuplicateAlongDistanceDeltaMeters) {
+      if (
+        Math.abs(existing.distance_m - poi.distance_m) > maxPoiDuplicateAlongDistanceDeltaMeters
+      ) {
         return false
       }
 
@@ -90,10 +92,7 @@ export const deduplicatePoiItems = (items: PoiItem[]) => {
     bucket[duplicateIndex] = selectPreferredPoiDuplicate(bucket[duplicateIndex], poi)
   }
 
-  const deduplicated = [
-    ...passthrough,
-    ...Array.from(semanticBuckets.values()).flat(),
-  ]
+  const deduplicated = [...passthrough, ...Array.from(semanticBuckets.values()).flat()]
 
   return deduplicated.sort((left, right) => {
     if (left.distance_m !== right.distance_m) {

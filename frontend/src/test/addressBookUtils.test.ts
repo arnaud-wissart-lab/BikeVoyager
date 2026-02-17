@@ -37,4 +37,3 @@ describe('addressBookUtils', () => {
     expect(formatAddressTagFallbackLabel('delivery')).toBe('Delivery')
   })
 })
-

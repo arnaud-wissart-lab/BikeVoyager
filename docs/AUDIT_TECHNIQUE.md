@@ -4,7 +4,7 @@
 > Source LOC : `scripts/loc.ps1` (PowerShell) et `scripts/loc.sh` (bash).
 > Relevé exécuté le 2026-02-17 avec la commande canonique :
 > `pwsh scripts/loc.ps1 --scope backend/frontend/docs --threshold 400 --top 30 --out docs/LOC_REPORT.md`
-> Commit de référence : `32adfee`.
+> Commit de référence : `54469d0`.
 > Note : le comptage "style éditeur" inclut les lignes vides (base LF `\n`).
 
 ## 1) Anciens hotspots : statut réel (Résolu vs Restant)

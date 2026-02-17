@@ -1,6 +1,6 @@
 # Roadmap BikeVoyager
 
-Source : `docs/AUDIT_TECHNIQUE.md` et `docs/LOC_REPORT.md` (relevé du 2026-02-17, commit `32adfee`).
+Source : `docs/AUDIT_TECHNIQUE.md` et `docs/LOC_REPORT.md` (relevé du 2026-02-17, commit `54469d0`).
 Objectif : renforcer la qualité du dépôt sans changement fonctionnel.
 
 ## Backlog priorisé (reste à faire)
@@ -15,7 +15,7 @@ Objectif : renforcer la qualité du dépôt sans changement fonctionnel.
 
 ## Hotspots sortis du backlog LOC (>= 400)
 
-- Au relevé du 2026-02-17 (`32adfee`), aucun fichier du scope `backend/frontend/docs` n'est >= 400 LOC.
+- Au relevé du 2026-02-17 (`54469d0`), aucun fichier du scope `backend/frontend/docs` n'est >= 400 LOC.
 - Tous les hotspots suivis précédemment sont sortis du backlog LOC, y compris `frontend/src/features/routing/useRoutingController.actions.ts` (394 LOC).
 
 Définition of done globale :

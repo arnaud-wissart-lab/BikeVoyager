@@ -1,5 +1,8 @@
 # BikeVoyager (mono-repo)
 
+[![CI](https://img.shields.io/github/actions/workflow/status/arnaud-wissart/BikeVoyager/ci.yml?branch=main&label=CI)](https://github.com/arnaud-wissart/BikeVoyager/actions/workflows/ci.yml)
+[![Licence](https://img.shields.io/github/license/arnaud-wissart/BikeVoyager)](LICENSE)
+
 Documentation de référence : français en priorité.
 Des notes en anglais peuvent exister, mais la version FR reste la source principale.
 
@@ -7,6 +10,13 @@ Des notes en anglais peuvent exister, mais la version FR reste la source princip
 
 BikeVoyager regroupe un backend `.NET 10` et un frontend `React + TypeScript`.
 Le repo vise une base robuste, testable et exploitable localement avec orchestration Aspire.
+
+## Liens rapides
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [API](docs/API.md)
+- [Sécurité](SECURITY.md)
+- [Contribuer](CONTRIBUTING.md)
 
 ## Structure
 

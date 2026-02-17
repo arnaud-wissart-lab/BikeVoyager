@@ -1,50 +1,45 @@
 # Architecture BikeVoyager
 
-## Vue d'ensemble
+## Vue système
 
-BikeVoyager est un monorepo avec un frontend `React + TypeScript` et une API `ASP.NET Core (.NET 10)` versionnée en `/api/v1/*`. Le frontend orchestre l'expérience utilisateur (planification, carte, données cloud) et délègue les calculs et intégrations externes à l'API.
+BikeVoyager repose sur un frontend `React + TypeScript` et une API `ASP.NET Core (.NET 10)` exposée en `/api/v1/*`.
+Le frontend gère l'interface et envoie les requêtes à l'API.  
+L'API porte les règles métier, la sécurité, la résilience réseau et les intégrations externes.
 
-Le backend suit une séparation en couches (`Api -> Application -> Infrastructure -> Domain`) pour garder un contrat HTTP lisible, une logique métier testable et des adaptateurs externes isolés. Cette structure facilite les évolutions sans propager les changements techniques jusqu'au domaine.
+Les services tiers sont appelés uniquement côté backend:
+- `Valhalla` pour le routage vélo;
+- `Overpass` pour la recherche de POI et données cartographiques;
+- fournisseurs cloud (Google Drive / OneDrive) pour la sauvegarde et la restauration.
 
-Les appels vers les services tiers (routage, POI, sync cloud) passent uniquement par l'API. Le frontend ne parle pas directement à Valhalla, Overpass ou aux fournisseurs cloud, ce qui centralise la sécurité, la résilience réseau et les règles métier.
-
-## Diagramme (C4-lite)
+## Diagramme simplifié
 
 ```text
-+---------------------------+
-| Frontend Web (React/Vite) |
-| - UI/UX                   |
-| - appels HTTP /api/v1/*   |
-+-------------+-------------+
-              |
-              v
-+---------------------------+
-| API BikeVoyager (.NET 10) |
-| - Endpoints versionnés    |
-| - Cas d'usage             |
-| - Sécurité + résilience   |
-+------+------+-------------+
-       |      |
-       |      +------------------------------+
-       |                                     |
-       v                                     v
-+--------------+                     +-------------------+
-| Valhalla     |                     | Overpass          |
-| (routing)    |                     | (POI/geodata)     |
-+--------------+                     +-------------------+
-              \
-               \
-                v
-         +-------------------+
-         | Cloud Providers   |
-         | (Google/Microsoft)|
-         +-------------------+
++-----------------------------+
+| Frontend Web (React / Vite) |
+| UI + appels HTTP /api/v1/*  |
++--------------+--------------+
+               |
+               v
++-----------------------------+
+| API BikeVoyager (.NET 10)   |
+| Cas d'usage + sécurité      |
+| + intégrations externes     |
++-----+----------+------------+
+      |          | 
+      v          v           v
++-----------+ +-----------+ +------------------+
+| Valhalla  | | Overpass  | | Cloud Providers  |
+| Routing   | | POI/Data  | | Google/Microsoft |
++-----------+ +-----------+ +------------------+
 ```
 
-## Décisions clés
+## Flux principaux
 
-- Backend en couches: [ADR-0001](../DECISIONS.md#adr-0001---architecture-backend-en-couches)
-- Frontend par domaines fonctionnels: [ADR-0002](../DECISIONS.md#adr-0002---architecture-frontend-react-typescript)
-- API canonique versionnée `/api/v1/*`: [ADR-0003](../DECISIONS.md#adr-0003---versioning-api-canonique-en-apiv1)
-- Orchestration locale via AppHost: [ADR-0005](../DECISIONS.md#adr-0005---orchestration-locale-via-apphost)
-- Résilience HTTP standardisée: [ADR-0006](../DECISIONS.md#adr-0006---resilience-http-via-microsoftextensionshttpresilience)
+1. Calcul d'itinéraire: `Frontend -> API -> Valhalla -> API -> Frontend`.
+2. Recherche de points d'intérêt: `Frontend -> API -> Overpass -> API -> Frontend`.
+3. Sauvegarde cloud: `Frontend -> API -> Provider Cloud -> API -> Frontend`.
+
+## Liens utiles
+
+- Décisions d'architecture (ADR): [DECISIONS.md](../DECISIONS.md)
+- Contrat HTTP: [API.md](./API.md)

@@ -51,7 +51,7 @@ jobs:
         run: npm run lint
       - name: Format
         working-directory: frontend
-        run: npm run format
+        run: npm run format:ci
       - name: Tests
         working-directory: frontend
         run: npm run test

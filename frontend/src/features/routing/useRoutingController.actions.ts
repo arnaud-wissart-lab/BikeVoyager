@@ -1,10 +1,6 @@
 import type { TFunction } from 'i18next'
 import type { AppStore } from '../../state/appStore'
-import {
-  buildLoopRequest,
-  type DetourPoint,
-  type RouteKey,
-} from './domain'
+import { buildLoopRequest, type DetourPoint, type RouteKey } from './domain'
 import { clearRouteErrors, setLoopFailedError, setRouteMissingPlaceError } from './actions.errors'
 import {
   buildLoopRequestPayload,

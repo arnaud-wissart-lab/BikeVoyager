@@ -72,7 +72,7 @@ Stack complète (recommandé) :
 
 Comportement par défaut :
 
-- Détection des mises à jour OSM en arrière-plan (`valhalla-watch`)
+- Détection des mises à jour OSM en arrière-plan (`scripts/valhalla-watch-updates.ps1` / `scripts/valhalla-watch-updates.sh`)
 - Pas d’application automatique de la mise à jour (`VALHALLA_UPDATE_AUTO_BUILD=false`)
 - Notification visible dans l’onglet Aide du frontend
 - Lancement manuel via bouton côté front (`POST /api/v1/valhalla/update/start`)

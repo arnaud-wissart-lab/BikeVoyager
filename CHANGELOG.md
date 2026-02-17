@@ -6,7 +6,7 @@ Historique public des évolutions notables du projet.
 
 - Aucun changement publié.
 
-## 2026-02-xx
+## 2026-02-17
 
 ### Refactors majeurs
 

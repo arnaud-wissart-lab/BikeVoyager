@@ -1,7 +1,7 @@
-## Frontend working agreements
+## Règles frontend
 
-- Ce fichier complete `../AGENTS.md` (regle racine prioritaire sur les seuils globaux).
-- Aucun fichier React/TS ne doit dépasser 600 lignes (sauf exception justifiée dans docs/DECISIONS.md).
+- Ce fichier complète `../AGENTS.md` (règle racine prioritaire).
+- Aucun fichier React/TS ne doit dépasser 600 lignes (sauf exception justifiée dans `../DECISIONS.md`).
 - Interdit de déplacer un monolithe vers un nouveau monolithe.
-- Préférer extraction en hooks (use\*Controller) + composants UI petits.
-- Tests obligatoires: npm test, et Playwright si présent.
+- Préférer l’extraction en hooks (`use*Controller`) et petits composants UI.
+- Tests obligatoires : `npm test` et Playwright si présent.

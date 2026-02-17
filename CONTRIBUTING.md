@@ -4,20 +4,26 @@
 Ce dépôt vise une base propre, auditable, maintenable et reproductible.
 
 ## Working agreements
-- Les règles de contribution sont définies dans `AGENTS.md` et `frontend/AGENTS.md`.
+- Ce document centralise les règles de contribution (générales et frontend).
 - Elles s'appliquent à toutes les contributions, quel que soit leur auteur.
 - En cas de divergence, la règle la plus spécifique au périmètre modifié prévaut.
 - Les changements doivent rester atomiques, justifiés et faciles à auditer.
 - Les validations de tests restent obligatoires avant ouverture de PR.
 
-## Règles de référence
-- `AGENTS.md` fait foi pour les règles de contribution.
+## Règles générales
 - Seuils de taille cibles : backend < 400 LOC ; frontend < 600 LOC.
 - Toute exception à ces seuils doit être justifiée dans `DECISIONS.md` (ADR).
 - Commentaires et documentation destinés aux humains : français.
 - PRs petites et atomiques : un seul thème par PR.
 - Pas de reformat global sans justification explicite.
+- Respect SOLID / DRY / KISS ; pas de sur-design sans bénéfice clair.
 - Pas de changement de comportement applicatif dans une PR de documentation.
+
+## Règles frontend spécifiques
+- Aucun fichier React/TS ne doit dépasser 600 lignes (sauf exception justifiée dans `DECISIONS.md`).
+- Interdit de déplacer un monolithe vers un nouveau monolithe.
+- Préférer l’extraction en hooks (`use*Controller`) et petits composants UI.
+- Tests frontend obligatoires : `npm test` et Playwright si présent.
 
 ## Workflow recommandé
 1. Créer une branche ciblée sur un seul objectif.

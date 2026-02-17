@@ -1,45 +1,46 @@
-# Contribuer a BikeVoyager
+# Contribuer à BikeVoyager
 
 ## Objectif
-Ce depot vise une vitrine GitHub : code propre, auditable et documentation claire.
+Ce dépôt vise une vitrine GitHub : code propre, auditable et documentation claire.
 
 ## Working agreements
-- Les regles de contribution sont definies dans `AGENTS.md` et `frontend/AGENTS.md`.
-- Elles s'appliquent a toutes les PRs humaines et aux agents IA (Codex).
-- En cas de divergence, la regle la plus specifique au perimetre modifie prevaut.
-- Les changements doivent rester atomiques, justifies et faciles a auditer.
+- Les règles de contribution sont définies dans `AGENTS.md` et `frontend/AGENTS.md`.
+- Elles s'appliquent à toutes les PRs humaines et aux agents IA (Codex).
+- En cas de divergence, la règle la plus spécifique au périmètre modifié prévaut.
+- Les changements doivent rester atomiques, justifiés et faciles à auditer.
 - Les validations de tests restent obligatoires avant ouverture de PR.
 
-## Regles de reference
-- `AGENTS.md` fait foi pour les regles de contribution.
+## Règles de référence
+- `AGENTS.md` fait foi pour les règles de contribution.
 - Seuils de taille cibles : backend < 400 LOC ; frontend < 600 LOC.
-- Toute exception a ces seuils doit etre justifiee dans `DECISIONS.md` (ADR).
-- Commentaires et documentation destines aux humains : francais.
-- PRs petites et atomiques : un seul theme par PR.
+- Toute exception à ces seuils doit être justifiée dans `DECISIONS.md` (ADR).
+- Commentaires et documentation destinés aux humains : français.
+- PRs petites et atomiques : un seul thème par PR.
 - Pas de reformat global sans justification explicite.
 - Pas de changement de comportement applicatif dans une PR de documentation.
 
-## Workflow recommande
-1. Creer une branche ciblee sur un seul objectif.
-2. Limiter les changements au perimetre de la PR.
-3. Ajouter ou mettre a jour les tests si une refacto structurelle est introduite.
-4. Verifier localement les commandes de validation avant ouverture de PR.
+## Workflow recommandé
+1. Créer une branche ciblée sur un seul objectif.
+2. Limiter les changements au périmètre de la PR.
+3. Ajouter ou mettre à jour les tests si une refacto structurelle est introduite.
+4. Vérifier localement les commandes de validation avant ouverture de PR.
 
 ## Validation minimale avant PR
 - Backend : `dotnet test BikeVoyager.sln`
-- Frontend : `npm test` (et `npm run e2e` si la zone frontend touchee le justifie)
-- Si la CI frontend est impactee : `npm run lint` et `npm run build`
-- Mesure LOC (source de verite) : `pwsh scripts/loc.ps1 --top 30 --threshold 400 --scope backend/frontend/docs --out docs/LOC_REPORT.md`
-- Alternative bash equivalente : `./scripts/loc.sh --top 30 --threshold 400 --scope backend/frontend/docs --out docs/LOC_REPORT.md`
-- Patterns par defaut (si aucun pattern explicite): `*.cs`, `*.ts`, `*.tsx`, `*.md` (surcharge possible en passant des patterns en arguments)
+- Frontend : `npm test` (et `npm run e2e` si la zone frontend touchée le justifie)
+- Si la CI frontend est impactée : `npm run lint` et `npm run build`
+- Mesure LOC (source de vérité) : `pwsh scripts/loc.ps1 --top 30 --threshold 400 --scope backend/frontend/docs --out docs/LOC_REPORT.md`
+- Alternative bash équivalente : `./scripts/loc.sh --top 30 --threshold 400 --scope backend/frontend/docs --out docs/LOC_REPORT.md`
+- Patterns par défaut (si aucun pattern explicite): `*.cs`, `*.ts`, `*.tsx`, `*.md` (surcharge possible en passant des patterns en arguments)
 
 ## Contenu attendu dans chaque PR
-- Resume
-- Liste des fichiers modifies
+- Résumé
+- Liste des fichiers modifiés
 - Raisons des changements
-- Risques identifies
+- Risques identifiés
 - Plan de rollback (si pertinent)
 
 ## Documentation projet
-- `DECISIONS.md` (racine) : registre ADR court et decisions d'architecture.
-- `docs/ROADMAP.md` : priorites P0 / P1 / P2.
+- `DECISIONS.md` (racine) : registre ADR court et décisions d'architecture.
+- `docs/ROADMAP.md` : priorités P0 / P1 / P2.
+

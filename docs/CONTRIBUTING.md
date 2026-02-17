@@ -1,5 +1,5 @@
-# CONTRIBUTING deplace
+# CONTRIBUTING déplacé
 
-Le guide de contribution est maintenu a la racine du depot :
+Le guide de contribution est maintenu à la racine du dépôt :
 [`../CONTRIBUTING.md`](../CONTRIBUTING.md).
 

@@ -1,16 +1,16 @@
 # API BikeVoyager
 
 ## Objectif
-Documenter la surface HTTP canonique et la compatibilite legacy.
+Documenter la surface HTTP canonique et la compatibilité legacy.
 
-## Strategie de versioning
+## Stratégie de versioning
 
 - Canonique : **`/api/v1/*`**
-- Compatibilite temporaire : certains anciens chemins **`/api/*`** sont aliases vers `/api/v1/*` cote backend.
+- Compatibilité temporaire : certains anciens chemins **`/api/*`** sont aliasés vers `/api/v1/*` côté backend.
 
 ## Routes canoniques (`/api/v1/*`)
 
-### Sante et demos
+### Santé et demos
 - `GET /api/v1/health`
 - `GET /api/v1/trips`
 - `POST /api/v1/trips`
@@ -43,7 +43,7 @@ Documenter la surface HTTP canonique et la compatibilite legacy.
 ### Feedback
 - `POST /api/v1/feedback`
 
-## Mapping de compatibilite legacy (`/api/*` -> `/api/v1/*`)
+## Mapping de compatibilité legacy (`/api/*` -> `/api/v1/*`)
 
 | Legacy | Canonique |
 |---|---|
@@ -56,4 +56,4 @@ Documenter la surface HTTP canonique et la compatibilite legacy.
 | `/api/feedback` | `/api/v1/feedback` |
 | `/api/valhalla/*` | `/api/v1/valhalla/*` |
 
-Note : les chemins legacy ci-dessus restent fonctionnels uniquement a titre transitoire.
+Note : les chemins legacy ci-dessus restent fonctionnels uniquement à titre transitoire.

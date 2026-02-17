@@ -44,7 +44,7 @@ npm ci
 npm run dev
 ```
 
-`npm ci` necessite `package-lock.json` (present dans le repo).
+`npm ci` nécessite `package-lock.json` (présent dans le repo).
 
 Stack complète (recommandé) :
 

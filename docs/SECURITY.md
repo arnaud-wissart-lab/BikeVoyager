@@ -1,5 +1,5 @@
-# Securite BikeVoyager
+# Sécurité BikeVoyager
 
-Source de verite : [`../SECURITY.md`](../SECURITY.md).
+Source de vérité : [`../SECURITY.md`](../SECURITY.md).
 
-Ce fichier est volontairement un renvoi pour eviter les doublons documentaires.
+Ce fichier est volontairement un renvoi pour éviter les doublons documentaires.

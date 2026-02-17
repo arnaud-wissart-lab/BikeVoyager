@@ -3,78 +3,78 @@
 ## Objet
 
 Ce runbook documente l'exploitation locale de BikeVoyager, avec un focus sur
-Valhalla (build, mises a jour, et nettoyage disque).
+Valhalla (build, mises à jour, et nettoyage disque).
 
 ## Structure du repo
 
 - `backend/` : API .NET, AppHost Aspire, couches applicatives, tests.
 - `frontend/` : application React/Vite.
-- `infra/valhalla/` : donnees de routage, releases, logs, status.
-- `scripts/` : scripts de dev et operations (`dev-*`, `valhalla-*`).
+- `infra/valhalla/` : données de routage, releases, logs, status.
+- `scripts/` : scripts de dev et opérations (`dev-*`, `valhalla-*`).
 
 ## Solutions
 
 - `BikeVoyager.slnx` : solution principale Visual Studio.
 - `BikeVoyager.sln` : solution CLI/CI.
 
-## Prerequis
+## Prérequis
 
 - .NET SDK 10.x
 - Node.js 20+ et npm
-- Docker Desktop (necessaire pour Valhalla)
-- Dependances frontend installees une fois : `npm ci` dans `frontend/`
-- `npm ci` necessite `package-lock.json` (present dans le repo).
+- Docker Desktop (nécessaire pour Valhalla)
+- Dépendances frontend installées une fois : `npm ci` dans `frontend/`
+- `npm ci` nécessite `package-lock.json` (présent dans le repo).
 
 ## Version image Valhalla
 
-Pour mettre a jour Valhalla de facon reproductible, choisir un tag cible `ghcr.io/valhalla/valhalla:<tag>`, recuperer son digest via `docker buildx imagetools inspect ghcr.io/valhalla/valhalla:<tag>`, puis remplacer la reference epinglee `ghcr.io/valhalla/valhalla@sha256:...` dans `infra/valhalla.compose.yml`, `scripts/valhalla-build-france.ps1`, `scripts/valhalla-build-france.sh` et `backend/src/BikeVoyager.AppHost/AppHostBuilderExtensions.cs` (constante `ValhallaImageReference`); terminer par `docker compose -f infra/valhalla.compose.yml pull valhalla` avant de committer le bump.
+Pour mettre à jour Valhalla de façon reproductible, choisir un tag cible `ghcr.io/valhalla/valhalla:<tag>`, récupérer son digest via `docker buildx imagetools inspect ghcr.io/valhalla/valhalla:<tag>`, puis remplacer la référence épinglée `ghcr.io/valhalla/valhalla@sha256:...` dans `infra/valhalla.compose.yml`, `scripts/valhalla-build-france.ps1`, `scripts/valhalla-build-france.sh` et `backend/src/BikeVoyager.AppHost/AppHostBuilderExtensions.cs` (constante `ValhallaImageReference`); terminer par `docker compose -f infra/valhalla.compose.yml pull valhalla` avant de committer le bump.
 
-## Demarrage local
+## Démarrage local
 
 ```powershell
 ./scripts/dev-up
 ```
 
-Arret :
+Arrêt :
 
 ```powershell
 ./scripts/dev-down
 ```
 
-## Demarrage F5 (Visual Studio)
+## Démarrage F5 (Visual Studio)
 
 1. Ouvrir `BikeVoyager.slnx`.
-2. Definir `BikeVoyager.AppHost` comme projet de demarrage.
+2. Définir `BikeVoyager.AppHost` comme projet de démarrage.
 3. Lancer `F5`.
 
 Comportement attendu :
 
-- AppHost demarre API, frontend, Redis, et ressources Aspire.
+- AppHost démarre API, frontend, Redis, et ressources Aspire.
 - Dashboard Aspire disponible sur `https://localhost:17000`.
-- Frontend expose sur `http://localhost:5173` (port fixe via `VITE_DEV_PORT=5173` et `VITE_STRICT_PORT=true`).
-- Watch Valhalla actif (sauf desactivation explicite).
+- Frontend exposé sur `http://localhost:5173` (port fixe via `VITE_DEV_PORT=5173` et `VITE_STRICT_PORT=true`).
+- Watch Valhalla actif (sauf désactivation explicite).
 
 Note :
-- L'AppHost sonde `5173..5190` pour detecter une instance frontend deja disponible.
-- En demarrage standard via AppHost, le frontend est force sur `5173`.
+- L'AppHost sonde `5173..5190` pour détecter une instance frontend déjà disponible.
+- En démarrage standard via AppHost, le frontend est forcé sur `5173`.
 
-## Demarrage AppHost en CLI
+## Démarrage AppHost en CLI
 
 ```powershell
 dotnet run --project backend/src/BikeVoyager.AppHost/BikeVoyager.AppHost.csproj
 ```
 
-## Valhalla : organisation des donnees
+## Valhalla : organisation des données
 
-Racine donnees : `infra/valhalla/`
+Racine données : `infra/valhalla/`
 
-- `live/` : donnees actives utilisees par le service.
+- `live/` : données actives utilisées par le service.
 - `releases/candidate-*` : sorties temporaires de build.
-- `releases/previous-*` : anciennes releases conservees selon retention.
+- `releases/previous-*` : anciennes releases conservées selon rétention.
 - `data/osm.pbf` : source OSM locale.
-- `logs/*.log` : logs detaillees de build.
+- `logs/*.log` : logs détaillées de build.
 - `build-status.json` : progression build.
-- `update-status.json` : statut de verification de mise a jour.
+- `update-status.json` : statut de vérification de mise à jour.
 - `.build.lock` : marqueur build en cours.
 
 ## Build Valhalla (France)
@@ -94,40 +94,40 @@ chmod +x ./scripts/valhalla-build-france.sh
 
 Principes :
 
-- Build blue/green : generation dans `releases/candidate-*`, puis promotion atomique vers `live/`.
-- Tant que la promotion n'est pas terminee, l'app continue d'utiliser les anciennes tuiles `live/`.
-- Rebuild relance seulement si necessaire (donnees invalides, manquantes, source changee, ou force).
+- Build blue/green : génération dans `releases/candidate-*`, puis promotion atomique vers `live/`.
+- Tant que la promotion n'est pas terminée, l'app continue d'utiliser les anciennes tuiles `live/`.
+- Rebuild relance seulement si nécessaire (données invalides, manquantes, source changée, ou forcé).
 
-## Strategie de mise a jour
+## Stratégie de mise à jour
 
-- Verification periodique : `scripts/valhalla-check-update.ps1` / `.sh`
-- Surveillance periodique : `scripts/valhalla-watch-updates.ps1` / `.sh`
+- Vérification périodique : `scripts/valhalla-check-update.ps1` / `.sh`
+- Surveillance périodique : `scripts/valhalla-watch-updates.ps1` / `.sh`
 - Lancement manuel depuis l'app : `POST /api/v1/valhalla/update/start`
 
-Par defaut recommande :
+Par défaut recommandé :
 
-- Detection automatique active
-- Application automatique des updates desactivee
-- Mise a jour lancee manuellement depuis le panneau Aide
+- Détection automatique active
+- Application automatique des updates désactivée
+- Mise à jour lancée manuellement depuis le panneau Aide
 
 ## Nettoyage disque (important)
 
-Script dedie :
+Script dédié :
 
 - `scripts/valhalla-cleanup.ps1`
 - `scripts/valhalla-cleanup.sh`
 
-Ce qui est nettoye :
+Ce qui est nettoyé :
 
-- Anciennes releases `previous-*` selon retention.
+- Anciennes releases `previous-*` selon rétention.
 - Candidats `candidate-*` stale (orphelins/anciens).
 - Logs de build anciennes (`infra/valhalla/logs/*.log`).
 - Scripts temporaires `.build-step-*.sh` anciens.
 
-Securite :
+Sécurité :
 
-- Si `.build.lock` est present, le nettoyage des releases est differe.
-- Les donnees actives `live/` ne sont jamais ciblees par le cleanup.
+- Si `.build.lock` est présent, le nettoyage des releases est différé.
+- Les données actives `live/` ne sont jamais ciblées par le cleanup.
 
 Nettoyage manuel :
 
@@ -137,36 +137,36 @@ Nettoyage manuel :
 
 ## Variables d'environnement Valhalla
 
-Mise a jour/build :
+Mise à jour/build :
 
 - `VALHALLA_AUTO_BUILD`
-  - `true` par defaut.
-  - Auto-build uniquement si donnees absentes/invalides ou rebuild force.
+  - `true` par défaut.
+  - Auto-build uniquement si données absentes/invalides ou rebuild forcé.
 - `VALHALLA_UPDATE_AUTO_BUILD`
-  - `false` recommande.
-  - Si `true`, watch applique automatiquement les updates detectees.
+  - `false` recommandé.
+  - Si `true`, watch applique automatiquement les updates détectées.
 - `VALHALLA_UPDATE_WATCH`
-  - `true` par defaut.
-  - Si `false`, desactive la surveillance periodique.
+  - `true` par défaut.
+  - Si `false`, désactive la surveillance périodique.
 - `VALHALLA_UPDATE_CHECK_INTERVAL_MINUTES`
-  - intervalle de verification (defaut `180`, min `5`).
+  - intervalle de vérification (défaut `180`, min `5`).
 - `VALHALLA_FORCE_REBUILD`
   - force un rebuild.
 - `VALHALLA_FORCE_DOWNLOAD`
-  - force le retelechargement `osm.pbf`.
+  - force le retéléchargement `osm.pbf`.
 
 Nettoyage disque :
 
 - `VALHALLA_RELEASES_TO_KEEP`
-  - nombre de `previous-*` conserves (defaut `0` pour economiser le disque).
+  - nombre de `previous-*` conservés (défaut `0` pour économiser le disque).
 - `VALHALLA_LOG_RETENTION_DAYS`
-  - retention des logs en jours (defaut `7`).
+  - rétention des logs en jours (défaut `7`).
 - `VALHALLA_STALE_CANDIDATE_HOURS`
-  - suppression des `candidate-*` inactifs apres N heures (defaut `6`).
+  - suppression des `candidate-*` inactifs après N heures (défaut `6`).
 - `VALHALLA_STEP_SCRIPT_RETENTION_HOURS`
-  - retention des `.build-step-*.sh` (defaut `24`).
+  - rétention des `.build-step-*.sh` (défaut `24`).
 - `VALHALLA_STALE_LOCK_MINUTES`
-  - lock `.build.lock` considere stale apres N minutes (defaut `30`, min `5`).
+  - lock `.build.lock` considéré stale après N minutes (défaut `30`, min `5`).
 
 ## Endpoints utiles
 
@@ -181,11 +181,11 @@ Routage :
 - `POST /api/v1/route`
 - `POST /api/v1/loop`
 
-Compatibilite legacy (temporaire) : les anciens chemins `/api/*` restent acceptes et reecrits vers `/api/v1/*`.
+Compatibilité legacy (temporaire) : les anciens chemins `/api/*` restent acceptés et réécrits vers `/api/v1/*`.
 
 ## Configuration feedback (email)
 
-La configuration versionnee utilise des placeholders (pas de donnees personnelles):
+La configuration versionnée utilise des placeholders (pas de données personnelles):
 - `Feedback:RecipientEmail = contact@example.com`
 - `Feedback:SenderEmail = ""`
 
@@ -218,15 +218,15 @@ dotnet user-secrets set "Feedback:SenderEmail" "noreply@example.com" --project b
 L'API expose un garde-fou anti-abus:
 
 - validation d'origine pour les appels `/api/v1/*` (avec alias legacy `/api/*`) (`ApiOriginGuardMiddleware`)
-- session anonyme silencieuse (`AnonymousApiSessionMiddleware`) via cookie signe HttpOnly
+- session anonyme silencieuse (`AnonymousApiSessionMiddleware`) via cookie signé HttpOnly
 - rate limiting global
-- rate limiting renforce sur:
+- rate limiting renforcé sur:
   - `/api/v1/route`
   - `/api/v1/loop`
   - `/api/v1/poi/around-route`
   - `/api/v1/export/gpx`
 
-Parametres `ApiSecurity` (dans `appsettings.json`):
+Paramètres `ApiSecurity` (dans `appsettings.json`):
 
 - `AllowedOrigins`
 - `GeneralRequestsPerMinute`
@@ -238,18 +238,18 @@ Parametres `ApiSecurity` (dans `appsettings.json`):
 
 Comportement session anonyme:
 
-- sur `/api/v1/*` (et alias legacy `/api/*`, hors `OPTIONS`), un cookie de session est cree s'il est absent/invalide/expire
-- la partition de rate limiting utilise cette session en priorite, puis `RemoteIpAddress` en fallback
-- le header `X-Forwarded-For` n'est pas utilise directement pour la partition (anti-spoof)
+- sur `/api/v1/*` (et alias legacy `/api/*`, hors `OPTIONS`), un cookie de session est créé s'il est absent/invalide/expiré
+- la partition de rate limiting utilise cette session en priorité, puis `RemoteIpAddress` en fallback
+- le header `X-Forwarded-For` n'est pas utilisé directement pour la partition (anti-spoof)
 - le frontend ne transmet plus `X-Session-Id`
 
 Reverse proxy:
 
-- pour conserver une IP client fiable derriere proxy, configurer l'infra pour ne pas exposer l'API directement et ne faire confiance qu'a des proxies reseau explicites
-- sans chaine proxy de confiance configuree, la partition fallback se fait sur l'IP de connexion vue par l'API
+- pour conserver une IP client fiable derrière proxy, configurer l'infra pour ne pas exposer l'API directement et ne faire confiance qu'à des proxies réseau explicites
+- sans chaîne proxy de confiance configurée, la partition fallback se fait sur l'IP de connexion vue par l'API
 
 Note: ces protections limitent le spam mais ne remplacent pas une authentification
-forte si l'API doit etre exposee a des clients non fiables.
+forte si l'API doit être exposée à des clients non fiables.
 
 ## Tests
 
@@ -263,9 +263,9 @@ dotnet test backend/tests/BikeVoyager.UnitTests/BikeVoyager.UnitTests.csproj
 Couverture API session anonyme:
 
 - `backend/tests/BikeVoyager.ApiTests/AnonymousApiSessionTests.cs`
-  - creation du cookie
-  - attributs de securite cookie
-  - reutilisation sans rotation
+  - création du cookie
+  - attributs de sécurité cookie
+  - réutilisation sans rotation
   - remplacement d'un cookie invalide
 
 Frontend :
@@ -277,7 +277,7 @@ npx --prefix frontend playwright install chromium
 npm --prefix frontend run e2e
 ```
 
-Scripts agreges :
+Scripts agrégés :
 
 ```powershell
 ./scripts/dev-test
@@ -286,25 +286,26 @@ Scripts agreges :
 
 ## Audit UI
 
-Passe UI documentee et auditable :
+Passe UI documentée et auditable :
 
-- `docs/AUDIT_TECHNIQUE.md` (section "Historique UI consolide")
+- `docs/AUDIT_TECHNIQUE.md` (section "Historique UI consolidé")
 
-## Depannage rapide
+## Dépannage rapide
 
-Si un build a ete coupe :
+Si un build a été coupé :
 
-- Verifier `infra/valhalla/.build.lock`.
-- Relancer une mise a jour manuelle via l'app ou script build.
+- Vérifier `infra/valhalla/.build.lock`.
+- Relancer une mise à jour manuelle via l'app ou script build.
 - Lancer `valhalla-cleanup` pour purger les candidats stale et vieux logs.
 
 Si `/api/v1/loop` renvoie `422` alors que status est "ready" :
 
 - Ce n'est pas un "Valhalla down" ; c'est une boucle non satisfaisante.
-- Reessayer avec une distance/zone differente.
+- Réessayer avec une distance/zone différente.
 
-Si espace disque trop eleve :
+Si espace disque trop élevé :
 
-- Executer le cleanup manuel.
+- Exécuter le cleanup manuel.
 - Garder `VALHALLA_RELEASES_TO_KEEP=0`.
-- Reduire `VALHALLA_LOG_RETENTION_DAYS`.
+- Réduire `VALHALLA_LOG_RETENTION_DAYS`.
+

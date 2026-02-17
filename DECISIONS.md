@@ -1,47 +1,47 @@
 # DECISIONS
 
-Registre ADR court : decisions d'architecture uniquement.
-Ce fichier ne contient ni hotspots, ni backlog, ni plan d'execution.
+Registre ADR court : décisions d'architecture uniquement.
+Ce fichier ne contient ni hotspots, ni backlog, ni plan d'exécution.
 
 ## ADR-0001 - Architecture backend en couches
 - Date : 2026-02-05
-- Statut : Acceptee
-- Contexte : besoin d'un backend evolutif avec frontieres explicites entre contrat HTTP, cas d'usage et integrations externes.
-- Decision : backend en .NET 10 Minimal API avec separation `Api -> Application -> Infrastructure -> Domain`.
-- Consequences : frontieres claires, testabilite amelioree, evolution par couche simplifiee.
+- Statut : Acceptée
+- Contexte : besoin d'un backend évolutif avec frontières explicites entre contrat HTTP, cas d'usage et intégrations externes.
+- Decision : backend en .NET 10 Minimal API avec séparation `Api -> Application -> Infrastructure -> Domain`.
+- Conséquences : frontières claires, testabilité améliorée, évolution par couche simplifiée.
 
 ## ADR-0002 - Architecture frontend React TypeScript
 - Date : 2026-02-05
-- Statut : Acceptee
-- Contexte : besoin d'un frontend moderne, rapide a builder et decoupable par responsabilite fonctionnelle.
-- Decision : frontend en React + TypeScript + Vite + Mantine, organise par domaines (`features/*`, `ui/*`, `app/*`).
-- Consequences : socle moderne, build rapide, separation UI/orchestration plus lisible.
+- Statut : Acceptée
+- Contexte : besoin d'un frontend moderne, rapide à builder et découpable par responsabilité fonctionnelle.
+- Decision : frontend en React + TypeScript + Vite + Mantine, organisé par domaines (`features/*`, `ui/*`, `app/*`).
+- Conséquences : socle moderne, build rapide, séparation UI/orchestration plus lisible.
 
 ## ADR-0003 - Versioning API canonique en /api/v1
 - Date : 2026-02-16
-- Statut : Acceptee
-- Contexte : coexistence de clients sur anciens chemins `/api/*` et nouveaux chemins versionnes.
-- Decision : tous les endpoints publics sont exposes en `/api/v1/*`; un rewrite legacy `/api/*` reste temporairement actif.
-- Consequences : contrat API explicite, migration client progressive, retrait du rewrite a planifier.
+- Statut : Acceptée
+- Contexte : coexistence de clients sur anciens chemins `/api/*` et nouveaux chemins versionnés.
+- Decision : tous les endpoints publics sont exposés en `/api/v1/*`; un rewrite legacy `/api/*` reste temporairement actif.
+- Conséquences : contrat API explicite, migration client progressive, retrait du rewrite à planifier.
 
-## ADR-0004 - Pipeline qualite et CI obligatoires
+## ADR-0004 - Pipeline qualité et CI obligatoires
 - Date : 2026-02-05
-- Statut : Acceptee
-- Contexte : besoin d'un gate qualite unique pour limiter les regressions backend/frontend.
-- Decision : CI GitHub unique backend/frontend avec lint, build, tests unitaires/API, E2E et audit de dependances.
-- Consequences : regression detectee plus tot, niveau de qualite verifiable en continu.
+- Statut : Acceptée
+- Contexte : besoin d'un gate qualité unique pour limiter les régressions backend/frontend.
+- Decision : CI GitHub unique backend/frontend avec lint, build, tests unitaires/API, E2E et audit de dépendances.
+- Conséquences : régression détectée plus tôt, niveau de qualité vérifiable en continu.
 
 ## ADR-0005 - Orchestration locale via AppHost
 - Date : 2026-02-05
-- Statut : Acceptee
-- Contexte : besoin d'un demarrage local coherent API + frontend sans introduire une stack d'orchestration supplementaire.
+- Statut : Acceptée
+- Contexte : besoin d'un démarrage local cohérent API + frontend sans introduire une stack d'orchestration supplémentaire.
 - Decision : usage de .NET Aspire AppHost pour l'orchestration locale (API + frontend Vite) sans ajouter de stack d'orchestration externe.
-- Consequences : demarrage local coherent, complexite d'outillage limitee.
+- Conséquences : démarrage local cohérent, complexité d'outillage limitée.
 
 ## ADR-0006 - Resilience HTTP via Microsoft.Extensions.Http.Resilience
 - Date : 2026-02-16
-- Statut : Acceptee
-- Contexte : les packages `Microsoft.Extensions.Http.Polly` et `Polly.Extensions.Http` sont depreciees et l'enregistrement HttpClientFactory doit rester equivalent (retry/circuit-breaker + timeouts existants).
-- Decision : migration vers `Microsoft.Extensions.Http.Resilience` avec `AddResilienceHandler` personnalise :
-  retry lineaire (3 tentatives, 200 ms), circuit-breaker (seuil 5, pause 15 s), retry exponentiel specifique Valhalla (4 tentatives, base 2 s). Les timeouts restent portes par `HttpClient.Timeout` deja configure par client.
-- Consequences : suppression des dependances depreciees, pipeline de resilience aligne sur l'API .NET moderne, comportement conserve sans changement de flux metier.
+- Statut : Acceptée
+- Contexte : les packages `Microsoft.Extensions.Http.Polly` et `Polly.Extensions.Http` sont dépréciées et l'enregistrement HttpClientFactory doit rester équivalent (retry/circuit-breaker + timeouts existants).
+- Decision : migration vers `Microsoft.Extensions.Http.Resilience` avec `AddResilienceHandler` personnalisé :
+  retry lineaire (3 tentatives, 200 ms), circuit-breaker (seuil 5, pause 15 s), retry exponentiel spécifique Valhalla (4 tentatives, base 2 s). Les timeouts restent portés par `HttpClient.Timeout` déjà configuré par client.
+- Conséquences : suppression des dépendances dépréciées, pipeline de résilience aligné sur l'API .NET moderne, comportement conservé sans changement de flux métier.

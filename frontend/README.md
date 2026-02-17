@@ -38,7 +38,7 @@ Le frontend s’attend à une API disponible sur `/api` (proxy Vite/AppHost).
 - planification d’itinéraire et boucle (`/api/route`, `/api/loop`)
 - recherche de lieux
 - vue carte Cesium
-- onglet Donnees (sauvegardes locales, export/import, sync cloud)
+- onglet Données (sauvegardes locales, export/import, sync cloud)
 - onglet Aide avec diagnostic Valhalla
 
 ## Cohérence UI
@@ -53,7 +53,7 @@ Le frontend repose sur un thème Mantine centralisé dans `src/theme.ts`:
 - constantes techniques centralisées (endpoints API) dans
   `src/features/app/apiPaths.ts` pour éviter les chaînes dupliquées
 
-Audit détaillé de la passe UI: `../docs/AUDIT_TECHNIQUE.md` (section "Historique UI consolide").
+Audit détaillé de la passe UI: `../docs/AUDIT_TECHNIQUE.md` (section "Historique UI consolidé").
 
 ## E2E (Playwright)
 
@@ -98,11 +98,11 @@ $env:CloudSync__OneDrive__ClientSecret="..."   # requis pour une app Entra Web
 npm run dev
 ```
 
-Redirect URI recommandee (Google + Microsoft): `http://localhost:5173/`
+Redirect URI recommandée (Google + Microsoft): `http://localhost:5173/`
 
-Les sessions cloud OAuth sont stockees cote API (cookie HttpOnly + cache distribue Redis).
+Les sessions cloud OAuth sont stockées côté API (cookie HttpOnly + cache distribué Redis).
 
-Scopes utilises:
+Scopes utilisés:
 
 - Google Drive: `openid email profile https://www.googleapis.com/auth/drive.file`
 - OneDrive (Microsoft Graph): `offline_access Files.ReadWrite User.Read`

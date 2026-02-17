@@ -1,5 +1,5 @@
-# Registre de decisions
+# Registre de décisions
 
-Source de verite : [`../DECISIONS.md`](../DECISIONS.md).
+Source de vérité : [`../DECISIONS.md`](../DECISIONS.md).
 
-Ce fichier est volontairement un renvoi pour eviter deux sources ADR concurrentes.
+Ce fichier est volontairement un renvoi pour éviter deux sources ADR concurrentes.

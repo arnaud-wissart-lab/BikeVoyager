@@ -1,34 +1,34 @@
-# Politique de securite BikeVoyager
+# Politique de sécurité BikeVoyager
 
-Ce fichier est la source de verite securite du depot.
+Ce fichier est la source de vérité sécurité du dépôt.
 
-## Signaler une vulnerabilite
+## Signaler une vulnérabilité
 
-Ne publiez pas de details exploitables dans une issue publique.
+Ne publiez pas de détails exploitables dans une issue publique.
 
-Canal recommande (prive) :
+Canal recommandé (privé) :
 - `https://github.com/arnaud-wissart/BikeVoyager/security/advisories/new`
 
 Canal de secours :
 - `https://github.com/arnaud-wissart/BikeVoyager/issues`
-- Indiquer `[security]` dans le titre, sans details sensibles, puis demander un canal prive.
+- Indiquer `[security]` dans le titre, sans détails sensibles, puis demander un canal privé.
 
-## Portee technique
+## Portée technique
 
 Ce document couvre principalement :
 - la session API anonyme ;
 - l'authentification cloud OAuth (Google Drive / OneDrive) ;
-- les limites connues et risques residuels ;
-- la politique de headers HTTP cote API.
+- les limites connues et risques résiduels ;
+- la politique de headers HTTP côté API.
 
 ## Session API anonyme
 
 ### Principe
-- Toute requete sur `/api/*` (y compris `/api/v1/*`) recoit ou reutilise un cookie de session anonyme.
-- Le cookie est protege par ASP.NET Data Protection (signature + chiffrement applicatif).
+- Toute requête sur `/api/*` (y compris `/api/v1/*`) reçoit ou réutilise un cookie de session anonyme.
+- Le cookie est protégé par ASP.NET Data Protection (signature + chiffrement applicatif).
 - Le cookie transporte un identifiant de session et une expiration.
 
-### Proprietes cookie
+### Propriétés cookie
 - `HttpOnly` actif
 - `SameSite=Lax` actif
 - `Secure` active si HTTPS
@@ -36,43 +36,43 @@ Ce document couvre principalement :
 - expiration configurable (`ApiSecurity:AnonymousSessionLifetimeHours`, minimum 1h)
 
 ### Usage
-- Correlation applicative et rate limiting.
+- Corrélation applicative et rate limiting.
 - Ce n'est pas un compte utilisateur.
 
 ## Authentification cloud OAuth
 
 ### Principe
-- Demarrage via `/api/v1/cloud/oauth/start`.
+- Démarrage via `/api/v1/cloud/oauth/start`.
 - Callback via `/api/v1/cloud/oauth/callback`.
-- Etats OAuth `pending` et sessions cloud `auth` stockes cote serveur (cache distribue + fallback memoire).
+- États OAuth `pending` et sessions cloud `auth` stockés côté serveur (cache distribué + fallback mémoire).
 
 ### Cookies cloud
-- `bv_cloud_pending_sid` : reference d'etat OAuth en cours.
-- `bv_cloud_auth_sid` : reference de session cloud connectee.
+- `bv_cloud_pending_sid` : référence d'état OAuth en cours.
+- `bv_cloud_auth_sid` : référence de session cloud connectée.
 
-Proprietes :
+Propriétés :
 - `HttpOnly`, `SameSite=Lax`, `Path=/` ;
 - `Secure` si HTTPS ;
-- aucun token OAuth n'est stocke dans le cookie (reference serveur uniquement).
+- aucun token OAuth n'est stocké dans le cookie (référence serveur uniquement).
 
 ### PKCE, state, callback
-- `state` et `code_verifier` generes cote serveur (aleatoire cryptographique).
+- `state` et `code_verifier` générés côté serveur (aléatoire cryptographique).
 - challenge PKCE en `S256`.
-- callback valide : erreurs fournisseur, presence `code`, et egalite temps constant du `state`.
+- callback validé : erreurs fournisseur, présence `code`, et égalité temps constant du `state`.
 
 ## Risques et limites
 
 - Sans HTTPS, les cookies ne sont pas `Secure`.
-- Le modele repose sur la confidentialite des cookies HttpOnly dans le navigateur.
-- Le fallback memoire locale peut degrader la coherence en multi-instance.
-- La revocation distante cloud est detectee lors des appels cloud (upload/restore/refresh).
+- Le modèle repose sur la confidentialité des cookies HttpOnly dans le navigateur.
+- Le fallback mémoire locale peut dégrader la cohérence en multi-instance.
+- La révocation distante cloud est détectée lors des appels cloud (upload/restore/refresh).
 
 ## Recommandations
 
 - Forcer HTTPS en production.
-- Utiliser un cache distribue robuste pour les sessions cloud.
+- Utiliser un cache distribué robuste pour les sessions cloud.
 - Surveiller les erreurs OAuth et de refresh token.
-- Limiter CORS aux origines strictement necessaires.
+- Limiter CORS aux origines strictement nécessaires.
 
 ## Politique de headers HTTP (API)
 
@@ -83,4 +83,4 @@ En environnement non `Development`, l'API applique :
 - `X-Frame-Options: DENY` ;
 - `Permissions-Policy: geolocation=(), camera=(), microphone=()`.
 
-Objectif : reduire les risques MIME sniffing, clickjacking et exposition de metadonnees de navigation.
+Objectif : réduire les risques MIME sniffing, clickjacking et exposition de métadonnées de navigation.

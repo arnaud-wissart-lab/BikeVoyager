@@ -20,11 +20,6 @@ public static class ApplicationBuilderExtensions
         return app.UseMiddleware<AnonymousApiSessionMiddleware>();
     }
 
-    public static IApplicationBuilder UseLegacyApiPathRewrite(this IApplicationBuilder app)
-    {
-        return app.UseMiddleware<LegacyApiPathRewriteMiddleware>();
-    }
-
     public static IApplicationBuilder UseApiSecurityHeaders(this IApplicationBuilder app)
     {
         return app.UseMiddleware<SecurityHeadersMiddleware>();

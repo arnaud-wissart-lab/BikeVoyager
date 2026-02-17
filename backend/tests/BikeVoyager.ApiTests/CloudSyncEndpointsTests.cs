@@ -17,7 +17,7 @@ public class CloudSyncEndpointsTests : IClassFixture<WebApplicationFactory<Progr
     public async Task Providers_retourne_la_configuration_cloud()
     {
         using var client = _factory.CreateClient();
-        using var response = await client.GetAsync("/api/cloud/providers");
+        using var response = await client.GetAsync("/api/v1/cloud/providers");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -33,7 +33,7 @@ public class CloudSyncEndpointsTests : IClassFixture<WebApplicationFactory<Progr
     public async Task Session_retourne_deconnecte_par_defaut()
     {
         using var client = _factory.CreateClient();
-        using var response = await client.GetAsync("/api/cloud/session");
+        using var response = await client.GetAsync("/api/v1/cloud/session");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -46,7 +46,7 @@ public class CloudSyncEndpointsTests : IClassFixture<WebApplicationFactory<Progr
     public async Task Status_retourne_les_diagnostics_cloud()
     {
         using var client = _factory.CreateClient();
-        using var response = await client.GetAsync("/api/cloud/status");
+        using var response = await client.GetAsync("/api/v1/cloud/status");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -75,7 +75,7 @@ public class CloudSyncEndpointsTests : IClassFixture<WebApplicationFactory<Progr
     public async Task Disconnect_reinitialise_la_session()
     {
         using var client = _factory.CreateClient();
-        using var response = await client.PostAsync("/api/cloud/disconnect", content: null);
+        using var response = await client.PostAsync("/api/v1/cloud/disconnect", content: null);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 

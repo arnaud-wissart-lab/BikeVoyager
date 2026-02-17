@@ -20,7 +20,7 @@ public class ValhallaStatusEndpointsTests : IClassFixture<WebApplicationFactory<
         var tempValhallaDataPath = CreateTempValhallaPath();
         var app = CreateFactoryWithValhallaSettings(tempValhallaDataPath);
         using var client = app.CreateClient();
-        using var response = await client.GetAsync("/api/valhalla/ready");
+        using var response = await client.GetAsync("/api/v1/valhalla/ready");
         var payload = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
@@ -33,7 +33,7 @@ public class ValhallaStatusEndpointsTests : IClassFixture<WebApplicationFactory<
         var tempValhallaDataPath = CreateTempValhallaPath();
         var app = CreateFactoryWithValhallaSettings(tempValhallaDataPath);
         using var client = app.CreateClient();
-        using var response = await client.GetAsync("/api/valhalla/status");
+        using var response = await client.GetAsync("/api/v1/valhalla/status");
         var payload = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -58,7 +58,7 @@ public class ValhallaStatusEndpointsTests : IClassFixture<WebApplicationFactory<
 
         var app = CreateFactoryWithValhallaSettings(tempValhallaDataPath);
         using var client = app.CreateClient();
-        using var response = await client.GetAsync("/api/valhalla/status");
+        using var response = await client.GetAsync("/api/v1/valhalla/status");
         var payload = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -75,7 +75,7 @@ public class ValhallaStatusEndpointsTests : IClassFixture<WebApplicationFactory<
 
         var app = CreateFactoryWithValhallaSettings(tempValhallaDataPath);
         using var client = app.CreateClient();
-        using var response = await client.GetAsync("/api/valhalla/status");
+        using var response = await client.GetAsync("/api/v1/valhalla/status");
         var payload = await response.Content.ReadAsStringAsync();
         using var document = JsonDocument.Parse(payload);
 
@@ -92,7 +92,7 @@ public class ValhallaStatusEndpointsTests : IClassFixture<WebApplicationFactory<
         var tempValhallaDataPath = CreateTempValhallaPath();
         var app = CreateFactoryWithValhallaSettings(tempValhallaDataPath);
         using var client = app.CreateClient();
-        using var response = await client.PostAsync("/api/valhalla/update/start", content: null);
+        using var response = await client.PostAsync("/api/v1/valhalla/update/start", content: null);
         var payload = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -115,7 +115,7 @@ public class ValhallaStatusEndpointsTests : IClassFixture<WebApplicationFactory<
 
         var app = CreateFactoryWithValhallaSettings(tempValhallaDataPath);
         using var client = app.CreateClient();
-        using var response = await client.PostAsync("/api/valhalla/update/start", content: null);
+        using var response = await client.PostAsync("/api/v1/valhalla/update/start", content: null);
         var payload = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);

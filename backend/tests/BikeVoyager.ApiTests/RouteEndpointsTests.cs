@@ -31,7 +31,7 @@ public class RouteEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
     {
         using var client = _factory.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/api/route", new
+        var response = await client.PostAsJsonAsync("/api/v1/route", new
         {
             from = new { lat = 48.8566, lon = 2.3522, label = "Paris" },
             to = new { lat = 48.8584, lon = 2.2945, label = "Tour Eiffel" },
@@ -56,7 +56,7 @@ public class RouteEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
     {
         using var client = _factory.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/api/route", new
+        var response = await client.PostAsJsonAsync("/api/v1/route", new
         {
             from = new { lat = 48.8566, lon = 2.3522, label = "Paris" },
             to = new { lat = 48.8584, lon = 2.2945, label = "Tour Eiffel" },
@@ -80,7 +80,7 @@ public class RouteEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
     {
         using var client = _factory.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/api/route", new
+        var response = await client.PostAsJsonAsync("/api/v1/route", new
         {
             from = new { lat = 48.8566, lon = 2.3522, label = "Paris" },
             to = new { lat = 48.8584, lon = 2.2945, label = "Tour Eiffel" },
@@ -100,7 +100,7 @@ public class RouteEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
     {
         using var client = _factory.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/api/route", new
+        var response = await client.PostAsJsonAsync("/api/v1/route", new
         {
             from = new { lat = 48.8566, lon = 2.3522, label = "Paris" },
             to = new { lat = 48.8584, lon = 2.2945, label = "Tour Eiffel" },
@@ -125,7 +125,7 @@ public class RouteEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
         });
 
         using var client = app.CreateClient();
-        using var response = await client.PostAsJsonAsync("/api/route", new
+        using var response = await client.PostAsJsonAsync("/api/v1/route", new
         {
             from = new { lat = 48.8566, lon = 2.3522, label = "Paris" },
             to = new { lat = 48.8584, lon = 2.2945, label = "Tour Eiffel" },

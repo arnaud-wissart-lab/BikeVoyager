@@ -20,7 +20,7 @@ npm install
 npm run dev
 ```
 
-Le frontend s’attend à une API disponible sur `/api` (proxy Vite/AppHost).
+Le frontend s’attend à une API disponible sur `/api/v1` (proxy Vite/AppHost).
 
 ## Scripts npm
 
@@ -35,7 +35,7 @@ Le frontend s’attend à une API disponible sur `/api` (proxy Vite/AppHost).
 
 ## Fonctionnalités UI principales
 
-- planification d’itinéraire et boucle (`/api/route`, `/api/loop`)
+- planification d’itinéraire et boucle (`/api/v1/route`, `/api/v1/loop`)
 - recherche de lieux
 - vue carte Cesium
 - onglet Données (sauvegardes locales, export/import, sync cloud)
@@ -57,7 +57,7 @@ Audit détaillé de la passe UI: `../docs/AUDIT_TECHNIQUE.md` (section "Historiq
 
 ## E2E (Playwright)
 
-Les scénarios E2E sont dans `e2e/` et mockent les endpoints `/api/*` dans le
+Les scénarios E2E sont dans `e2e/` et mockent les endpoints `/api/v1/*` dans le
 navigateur pour rester déterministes (pas de backend requis pour ces tests).
 
 Prérequis (une seule fois):
@@ -81,7 +81,7 @@ Couverture actuelle:
 ## Session API anonyme
 
 - aucun login/mot de passe n'est requis pour l'utilisateur final
-- l'API crée en silence un cookie de session anonyme HttpOnly sur `/api/*`
+- l'API crée en silence un cookie de session anonyme HttpOnly sur `/api/v1/*`
 - le frontend n'envoie plus de header `X-Session-Id`
 - ce mécanisme renforce l'anti-abus, mais ne remplace pas une authentification forte
 

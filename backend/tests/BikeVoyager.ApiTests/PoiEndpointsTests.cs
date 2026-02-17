@@ -30,7 +30,7 @@ public class PoiEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
     {
         using var client = _factory.CreateClient();
         var geometry = Uri.EscapeDataString("{\"type\":\"LineString\",\"coordinates\":[[2.35,48.85],[2.36,48.86]]}");
-        var response = await client.GetAsync($"/api/poi/around-route?geometry={geometry}&categories=monuments&distance=500");
+        var response = await client.GetAsync($"/api/v1/poi/around-route?geometry={geometry}&categories=monuments&distance=500");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -44,7 +44,7 @@ public class PoiEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task AroundRoute_RefuseSiGeometryAbsente()
     {
         using var client = _factory.CreateClient();
-        var response = await client.GetAsync("/api/poi/around-route");
+        var response = await client.GetAsync("/api/v1/poi/around-route");
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -66,7 +66,7 @@ public class PoiEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
             """;
 
         using var content = new StringContent(payload, Encoding.UTF8, "application/json");
-        var response = await client.PostAsync("/api/poi/around-route", content);
+        var response = await client.PostAsync("/api/v1/poi/around-route", content);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 

@@ -21,7 +21,7 @@ public class AnonymousApiSessionTests : IClassFixture<WebApplicationFactory<Prog
             HandleCookies = false,
         });
 
-        using var response = await client.GetAsync("/api/cloud/providers");
+        using var response = await client.GetAsync("/api/v1/cloud/providers");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var sessionCookie = response.Headers
@@ -42,13 +42,13 @@ public class AnonymousApiSessionTests : IClassFixture<WebApplicationFactory<Prog
             HandleCookies = true,
         });
 
-        using var firstResponse = await client.GetAsync("/api/cloud/providers");
+        using var firstResponse = await client.GetAsync("/api/v1/cloud/providers");
         Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
         Assert.Contains(
             firstResponse.Headers.GetValues("Set-Cookie"),
             value => value.StartsWith($"{SessionCookieName}=", StringComparison.OrdinalIgnoreCase));
 
-        using var secondResponse = await client.GetAsync("/api/cloud/providers");
+        using var secondResponse = await client.GetAsync("/api/v1/cloud/providers");
         Assert.Equal(HttpStatusCode.OK, secondResponse.StatusCode);
         Assert.False(
             secondResponse.Headers.TryGetValues("Set-Cookie", out var secondSetCookies) &&
@@ -64,7 +64,7 @@ public class AnonymousApiSessionTests : IClassFixture<WebApplicationFactory<Prog
             HandleCookies = false,
         });
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/cloud/providers");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/cloud/providers");
         request.Headers.Add("Cookie", $"{SessionCookieName}=invalid");
 
         using var response = await client.SendAsync(request);

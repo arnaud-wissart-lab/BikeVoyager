@@ -31,7 +31,7 @@ public class FeedbackEndpointsTests : IClassFixture<WebApplicationFactory<Progra
     {
         using var client = _factory.CreateClient();
 
-        using var response = await client.PostAsJsonAsync("/api/feedback", new
+        using var response = await client.PostAsJsonAsync("/api/v1/feedback", new
         {
             subject = "court",
             message = "trop court",
@@ -52,7 +52,7 @@ public class FeedbackEndpointsTests : IClassFixture<WebApplicationFactory<Progra
     {
         using var client = _factory.CreateClient();
 
-        using var response = await client.PostAsJsonAsync("/api/feedback", new
+        using var response = await client.PostAsJsonAsync("/api/v1/feedback", new
         {
             subject = "  Retour\r\napplication  ",
             message = "Bonjour,\nVoici un retour utile sur le comportement observé.",

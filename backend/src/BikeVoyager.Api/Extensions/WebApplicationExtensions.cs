@@ -10,7 +10,6 @@ public static class WebApplicationExtensions
 {
     public static WebApplication UseApiPipeline(this WebApplication app, ApiBootstrapOptions options)
     {
-        app.UseLegacyApiPathRewrite();
         app.UseRouting();
 
         app.UseCorrelationId();

@@ -31,7 +31,7 @@ public class LoopEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
     {
         using var client = _factory.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/api/loop", new
+        var response = await client.PostAsJsonAsync("/api/v1/loop", new
         {
             start = new { lat = 48.8566, lon = 2.3522, label = "Paris" },
             targetDistanceKm = 50,
@@ -56,7 +56,7 @@ public class LoopEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
     {
         using var client = _factory.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/api/loop", new
+        var response = await client.PostAsJsonAsync("/api/v1/loop", new
         {
             start = new { lat = 48.8566, lon = 2.3522, label = "Paris" },
             targetDistanceKm = 50,
@@ -72,7 +72,7 @@ public class LoopEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
     {
         using var client = _factory.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/api/loop", new
+        var response = await client.PostAsJsonAsync("/api/v1/loop", new
         {
             start = new { lat = 48.8566, lon = 2.3522, label = "Paris" },
             targetDistanceKm = 50,
@@ -97,7 +97,7 @@ public class LoopEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
     {
         using var client = _factory.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/api/loop", new
+        var response = await client.PostAsJsonAsync("/api/v1/loop", new
         {
             start = new { lat = 48.8566, lon = 2.3522, label = "Paris" },
             targetDistanceKm = 30,
@@ -124,7 +124,7 @@ public class LoopEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
         });
 
         using var client = app.CreateClient();
-        using var response = await client.PostAsJsonAsync("/api/loop", new
+        using var response = await client.PostAsJsonAsync("/api/v1/loop", new
         {
             start = new { lat = 48.8566, lon = 2.3522, label = "Paris" },
             targetDistanceKm = 50,

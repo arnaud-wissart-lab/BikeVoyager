@@ -43,7 +43,7 @@ Aucun fichier >= 400 LOC dans le scope backend/frontend/docs.
 ## 4) Points forts techniques (10 lignes max)
 
 - API versionnée de façon canonique en `/api/v1/*` (`backend/src/BikeVoyager.Api/Endpoints/*`).
-- Compatibilité legacy `/api/*` gérée par middleware dédié (`backend/src/BikeVoyager.Api/Middleware/LegacyApiPathRewriteMiddleware.cs`).
+- Support legacy supprimé le 2026-02-17 : routes API exposées uniquement en `/api/v1/*`.
 - Headers de sécurité forcés en non-Development (`backend/src/BikeVoyager.Api/Middleware/SecurityHeadersMiddleware.cs`).
 - Validation des headers couverte par tests API (`backend/tests/BikeVoyager.ApiTests/SecurityHeadersTests.cs`).
 - Compatibilité de versionnement couverte par tests (`backend/tests/BikeVoyager.ApiTests/ApiVersioningCompatibilityTests.cs`).

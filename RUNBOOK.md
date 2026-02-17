@@ -181,8 +181,6 @@ Routage :
 - `POST /api/v1/route`
 - `POST /api/v1/loop`
 
-Compatibilité legacy (temporaire) : les anciens chemins `/api/*` restent acceptés et réécrits vers `/api/v1/*`.
-
 ## Configuration feedback (email)
 
 La configuration versionnée utilise des placeholders (pas de données personnelles):
@@ -217,7 +215,7 @@ dotnet user-secrets set "Feedback:SenderEmail" "noreply@example.com" --project b
 
 L'API expose un garde-fou anti-abus:
 
-- validation d'origine pour les appels `/api/v1/*` (avec alias legacy `/api/*`) (`ApiOriginGuardMiddleware`)
+- validation d'origine pour les appels `/api/v1/*` (`ApiOriginGuardMiddleware`)
 - session anonyme silencieuse (`AnonymousApiSessionMiddleware`) via cookie signé HttpOnly
 - rate limiting global
 - rate limiting renforcé sur:
@@ -238,7 +236,7 @@ Paramètres `ApiSecurity` (dans `appsettings.json`):
 
 Comportement session anonyme:
 
-- sur `/api/v1/*` (et alias legacy `/api/*`, hors `OPTIONS`), un cookie de session est créé s'il est absent/invalide/expiré
+- sur `/api/v1/*` (hors `OPTIONS`), un cookie de session est créé s'il est absent/invalide/expiré
 - la partition de rate limiting utilise cette session en priorité, puis `RemoteIpAddress` en fallback
 - le header `X-Forwarded-For` n'est pas utilisé directement pour la partition (anti-spoof)
 - le frontend ne transmet plus `X-Session-Id`

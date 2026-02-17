@@ -27,7 +27,7 @@ public class PlacesEndpointsTests : IClassFixture<WebApplicationFactory<Program>
     public async Task Search_RetourneDesCandidats()
     {
         using var client = _factory.CreateClient();
-        var response = await client.GetAsync("/api/places/search?q=paris&limit=2");
+        var response = await client.GetAsync("/api/v1/places/search?q=paris&limit=2");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -41,7 +41,7 @@ public class PlacesEndpointsTests : IClassFixture<WebApplicationFactory<Program>
     public async Task Search_RefuseUneRequeteTropCourte()
     {
         using var client = _factory.CreateClient();
-        var response = await client.GetAsync("/api/places/search?q=a");
+        var response = await client.GetAsync("/api/v1/places/search?q=a");
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -50,7 +50,7 @@ public class PlacesEndpointsTests : IClassFixture<WebApplicationFactory<Program>
     public async Task Reverse_RetourneUnCandidat()
     {
         using var client = _factory.CreateClient();
-        var response = await client.GetAsync("/api/places/reverse?lat=48.8566&lon=2.3522");
+        var response = await client.GetAsync("/api/v1/places/reverse?lat=48.8566&lon=2.3522");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 

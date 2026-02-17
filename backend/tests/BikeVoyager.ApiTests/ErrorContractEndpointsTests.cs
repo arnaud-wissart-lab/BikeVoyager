@@ -18,7 +18,7 @@ public class ErrorContractEndpointsTests : IClassFixture<WebApplicationFactory<P
     public async Task Places_search_trop_court_expose_un_message_coherent()
     {
         using var client = _factory.CreateClient();
-        using var response = await client.GetAsync("/api/places/search?q=a");
+        using var response = await client.GetAsync("/api/v1/places/search?q=a");
         var payload = await response.Content.ReadAsStringAsync();
         using var document = JsonDocument.Parse(payload);
         var root = document.RootElement;
@@ -32,7 +32,7 @@ public class ErrorContractEndpointsTests : IClassFixture<WebApplicationFactory<P
     public async Task Poi_around_route_sans_geometry_expose_un_message_coherent()
     {
         using var client = _factory.CreateClient();
-        using var response = await client.GetAsync("/api/poi/around-route");
+        using var response = await client.GetAsync("/api/v1/poi/around-route");
         var payload = await response.Content.ReadAsStringAsync();
         using var document = JsonDocument.Parse(payload);
         var root = document.RootElement;
@@ -46,7 +46,7 @@ public class ErrorContractEndpointsTests : IClassFixture<WebApplicationFactory<P
     public async Task Export_gpx_invalide_expose_un_message_coherent()
     {
         using var client = _factory.CreateClient();
-        using var response = await client.PostAsJsonAsync("/api/export/gpx", new
+        using var response = await client.PostAsJsonAsync("/api/v1/export/gpx", new
         {
             geometry = new
             {

@@ -103,14 +103,12 @@ Variables d’environnement utiles :
 - `POST /api/v1/route`
 - `POST /api/v1/loop`
 
-Compatibilité legacy (temporaire) : les anciens chemins `/api/*` restent acceptés et redirigés côté backend vers `/api/v1/*`.
-
 ## Protection API (anti-abus)
 
 L'API applique trois niveaux de protection:
 
-- garde d'origine sur `/api/v1/*` (avec alias legacy `/api/*`, origines autorisées via `ApiSecurity:AllowedOrigins`)
-- session anonyme silencieuse sur `/api/v1/*` (avec alias legacy `/api/*`, cookie signé HttpOnly)
+- garde d'origine sur `/api/v1/*` (origines autorisées via `ApiSecurity:AllowedOrigins`)
+- session anonyme silencieuse sur `/api/v1/*` (cookie signé HttpOnly)
 - limitation de débit (rate limiting global + politique renforcée sur les endpoints de calcul)
 
 Configuration dans `backend/src/BikeVoyager.Api/appsettings.json` section `ApiSecurity`.

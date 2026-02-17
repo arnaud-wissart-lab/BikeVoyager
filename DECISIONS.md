@@ -20,9 +20,9 @@ Ce fichier ne contient ni hotspots, ni backlog, ni plan d'exécution.
 ## ADR-0003 - Versioning API canonique en /api/v1
 - Date : 2026-02-16
 - Statut : Acceptée
-- Contexte : coexistence de clients sur anciens chemins `/api/*` et nouveaux chemins versionnés.
-- Decision : tous les endpoints publics sont exposés en `/api/v1/*`; un rewrite legacy `/api/*` reste temporairement actif.
-- Conséquences : contrat API explicite, migration client progressive, retrait du rewrite à planifier.
+- Contexte : besoin d'un contrat API versionné et stable sans préfixe non versionné.
+- Decision : tous les endpoints publics sont exposés en `/api/v1/*` uniquement. Le support du préfixe non versionné `/api` a été supprimé le 2026-02-17.
+- Conséquences : contrat API explicite, surface HTTP simplifiée, suppression du middleware de rewrite legacy.
 
 ## ADR-0004 - Pipeline qualité et CI obligatoires
 - Date : 2026-02-05

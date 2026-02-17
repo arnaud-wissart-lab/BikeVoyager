@@ -24,7 +24,7 @@ Ce document couvre principalement :
 ## Session API anonyme
 
 ### Principe
-- Toute requête sur `/api/*` (y compris `/api/v1/*`) reçoit ou réutilise un cookie de session anonyme.
+- Toute requête sur `/api/v1/*` reçoit ou réutilise un cookie de session anonyme.
 - Le cookie est protégé par ASP.NET Data Protection (signature + chiffrement applicatif).
 - Le cookie transporte un identifiant de session et une expiration.
 

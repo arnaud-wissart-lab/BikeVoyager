@@ -51,6 +51,8 @@ public static class WebApplicationExtensions
         app.MapFeedbackEndpoints();
         app.MapValhallaEndpoints(options.ValhallaDataPath, options.ValhallaBaseUrl);
         app.MapHealthEndpoints();
+        app.MapTripEndpoints();
+        app.MapExternalEndpoints();
 
         return app;
     }

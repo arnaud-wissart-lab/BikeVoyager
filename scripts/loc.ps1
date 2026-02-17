@@ -111,7 +111,7 @@ function Get-LocCount {
 }
 
 function New-MarkdownTable {
-    param([Parameter(Mandatory = $true)][array]$Rows)
+    param([Parameter(Mandatory = $true)][AllowEmptyCollection()][array]$Rows)
 
     $lines = New-Object System.Collections.Generic.List[string]
     $lines.Add('| Fichier | LOC |')
@@ -258,6 +258,7 @@ if ($top -gt 0) {
     $rows = $rows | Select-Object -First $top
 }
 
+$rows = @($rows)
 $table = New-MarkdownTable -Rows $rows
 
 if (-not [string]::IsNullOrWhiteSpace($outPath)) {

@@ -19,12 +19,16 @@ import {
   resolveLoopDistanceKm,
   resolveLoopStartLocation,
 } from './actions.loop'
-import { appendDetourPoint } from './actions.poi'
 import {
   buildRouteRequestPayload,
   createRouteRequestAction,
   resolveRouteLocations,
 } from './actions.route'
+import {
+  addDetourPointAndRecalculate as addDetourPointAndRecalculateHelper,
+  removeDetourPointAndRecalculate as removeDetourPointAndRecalculateHelper,
+  toRouteLocation,
+} from './routing.helpers'
 import { createRoutingControllerFormActions } from './useRoutingController.formActions'
 import type { MapContext } from './useRoutingController.types'
 
@@ -178,16 +182,8 @@ export const createRoutingControllerActions = ({
     }
 
     const requestBody = buildRouteRequestPayload({
-      from: {
-        lat: onewayStartPlace.lat,
-        lon: onewayStartPlace.lon,
-        label: onewayStartPlace.label,
-      },
-      to: {
-        lat: endPlace.lat,
-        lon: endPlace.lon,
-        label: endPlace.label,
-      },
+      from: toRouteLocation(onewayStartPlace),
+      to: toRouteLocation(endPlace),
       mode,
       speedKmh: profileSettings.speeds[mode],
       ebikeAssist: profileSettings.ebikeAssist,
@@ -268,35 +264,19 @@ export const createRoutingControllerActions = ({
   }
 
   const addDetourPointAndRecalculate = async (point: DetourPoint) => {
-    const nextDetours = appendDetourPoint(detourPoints, point)
-    if (nextDetours === detourPoints) {
-      return {
-        status: 'unchanged' as const,
-        nextDetours,
-      }
-    }
-
-    const success = await recalculateWithDetours(nextDetours)
-    if (!success) {
-      return {
-        status: 'failed' as const,
-        nextDetours,
-      }
-    }
-
-    return {
-      status: 'success' as const,
-      nextDetours,
-    }
+    return addDetourPointAndRecalculateHelper({
+      detourPoints,
+      point,
+      recalculateWithDetours,
+    })
   }
 
   const removeDetourPointAndRecalculate = async (detourId: string) => {
-    const nextDetours = detourPoints.filter((point) => point.id !== detourId)
-    const success = await recalculateWithDetours(nextDetours)
-    return {
-      success,
-      nextDetours,
-    }
+    return removeDetourPointAndRecalculateHelper({
+      detourPoints,
+      detourId,
+      recalculateWithDetours,
+    })
   }
 
   const handleRecalculateAlternative = async () => {

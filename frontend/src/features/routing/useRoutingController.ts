@@ -1,4 +1,4 @@
-import { useCallback, useEffect, type CSSProperties } from 'react'
+import { useCallback, useEffect } from 'react'
 import { fetchValhallaStatus, readApiMessage, startValhallaUpdate, submitDeveloperFeedback, exportRouteAsGpx } from './api'
 import {
   buildGpxFileName,
@@ -8,6 +8,14 @@ import {
   plannerDraftStorageKey,
   routeStorageKey,
 } from './domain'
+import {
+  computeCanSubmitFeedback,
+  createPlannerPanelStyles,
+  exportRouteAsGpxAction,
+  resolveAlternativeRouteLabel,
+  resolveRouteErrorDisplayMessage,
+  submitDeveloperFeedbackAction,
+} from './routing.helpers'
 import { createRoutingControllerActions } from './useRoutingController.actions'
 import { useRoutingFeatureSlice } from './useRoutingFeatureSlice'
 import type { UseRoutingControllerParams } from './useRoutingController.types'
@@ -77,25 +85,8 @@ export const useRoutingController = ({
     t,
   })
 
-  const panelTransitionDuration = 220
-  const panelTransitionTiming = 'ease-in-out'
-  const panelStackStyle: CSSProperties = {
-    position: 'relative',
-  }
-  const panelBaseStyle: CSSProperties = {
-    transitionProperty: 'opacity, transform',
-    transitionDuration: `${panelTransitionDuration}ms`,
-    transitionTimingFunction: panelTransitionTiming,
-  }
-  const getPanelStyle = (isActive: boolean): CSSProperties => ({
-    ...panelBaseStyle,
-    position: isActive ? 'relative' : 'absolute',
-    inset: isActive ? undefined : 0,
-    opacity: isActive ? 1 : 0,
-    transform: isActive ? 'translateY(0)' : 'translateY(-6px)',
-    pointerEvents: isActive ? 'auto' : 'none',
-    visibility: isActive ? 'visible' : 'hidden',
-  })
+  const { panelTransitionDuration, panelTransitionTiming, panelStackStyle, getPanelStyle } =
+    createPlannerPanelStyles()
 
   const markDirty = () => {
     if (hasResult) {
@@ -168,43 +159,29 @@ export const useRoutingController = ({
     [setIsValhallaStatusLoading, setValhallaStatus, setValhallaStatusError],
   )
 
-  const canSubmitFeedback =
-    feedbackSubject.trim().length >= 6 &&
-    feedbackMessage.trim().length >= 20 &&
-    !isFeedbackSubmitting
+  const canSubmitFeedback = computeCanSubmitFeedback(
+    feedbackSubject,
+    feedbackMessage,
+    isFeedbackSubmitting,
+  )
 
   const handleSubmitDeveloperFeedback = async () => {
-    if (!canSubmitFeedback) {
-      return
-    }
-
-    setIsFeedbackSubmitting(true)
-    setFeedbackSubmitMessage(null)
-    setFeedbackSubmitError(null)
-
-    try {
-      const response = await submitDeveloperFeedback({
-        subject: feedbackSubject,
-        message: feedbackMessage,
-        contactEmail: feedbackContactEmail,
-        page: route,
-      })
-
-      if (!response.ok) {
-        const message = await readApiMessage(response)
-        setFeedbackSubmitError(message ?? t('helpFeedbackSubmitError'))
-        return
-      }
-
-      setFeedbackSubject('')
-      setFeedbackContactEmail('')
-      setFeedbackMessage('')
-      setFeedbackSubmitMessage(t('helpFeedbackSubmitSuccess'))
-    } catch {
-      setFeedbackSubmitError(t('helpFeedbackSubmitError'))
-    } finally {
-      setIsFeedbackSubmitting(false)
-    }
+    await submitDeveloperFeedbackAction({
+      canSubmitFeedback,
+      feedbackSubject,
+      feedbackMessage,
+      feedbackContactEmail,
+      route,
+      t,
+      setIsFeedbackSubmitting,
+      setFeedbackSubmitMessage,
+      setFeedbackSubmitError,
+      setFeedbackSubject,
+      setFeedbackContactEmail,
+      setFeedbackMessage,
+      submitDeveloperFeedback,
+      readApiMessage,
+    })
   }
 
   useEffect(() => {
@@ -335,48 +312,27 @@ export const useRoutingController = ({
   }, [loadValhallaStatus, route, valhallaStatus, valhallaAutoUpdateRequestedRef])
 
   const handleExportGpx = async () => {
-    if (!routeResult || routeResult.geometry.coordinates.length < 2) {
-      setExportError(t('exportGpxFailed'))
-      return
-    }
-
-    setIsExporting(true)
-    setExportError(null)
-
-    try {
-      const response = await exportRouteAsGpx({
-        geometry: routeResult.geometry,
-        elevation_profile:
-          routeResult.elevation_profile.length > 1
-            ? routeResult.elevation_profile
-            : null,
-        name: map.mapHeaderTitle || t('exportGpxDefaultName'),
-      })
-
-      if (!response.ok) {
-        setExportError(t('exportGpxFailed'))
-        return
-      }
-
-      const blob = await response.blob()
-      const headerFileName = parseContentDispositionFileName(
-        response.headers.get('content-disposition'),
-      )
-      const fallbackName = buildGpxFileName(map.mapHeaderTitle || t('exportGpxDefaultName'))
-      downloadBlob(blob, headerFileName ?? fallbackName)
-    } catch {
-      setExportError(t('exportGpxFailed'))
-    } finally {
-      setIsExporting(false)
-    }
+    await exportRouteAsGpxAction({
+      routeResult,
+      mapHeaderTitle: map.mapHeaderTitle,
+      t,
+      setIsExporting,
+      setExportError,
+      exportRouteAsGpx,
+      parseContentDispositionFileName,
+      buildGpxFileName,
+      downloadBlob,
+    })
   }
 
-  const routeErrorDisplayMessage =
-    routeErrorMessage ?? (routeErrorKey ? t(routeErrorKey) : null)
+  const routeErrorDisplayMessage = resolveRouteErrorDisplayMessage(
+    routeErrorMessage,
+    routeErrorKey,
+    t,
+  )
   const isValhallaBuildRunning = valhallaStatus?.build?.state === 'running'
   const valhallaUpdateAvailable = valhallaStatus?.update?.update_available === true
-  const alternativeRouteLabel =
-    routeResult?.kind === 'loop' ? t('mapRegenerateLoopVariant') : t('mapRecalculateRouteVariant')
+  const alternativeRouteLabel = resolveAlternativeRouteLabel(routeResult, t)
 
   return {
     showLocationInputs,

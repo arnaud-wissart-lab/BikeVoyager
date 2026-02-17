@@ -22,7 +22,8 @@ Valhalla (build, mises a jour, et nettoyage disque).
 - .NET SDK 10.x
 - Node.js 20+ et npm
 - Docker Desktop (necessaire pour Valhalla)
-- Dependances frontend installees une fois : `npm install` dans `frontend/`
+- Dependances frontend installees une fois : `npm ci` dans `frontend/`
+- `npm ci` necessite `package-lock.json` (present dans le repo).
 
 ## Version image Valhalla
 

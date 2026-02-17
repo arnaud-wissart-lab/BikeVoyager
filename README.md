@@ -40,9 +40,11 @@ Frontend seul :
 
 ```powershell
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
+
+`npm ci` necessite `package-lock.json` (present dans le repo).
 
 Stack complète (recommandé) :
 
@@ -150,7 +152,7 @@ Vérification locale :
 
 ```powershell
 cd frontend
-npm install
+npm ci
 npm run build
 npm run preview
 ```

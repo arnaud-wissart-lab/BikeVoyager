@@ -183,10 +183,18 @@ fi
 table='| Fichier | LOC |
 |---|---:|'
 
-while IFS=$'\t' read -r loc rel; do
-  [[ -n "${loc:-}" && -n "${rel:-}" ]] || continue
-  table+=$'\n'"| \`$rel\` | $loc |"
-done < "$tmp_work"
+if [[ ! -s "$tmp_work" ]]; then
+  if [[ -n "$threshold" ]]; then
+    table+=$'\n'"| *(Aucun fichier >= $threshold LOC dans le scope)* | 0 |"
+  else
+    table+=$'\n''| *(Aucun fichier ne correspond aux filtres)* | 0 |'
+  fi
+else
+  while IFS=$'\t' read -r loc rel; do
+    [[ -n "${loc:-}" && -n "${rel:-}" ]] || continue
+    table+=$'\n'"| \`$rel\` | $loc |"
+  done < "$tmp_work"
+fi
 
 if [[ -n "$out_path" ]]; then
   if [[ "$out_path" = /* ]]; then

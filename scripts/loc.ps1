@@ -111,11 +111,19 @@ function Get-LocCount {
 }
 
 function New-MarkdownTable {
-    param([Parameter(Mandatory = $true)][AllowEmptyCollection()][array]$Rows)
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][array]$Rows,
+        [string]$EmptyLabel = '*(Aucun fichier ne correspond aux filtres)*'
+    )
 
     $lines = New-Object System.Collections.Generic.List[string]
     $lines.Add('| Fichier | LOC |')
     $lines.Add('|---|---:|')
+
+    if ($Rows.Count -eq 0) {
+        $lines.Add(('| {0} | 0 |' -f $EmptyLabel))
+        return ($lines -join [Environment]::NewLine)
+    }
 
     foreach ($row in $Rows) {
         $lines.Add(('| `{0}` | {1} |' -f $row.File, $row.LOC))
@@ -259,7 +267,12 @@ if ($top -gt 0) {
 }
 
 $rows = @($rows)
-$table = New-MarkdownTable -Rows $rows
+$emptyLabel = '*(Aucun fichier ne correspond aux filtres)*'
+if (($rows.Count -eq 0) -and ($threshold -ge 0)) {
+    $emptyLabel = ('*(Aucun fichier >= {0} LOC dans le scope)*' -f $threshold)
+}
+
+$table = New-MarkdownTable -Rows $rows -EmptyLabel $emptyLabel
 
 if (-not [string]::IsNullOrWhiteSpace($outPath)) {
     $outAbsolutePath = if ([System.IO.Path]::IsPathRooted($outPath)) {

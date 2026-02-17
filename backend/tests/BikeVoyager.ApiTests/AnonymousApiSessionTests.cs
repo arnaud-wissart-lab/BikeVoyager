@@ -30,7 +30,7 @@ public class AnonymousApiSessionTests : IClassFixture<WebApplicationFactory<Prog
 
         Assert.Contains("httponly", sessionCookie, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("samesite=lax", sessionCookie, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("path=/", sessionCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("path=/api", sessionCookie, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("expires=", sessionCookie, StringComparison.OrdinalIgnoreCase);
     }
 

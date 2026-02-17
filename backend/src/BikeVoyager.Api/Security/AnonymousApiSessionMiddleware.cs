@@ -64,7 +64,7 @@ public sealed class AnonymousApiSessionMiddleware
             IsEssential = true,
             SameSite = SameSiteMode.Lax,
             Secure = context.Request.IsHttps,
-            Path = "/",
+            Path = "/api",
             Expires = expiresAt,
         });
 
@@ -167,4 +167,3 @@ public sealed class AnonymousApiSessionMiddleware
         return proposed < MinimumSessionLifetime ? MinimumSessionLifetime : proposed;
     }
 }
-

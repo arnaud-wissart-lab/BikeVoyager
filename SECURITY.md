@@ -32,7 +32,7 @@ Ce document couvre principalement :
 - `HttpOnly` actif
 - `SameSite=Lax` actif
 - `Secure` active si HTTPS
-- `Path=/`
+- `Path=/api`
 - expiration configurable (`ApiSecurity:AnonymousSessionLifetimeHours`, minimum 1h)
 
 ### Usage

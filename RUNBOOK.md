@@ -286,7 +286,7 @@ Scripts agrégés :
 
 Passe UI documentée et auditable :
 
-- `docs/AUDIT_TECHNIQUE.md` (section "Historique UI consolidé")
+- `docs/AUDIT_TECHNIQUE.md`
 
 ## Dépannage rapide
 

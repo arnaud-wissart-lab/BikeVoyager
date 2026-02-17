@@ -16,7 +16,7 @@ Documentation de référence : français en priorité.
 
 ```powershell
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
@@ -53,7 +53,7 @@ Le frontend repose sur un thème Mantine centralisé dans `src/theme.ts`:
 - constantes techniques centralisées (endpoints API) dans
   `src/features/app/apiPaths.ts` pour éviter les chaînes dupliquées
 
-Audit détaillé de la passe UI: `../docs/AUDIT_TECHNIQUE.md` (section "Historique UI consolidé").
+Audit détaillé de la passe UI: `../docs/AUDIT_TECHNIQUE.md`.
 
 ## E2E (Playwright)
 

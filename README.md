@@ -169,7 +169,7 @@ Puis ouvrir l’URL de preview et vérifier la proposition d’installation du n
 
 Installation iOS : `Safari > Partager > Sur l’écran d’accueil`.
 
-Invite d’installation : `frontend/src/components/InstallPrompt.tsx` gère la popin FR/EN et le cas iOS sans `beforeinstallprompt`.
+Invite d’installation : le composant dédié gère la popin FR/EN et le cas iOS sans événement navigateur spécifique.
 
 ## Documentation liée
 

@@ -5,7 +5,7 @@ Ce dépôt vise une base propre, auditable, maintenable et reproductible.
 
 ## Working agreements
 - Les règles de contribution sont définies dans `AGENTS.md` et `frontend/AGENTS.md`.
-- Elles s'appliquent à toutes les PRs humaines et aux agents IA (Codex).
+- Elles s'appliquent à toutes les contributions, quel que soit leur auteur.
 - En cas de divergence, la règle la plus spécifique au périmètre modifié prévaut.
 - Les changements doivent rester atomiques, justifiés et faciles à auditer.
 - Les validations de tests restent obligatoires avant ouverture de PR.

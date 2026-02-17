@@ -167,7 +167,7 @@ internal static class AppHostBuilderExtensions
             if (string.IsNullOrWhiteSpace(frontendUrl))
             {
                 Console.WriteLine(
-                    "Le frontend n'a pas répondu après 30 secondes. Vérifiez que `npm install` a été exécuté dans `frontend/`.");
+                    "Le frontend n'a pas répondu après 30 secondes. Vérifiez que `npm ci` a été exécuté dans `frontend/`.");
             }
         });
     }

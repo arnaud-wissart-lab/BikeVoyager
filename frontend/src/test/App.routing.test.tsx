@@ -2,111 +2,19 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../App'
 import { apiPaths } from '../features/routing/apiPaths'
-import { routeStorageKey } from '../features/routing/domain'
 import {
-  createJsonResponse,
-  renderWithProviders,
-  resolveRequestUrl,
-} from './test-utils'
+  createAppFetchMock,
+  isPoiAroundRouteUrl,
+  resetAppTestEnvironment,
+  saveRouteResultToStorage,
+  setDesktopMatchMedia,
+} from './app-test-utils'
+import { createJsonResponse, renderWithProviders } from './test-utils'
 
-const createDefaultApiResponse = (url: string): Response => {
-  if (url === apiPaths.cloudProviders) {
-    return createJsonResponse({
-      providers: { onedrive: false, googleDrive: false },
-    })
-  }
-
-  if (url === apiPaths.cloudSession) {
-    return createJsonResponse({
-      connected: false,
-      authState: null,
-    })
-  }
-
-  if (url === apiPaths.cloudStatus) {
-    return createJsonResponse({
-      providers: { onedrive: false, googleDrive: false },
-      session: { connected: false, authState: null },
-      cache: {
-        distributedCacheType: 'Redis',
-        healthy: true,
-        message: 'OK',
-        fallback: null,
-      },
-      serverTimeUtc: '2026-02-15T10:30:00Z',
-    })
-  }
-
-  if (url === apiPaths.valhallaStatus) {
-    return createJsonResponse({
-      ready: true,
-      reason: null,
-      marker_exists: true,
-      service_reachable: true,
-      service_error: null,
-      message: 'ready',
-      build: {
-        state: 'idle',
-        phase: 'ready',
-        progress_pct: 100,
-        message: 'ready',
-        updated_at: '2026-02-15T10:00:00Z',
-      },
-      update: {
-        state: 'idle',
-        update_available: false,
-        reason: null,
-        message: 'up-to-date',
-        checked_at: '2026-02-15T09:00:00Z',
-        next_check_at: '2026-02-15T12:00:00Z',
-        marker_exists: true,
-        remote: {
-          available: true,
-          error: null,
-        },
-      },
-    })
-  }
-
-  if (url.startsWith(apiPaths.placesSearch)) {
-    return createJsonResponse([])
-  }
-
-  if (url.endsWith(apiPaths.poiAroundRoute) || url.includes(apiPaths.poiAroundRoute)) {
-    return createJsonResponse([])
-  }
-
-  if (url === apiPaths.route || url === apiPaths.loop || url === apiPaths.exportGpx) {
-    return createJsonResponse({}, 400)
-  }
-
-  return createJsonResponse({})
-}
-
-describe('App', () => {
+describe('App routing', () => {
   beforeEach(() => {
-    localStorage.clear()
-    window.location.hash = ''
-    vi.unstubAllGlobals()
-
-    const defaultFetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = resolveRequestUrl(input)
-      return createDefaultApiResponse(url)
-    })
-
-    vi.stubGlobal('fetch', defaultFetchMock)
-  })
-
-  it('affiche le nom du produit', async () => {
-    const fetchMock = vi.mocked(fetch)
-
-    renderWithProviders(<App />)
-
-    expect(screen.getByText('BikeVoyager')).toBeInTheDocument()
-
-    await waitFor(() => {
-      expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2)
-    })
+    resetAppTestEnvironment()
+    vi.stubGlobal('fetch', createAppFetchMock())
   })
 
   it('isole le depart entre aller simple et boucle', async () => {
@@ -140,9 +48,7 @@ describe('App', () => {
   it('enchaîne planifier, carte, navigation et sortie', async () => {
     const user = userEvent.setup()
 
-    const mockFetch = vi.fn(async (input: RequestInfo | URL) => {
-      const url = resolveRequestUrl(input)
-
+    const mockFetch = createAppFetchMock((url) => {
       if (url.startsWith(apiPaths.placesSearch)) {
         const params = new URLSearchParams(url.split('?')[1] ?? '')
         const query = params.get('q') ?? ''
@@ -188,9 +94,8 @@ describe('App', () => {
         })
       }
 
-      return createDefaultApiResponse(url)
+      return undefined
     })
-
     vi.stubGlobal('fetch', mockFetch)
 
     renderWithProviders(<App />)
@@ -232,44 +137,26 @@ describe('App', () => {
   it('masque les POI paysages quand la categorie est deselectionnee', async () => {
     const user = userEvent.setup()
 
-    Object.defineProperty(window, 'matchMedia', {
-      writable: true,
-      value: (query: string) => ({
-        matches: query.includes('(min-width: 60em)'),
-        media: query,
-        onchange: null,
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        dispatchEvent: () => false,
-        addListener: () => {},
-        removeListener: () => {},
-      }),
+    setDesktopMatchMedia()
+    window.location.hash = '/carte'
+    saveRouteResultToStorage({
+      kind: 'route',
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [2.3522, 48.8566],
+          [2.36, 48.86],
+        ],
+      },
+      distance_m: 1200,
+      duration_s_engine: 500,
+      eta_s: 500,
+      turn_by_turn: [],
+      elevation_profile: [],
     })
 
-    window.location.hash = '/carte'
-    localStorage.setItem(
-      routeStorageKey,
-      JSON.stringify({
-        kind: 'route',
-        geometry: {
-          type: 'LineString',
-          coordinates: [
-            [2.3522, 48.8566],
-            [2.36, 48.86],
-          ],
-        },
-        distance_m: 1200,
-        duration_s_engine: 500,
-        eta_s: 500,
-        turn_by_turn: [],
-        elevation_profile: [],
-      }),
-    )
-
-    const mockFetch = vi.fn(async (input: RequestInfo | URL) => {
-      const url = resolveRequestUrl(input)
-
-      if (url.endsWith(apiPaths.poiAroundRoute) || url.includes(apiPaths.poiAroundRoute)) {
+    const mockFetch = createAppFetchMock((url, input) => {
+      if (url.endsWith(apiPaths.poiAroundRoute) || isPoiAroundRouteUrl(input)) {
         return createJsonResponse([
           {
             id: 'poi-monument',
@@ -294,9 +181,8 @@ describe('App', () => {
         ])
       }
 
-      return createDefaultApiResponse(url)
+      return undefined
     })
-
     vi.stubGlobal('fetch', mockFetch)
 
     renderWithProviders(<App />)
@@ -320,44 +206,26 @@ describe('App', () => {
   it('deduplique les POI quasi-identiques dans la liste', async () => {
     const user = userEvent.setup()
 
-    Object.defineProperty(window, 'matchMedia', {
-      writable: true,
-      value: (query: string) => ({
-        matches: query.includes('(min-width: 60em)'),
-        media: query,
-        onchange: null,
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        dispatchEvent: () => false,
-        addListener: () => {},
-        removeListener: () => {},
-      }),
+    setDesktopMatchMedia()
+    window.location.hash = '/carte'
+    saveRouteResultToStorage({
+      kind: 'route',
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [6.865, 45.923],
+          [6.885, 45.925],
+        ],
+      },
+      distance_m: 2200,
+      duration_s_engine: 900,
+      eta_s: 900,
+      turn_by_turn: [],
+      elevation_profile: [],
     })
 
-    window.location.hash = '/carte'
-    localStorage.setItem(
-      routeStorageKey,
-      JSON.stringify({
-        kind: 'route',
-        geometry: {
-          type: 'LineString',
-          coordinates: [
-            [6.865, 45.923],
-            [6.885, 45.925],
-          ],
-        },
-        distance_m: 2200,
-        duration_s_engine: 900,
-        eta_s: 900,
-        turn_by_turn: [],
-        elevation_profile: [],
-      }),
-    )
-
-    const mockFetch = vi.fn(async (input: RequestInfo | URL) => {
-      const url = resolveRequestUrl(input)
-
-      if (url.endsWith(apiPaths.poiAroundRoute) || url.includes(apiPaths.poiAroundRoute)) {
+    const mockFetch = createAppFetchMock((url, input) => {
+      if (url.endsWith(apiPaths.poiAroundRoute) || isPoiAroundRouteUrl(input)) {
         return createJsonResponse([
           {
             id: 'poi-dup-1',
@@ -395,9 +263,8 @@ describe('App', () => {
         ])
       }
 
-      return createDefaultApiResponse(url)
+      return undefined
     })
-
     vi.stubGlobal('fetch', mockFetch)
 
     renderWithProviders(<App />)
@@ -413,54 +280,31 @@ describe('App', () => {
   it('n envoie pas de requete POI supplementaire quand aucune categorie visible n est selectionnee hors navigation', async () => {
     const user = userEvent.setup()
 
-    Object.defineProperty(window, 'matchMedia', {
-      writable: true,
-      value: (query: string) => ({
-        matches: query.includes('(min-width: 60em)'),
-        media: query,
-        onchange: null,
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        dispatchEvent: () => false,
-        addListener: () => {},
-        removeListener: () => {},
-      }),
+    setDesktopMatchMedia()
+    window.location.hash = '/carte'
+    saveRouteResultToStorage({
+      kind: 'route',
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [2.3522, 48.8566],
+          [2.36, 48.86],
+        ],
+      },
+      distance_m: 1200,
+      duration_s_engine: 500,
+      eta_s: 500,
+      turn_by_turn: [],
+      elevation_profile: [],
     })
 
-    window.location.hash = '/carte'
-    localStorage.setItem(
-      routeStorageKey,
-      JSON.stringify({
-        kind: 'route',
-        geometry: {
-          type: 'LineString',
-          coordinates: [
-            [2.3522, 48.8566],
-            [2.36, 48.86],
-          ],
-        },
-        distance_m: 1200,
-        duration_s_engine: 500,
-        eta_s: 500,
-        turn_by_turn: [],
-        elevation_profile: [],
-      }),
-    )
-
-    const isPoiAroundRouteUrl = (input: RequestInfo | URL) => {
-      const url = resolveRequestUrl(input)
-      return url.endsWith(apiPaths.poiAroundRoute) || url.includes(apiPaths.poiAroundRoute)
-    }
-
-    const mockFetch = vi.fn(async (input: RequestInfo | URL) => {
+    const mockFetch = createAppFetchMock((_, input) => {
       if (isPoiAroundRouteUrl(input)) {
         return createJsonResponse([])
       }
 
-      const url = resolveRequestUrl(input)
-      return createDefaultApiResponse(url)
+      return undefined
     })
-
     vi.stubGlobal('fetch', mockFetch)
 
     renderWithProviders(<App />)
@@ -503,4 +347,3 @@ describe('App', () => {
     expect(getPoiAroundRouteCallCount()).toBe(callCountBeforeLastToggle)
   })
 })
-

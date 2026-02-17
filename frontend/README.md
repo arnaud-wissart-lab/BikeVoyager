@@ -51,7 +51,7 @@ Le frontend repose sur un thème Mantine centralisé dans `src/theme.ts`:
   `TextInput`, `NumberInput`, `Checkbox`, `Paper`, `Badge`, `Slider`)
 - hiérarchie d’actions: actions principales en `sm`, micro-actions en `xs`
 - constantes techniques centralisées (endpoints API) dans
-  `src/features/app/apiPaths.ts` pour éviter les chaînes dupliquées
+  `src/features/routing/apiPaths.ts` pour éviter les chaînes dupliquées
 
 Audit détaillé de la passe UI: `../docs/AUDIT_TECHNIQUE.md`.
 

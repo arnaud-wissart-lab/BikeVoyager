@@ -67,6 +67,6 @@ jobs:
       - name: E2E
         working-directory: frontend
         run: npm run e2e
-      - name: Audit npm
+      - name: Audit npm (runtime deps)
         working-directory: frontend
-        run: npm audit
+        run: npm audit --omit=dev

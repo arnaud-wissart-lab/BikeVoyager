@@ -50,7 +50,7 @@ Aucun fichier >= 400 LOC dans le scope backend/frontend/docs.
 - Compatibilité de versionnement couverte par tests (`backend/tests/BikeVoyager.ApiTests/ApiVersioningCompatibilityTests.cs`).
 - CI unique backend + frontend + E2E dans `.github/workflows/ci.yml`.
 - Qualité automatisée : `dotnet test BikeVoyager.sln`, `npm run test`, `npm run e2e` en CI.
-- Audits dépendances intégrés en CI (`dotnet list ... --vulnerable`, `npm audit`).
+- Audits dépendances intégrés en CI (`dotnet list ... --vulnerable`, `npm audit --omit=dev`).
 - Gouvernance OSS visible à la racine : `LICENSE`, `CODE_OF_CONDUCT.md`, `SECURITY.md`.
 
 ## 5) Nettoyage legacy

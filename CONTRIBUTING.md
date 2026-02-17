@@ -1,7 +1,7 @@
 # Contribuer à BikeVoyager
 
 ## Objectif
-Ce dépôt vise une vitrine GitHub : code propre, auditable et documentation claire.
+Ce dépôt vise une base propre, auditable, maintenable et reproductible.
 
 ## Working agreements
 - Les règles de contribution sont définies dans `AGENTS.md` et `frontend/AGENTS.md`.

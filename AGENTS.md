@@ -1,7 +1,7 @@
 # AGENTS.md — Working agreements
 
 ## Objectif
-Faire de ce dépôt une vitrine GitHub : code propre, auditable, docs impeccables.
+Faire de ce dépôt une base propre, auditable, maintenable et reproductible.
 
 ## Langue
 - Commentaires et documentation destinés aux humains : FRANÇAIS.

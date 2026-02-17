@@ -165,6 +165,7 @@ Invite d’installation : `frontend/src/components/InstallPrompt.tsx` gère la p
 
 - [RUNBOOK](RUNBOOK.md)
 - [API](docs/API.md)
+- [Architecture](docs/ARCHITECTURE.md)
 - [Audit technique](docs/AUDIT_TECHNIQUE.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)

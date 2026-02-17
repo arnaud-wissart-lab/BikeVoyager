@@ -2,10 +2,8 @@ import type { TFunction } from 'i18next'
 import type { AppStore } from '../../state/appStore'
 import {
   buildLoopRequest,
-  loopTelemetryEvents,
   type DetourPoint,
   type RouteKey,
-  trackLoopEvent,
 } from './domain'
 import { clearRouteErrors, setLoopFailedError, setRouteMissingPlaceError } from './actions.errors'
 import {
@@ -153,20 +151,12 @@ export const createRoutingControllerActions = ({
       )
 
       if (!loopRequest) {
-        trackLoopEvent(loopTelemetryEvents.failed, { reason: 'invalid_form' })
         return
       }
-
-      trackLoopEvent(loopTelemetryEvents.requested, {
-        targetDistanceKm: loopRequest.targetDistanceKm,
-      })
 
       const success = await requestLoop(loopRequest, [])
       if (success) {
         setLoopAlternativeIndex(0)
-        trackLoopEvent(loopTelemetryEvents.succeeded, {
-          targetDistanceKm: loopRequest.targetDistanceKm,
-        })
       }
 
       return

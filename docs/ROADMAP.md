@@ -5,18 +5,14 @@ Objectif : renforcer la qualité du dépôt sans changement fonctionnel.
 
 ## Backlog priorisé (reste à faire)
 
-1. `P1` - Ajouter les badges README (CI, tests, licence) pour rendre l'état qualité visible immédiatement.
-2. `P1` - Rédiger `docs/ARCHITECTURE.md` (vue système, flux front/back, conventions de modules) pour faciliter l'audit externe.
-3. `P2` - Améliorer la présentation du dépôt (captures/GIF) et la documentation utilisateur.
+1. `P1` - Ajouter 2 specs E2E Playwright stables pour les parcours critiques : routing et export/import.
+2. `P2` - Réduire la dépendance à un owner hardcodé dans `SECURITY.md` et `CODE_OF_CONDUCT.md`.
+3. `P2` - Ajouter une capture ou un GIF léger dans `README.md` pour illustrer un parcours clé (optionnel).
 
 ## Historique récent
 
 - `2026-02-17` : suppression du support legacy (préfixe non versionné `/api`) et retrait du middleware `backend/src/BikeVoyager.Api/Middleware/LegacyApiPathRewriteMiddleware.cs`.
-
-## Hotspots sortis du backlog LOC (>= 400)
-
-- Au relevé du 2026-02-17 (`54469d0`), aucun fichier du scope `backend/frontend/docs` n'est >= 400 LOC.
-- Tous les hotspots suivis précédemment sont sortis du backlog LOC, y compris `frontend/src/features/routing/useRoutingController.actions.ts` (394 LOC).
+- `2026-02-17` : documentation publique alignée (suppression des traces d'outillage dans les `.md`).
 
 Définition of done globale :
 - Aucun changement fonctionnel.

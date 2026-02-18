@@ -43,7 +43,7 @@ step_scripts_removed=0
 
 build_running=false
 if [ -f "$build_lock_path" ]; then
-  # If lock is stale (interrupted build), release it to avoid blocking cleanup forever.
+  # Si le verrou est obsolète (build interrompu), le libérer pour éviter de bloquer le nettoyage indéfiniment.
   if find "$build_lock_path" -mmin +"$stale_lock_minutes" -print -quit 2>/dev/null | grep -q .; then
     rm -f "$build_lock_path"
     echo "Valhalla cleanup: verrou de build stale supprime."

@@ -51,7 +51,7 @@ Ce document couvre principalement :
 - `bv_cloud_auth_sid` : référence de session cloud connectée.
 
 Propriétés :
-- `HttpOnly`, `SameSite=Lax`, `Path=/` ;
+- `HttpOnly`, `SameSite=Lax`, `Path=/api` ;
 - `Secure` si HTTPS ;
 - aucun token OAuth n'est stocké dans le cookie (référence serveur uniquement).
 

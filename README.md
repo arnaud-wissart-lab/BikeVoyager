@@ -4,7 +4,6 @@
 [![Licence](https://img.shields.io/github/license/arnaud-wissart/BikeVoyager)](LICENSE)
 
 Documentation de référence : français en priorité.
-Des notes en anglais peuvent exister, mais la version FR reste la source principale.
 
 ## Objectif
 

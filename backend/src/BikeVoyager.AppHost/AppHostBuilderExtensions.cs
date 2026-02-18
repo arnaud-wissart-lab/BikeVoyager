@@ -2,7 +2,7 @@ using Aspire.Hosting.ApplicationModel;
 
 internal static class AppHostBuilderExtensions
 {
-    // A bump lors des updates Valhalla (garder aligne avec infra/valhalla.compose.yml).
+    // À mettre à jour lors des mises à jour Valhalla (garder aligné avec infra/valhalla.compose.yml).
     private const string ValhallaImageReference =
         "ghcr.io/valhalla/valhalla@sha256:4e287d4e78ee9e44911d282c33b52f6d916381d705f59b0a875d5b71ef565d2a";
 

@@ -3,7 +3,7 @@
 ## Objectif
 Ce dépôt vise une base propre, auditable, maintenable et reproductible.
 
-## Working agreements
+## Conventions de travail
 - Ce document centralise les règles de contribution (générales et frontend).
 - Elles s'appliquent à toutes les contributions, quel que soit leur auteur.
 - En cas de divergence, la règle la plus spécifique au périmètre modifié prévaut.

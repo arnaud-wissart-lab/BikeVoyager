@@ -11,8 +11,8 @@ Ce dépôt vise une base propre, auditable, maintenable et reproductible.
 - Les validations de tests restent obligatoires avant ouverture de PR.
 
 ## Règles générales
-- Seuils de taille cibles : backend < 400 LOC ; frontend < 600 LOC.
-- Toute exception à ces seuils doit être justifiée dans `DECISIONS.md` (ADR).
+- 400 LOC = seuil d'analyse/alerte (hotspot) utilisé par l'audit LOC (`--threshold 400`).
+- Règle de contribution : viser < 400 LOC par fichier ; en frontend React/TS, la limite exceptionnelle est 600 LOC avec ADR dans `DECISIONS.md`.
 - Commentaires et documentation destinés aux humains : français.
 - PRs petites et atomiques : un seul thème par PR.
 - Pas de reformat global sans justification explicite.
@@ -20,7 +20,7 @@ Ce dépôt vise une base propre, auditable, maintenable et reproductible.
 - Pas de changement de comportement applicatif dans une PR de documentation.
 
 ## Règles frontend spécifiques
-- Aucun fichier React/TS ne doit dépasser 600 lignes (sauf exception justifiée dans `DECISIONS.md`).
+- Frontend React/TS : >= 400 LOC = hotspot à traiter ; > 600 LOC interdit sans exception ADR dans `DECISIONS.md`.
 - Interdit de déplacer un monolithe vers un nouveau monolithe.
 - Préférer l’extraction en hooks (`use*Controller`) et petits composants UI.
 - Tests frontend obligatoires : `npm test` et Playwright si présent.

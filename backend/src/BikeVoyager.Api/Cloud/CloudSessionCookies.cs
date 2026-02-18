@@ -71,7 +71,7 @@ public sealed class CloudSessionCookies : ICloudSessionCookies
             Secure = httpContext.Request.IsHttps,
             SameSite = SameSiteMode.Lax,
             IsEssential = true,
-            Path = "/",
+            Path = "/api",
             Expires = DateTimeOffset.UtcNow.Add(lifetime),
         });
     }
@@ -84,7 +84,7 @@ public sealed class CloudSessionCookies : ICloudSessionCookies
             Secure = httpContext.Request.IsHttps,
             SameSite = SameSiteMode.Lax,
             IsEssential = true,
-            Path = "/",
+            Path = "/api",
         });
     }
 }

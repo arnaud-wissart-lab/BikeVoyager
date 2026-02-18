@@ -122,6 +122,6 @@ Quand une mise à jour est lancée, le backend construit en arrière-plan une re
 
 Voir `../README.md` (section "PWA") pour la stratégie d’installation et de cache.
 
-## English quick note
+## Note rapide
 
-Primary docs are in French. The Help tab shows Valhalla status and lets users start updates manually.
+La documentation de référence est en français. L’onglet Aide affiche l’état de Valhalla et permet de lancer les mises à jour manuellement.

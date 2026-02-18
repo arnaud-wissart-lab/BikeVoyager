@@ -1,6 +1,39 @@
-@BikeVoyager.Api_HostAddress = http://localhost:5024
+@baseUrl = http://localhost:5024
 
-GET {{BikeVoyager.Api_HostAddress}}/weatherforecast/
+### Vérifier la disponibilité de l'API
+GET {{baseUrl}}/api/v1/health
 Accept: application/json
 
-###
+### Vérifier l'état Valhalla
+GET {{baseUrl}}/api/v1/valhalla/status
+Accept: application/json
+
+### Lister les fournisseurs cloud disponibles
+GET {{baseUrl}}/api/v1/cloud/providers
+Accept: application/json
+
+### Calculer un itinéraire simple
+POST {{baseUrl}}/api/v1/route
+Content-Type: application/json
+Accept: application/json
+
+{
+  "from": {
+    "lat": 48.8566,
+    "lon": 2.3522,
+    "label": "Paris centre"
+  },
+  "to": {
+    "lat": 48.8667,
+    "lon": 2.3333,
+    "label": "Louvre"
+  },
+  "waypoints": [],
+  "mode": "bicycle",
+  "options": {
+    "preferCycleways": true,
+    "avoidHills": false
+  },
+  "speedKmh": 18,
+  "optimizeWaypoints": true
+}

@@ -1,7 +1,7 @@
 # BikeVoyager (mono-repo)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/arnaud-wissart/BikeVoyager/ci.yml?branch=main&label=CI)](https://github.com/arnaud-wissart/BikeVoyager/actions/workflows/ci.yml)
-[![Licence](https://img.shields.io/github/license/arnaud-wissart/BikeVoyager)](LICENSE)
+[![Licence](https://img.shields.io/github/license/arnaud-wissart/BikeVoyager.svg?cacheSeconds=3600)](LICENSE)
 
 Documentation de référence : français en priorité.
 

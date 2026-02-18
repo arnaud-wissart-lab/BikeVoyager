@@ -17,7 +17,7 @@
 | `frontend/src/features/data/dataPortability.ts` | 749 | 40 | **RÉSOLU** | Fichier < 400 LOC. |
 | `frontend/src/ui/pages/DataPage.tsx` | 587 | 269 | **RÉSOLU** | Fichier < 400 LOC. |
 | `frontend/src/features/cloud/useCloudController.ts` | 687 | 115 | **RÉSOLU** | Split effectif ; fichier repasse largement sous 400 LOC. |
-| `frontend/src/features/routing/useRoutingController.actions.ts` | 612 | 384 | **RÉSOLU** | Fichier < 400 LOC. |
+| `frontend/src/features/routing/useRoutingController.actions.ts` | 612 | 370 | **RÉSOLU** | Fichier < 400 LOC. |
 | `backend/src/BikeVoyager.Infrastructure/Routing/ValhallaLoopService.cs` | 618 | 297 | **RÉSOLU** | Taille maîtrisée. |
 | `backend/src/BikeVoyager.AppHost/Program.cs` | 459 | 21 | **RÉSOLU** | Bootstrapping minimal. |
 | `backend/src/BikeVoyager.Infrastructure/Pois/OverpassGeometryHelper.cs` | 405 | 20 | **RÉSOLU** | Helper extrait et fichier historique réduit. |

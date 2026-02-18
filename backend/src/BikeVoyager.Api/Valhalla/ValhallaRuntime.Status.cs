@@ -240,6 +240,7 @@ internal static partial class ValhallaRuntime
 
     public static async Task<(bool Reachable, string? Error)> ProbeServiceAsync(
         string? baseUrl,
+        IValhallaProbeClient probeClient,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(baseUrl))
@@ -254,13 +255,7 @@ internal static partial class ValhallaRuntime
 
         try
         {
-            using var httpClient = new HttpClient
-            {
-                BaseAddress = parsedBaseUrl,
-                Timeout = TimeSpan.FromSeconds(2),
-            };
-
-            using var response = await httpClient.GetAsync("status", cancellationToken);
+            using var response = await probeClient.GetStatusAsync(parsedBaseUrl, cancellationToken);
             if (response.IsSuccessStatusCode)
             {
                 return (true, null);

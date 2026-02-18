@@ -4,6 +4,7 @@ using BikeVoyager.Api.Cloud.Providers;
 using BikeVoyager.Api.Feedback;
 using BikeVoyager.Api.Middleware;
 using BikeVoyager.Api.Security;
+using BikeVoyager.Api.Valhalla;
 using BikeVoyager.Application.Trips;
 using FluentValidation;
 using Microsoft.AspNetCore.RateLimiting;
@@ -54,6 +55,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICloudOAuthRedirectPolicy, CloudOAuthRedirectPolicy>();
         services.AddScoped<ICloudSessionCookies, CloudSessionCookies>();
         services.AddScoped<CloudSyncEndpointHandlers>();
+        services.AddHttpClient<IValhallaProbeClient, ValhallaProbeClient>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(2);
+        });
         services.AddHttpClient<GoogleDriveCloudProviderClient>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(25);

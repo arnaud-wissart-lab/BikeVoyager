@@ -10,7 +10,7 @@ public static class ValhallaEndpoints
         var valhalla = endpoints.MapGroup("/api/v1/valhalla");
 
         valhalla.MapGet("/status",
-                async (CancellationToken cancellationToken) =>
+                async (IValhallaProbeClient probeClient, CancellationToken cancellationToken) =>
                 {
                     var activeDataPath = ValhallaRuntime.ResolveActiveDataPath(valhallaDataPath);
                     var ready = ValhallaRuntime.IsReady(valhallaDataPath, out var reason);
@@ -19,7 +19,7 @@ public static class ValhallaEndpoints
                     var updateStatus = ValhallaRuntime.ReadUpdateStatus(valhallaDataPath);
                     var buildRunning = string.Equals(buildProgress.State, "running", StringComparison.OrdinalIgnoreCase);
                     var (serviceReachable, serviceError) = ready
-                        ? await ValhallaRuntime.ProbeServiceAsync(valhallaBaseUrl, cancellationToken)
+                        ? await ValhallaRuntime.ProbeServiceAsync(valhallaBaseUrl, probeClient, cancellationToken)
                         : (false, (string?)null);
 
                     var message = !ready
@@ -126,7 +126,7 @@ public static class ValhallaEndpoints
             .WithName("StartValhallaUpdate");
 
         valhalla.MapGet("/ready",
-                async (CancellationToken cancellationToken) =>
+                async (IValhallaProbeClient probeClient, CancellationToken cancellationToken) =>
                 {
                     if (!ValhallaRuntime.IsReady(valhallaDataPath, out var reason))
                     {
@@ -151,6 +151,7 @@ public static class ValhallaEndpoints
 
                     var (serviceReachable, serviceError) = await ValhallaRuntime.ProbeServiceAsync(
                         valhallaBaseUrl,
+                        probeClient,
                         cancellationToken);
 
                     if (!serviceReachable)

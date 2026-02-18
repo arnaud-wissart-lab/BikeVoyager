@@ -145,7 +145,10 @@ internal static class AppHostBuilderExtensions
 
         _ = Task.Run(async () =>
         {
-            using var http = new HttpClient();
+            using var http = new HttpClient
+            {
+                Timeout = TimeSpan.FromSeconds(3),
+            };
             var frontendUrl = string.Empty;
 
             for (var attempt = 0; attempt < 30; attempt++)

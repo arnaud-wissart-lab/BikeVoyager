@@ -55,7 +55,7 @@ internal sealed class GeocodingService : IGeocodingService
             return distributed;
         }
 
-        if (_cache.TryGetValue(cacheKey, out IReadOnlyList<PlaceCandidate>? cached))
+        if (_cache.TryGetValue(cacheKey, out IReadOnlyList<PlaceCandidate>? cached) && cached is not null)
         {
             return cached;
         }

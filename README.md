@@ -16,6 +16,10 @@ Application full-stack de planification d’itinéraires vélo basée sur .NET 1
 - Pipeline CI complet (formatage, lint, tests, audit dépendances)
 - Déploiement reproductible (Docker, image Valhalla épinglée)
 
+## Démonstration
+
+Une instance de démonstration sera disponible prochainement.
+
 ## Architecture
 
 Frontend (React + Vite)

@@ -3,7 +3,14 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/arnaud-wissart/BikeVoyager/ci.yml?branch=main&label=CI)](https://github.com/arnaud-wissart/BikeVoyager/actions/workflows/ci.yml)
 [![Licence](https://img.shields.io/github/license/arnaud-wissart/BikeVoyager.svg?cacheSeconds=3600)](LICENSE)
 
-Documentation de référence : français en priorité.
+## Highlights
+
+- .NET 10 Web API with versioned endpoints (`/api/v1/*`)
+- Security hardening (Origin guard, HttpOnly cookies, rate limiting)
+- Resilient HttpClient pipelines (`Microsoft.Extensions.Http.Resilience`)
+- React + Vite frontend with i18n (FR/EN)
+- Playwright end-to-end tests
+- CI pipeline with formatting, tests, dependency audit
 
 ## Objectif
 

@@ -30,8 +30,11 @@ Voir aussi : docs/ARCHITECTURE.md
 
 ## Objectif
 
-BikeVoyager regroupe un backend `.NET 10` et un frontend `React + TypeScript`.
-Le repo vise une base robuste, testable et exploitable localement avec orchestration Aspire.
+BikeVoyager est une application full-stack combinant une API ASP.NET Core (.NET 10)
+et un frontend React + TypeScript.
+
+Le dépôt met l’accent sur la qualité du code, la testabilité, la sécurité
+et la reproductibilité en environnement local (orchestration Aspire).
 
 ## Liens rapides
 

@@ -1,9 +1,30 @@
 # BikeVoyager
 
-Application full-stack de planification d’itinéraires vélo basée sur .NET 10 et React.
+Planifiez rapidement des itinéraires vélo fiables, de la balade urbaine au parcours longue distance.
+BikeVoyager combine calcul d’itinéraire, points d’intérêt et sécurité d’accès API dans une stack moderne orientée production.
+Le projet vise une expérience développeur robuste sans sacrifier la lisibilité produit.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/arnaud-wissart/BikeVoyager/ci.yml?branch=main&label=CI)](https://github.com/arnaud-wissart/BikeVoyager/actions/workflows/ci.yml)
 [![Licence](https://img.shields.io/github/license/arnaud-wissart/BikeVoyager.svg?cacheSeconds=3600)](LICENSE)
+![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
+
+## Aperçu
+
+BikeVoyager aide à planifier des trajets vélo personnalisés via une API ASP.NET Core et une interface React.
+L’application orchestre calcul d’itinéraire, suggestions de boucles et intégration de points d’intérêt.
+Elle est pensée pour un usage local reproductible et une montée en qualité continue (tests, audit, CI).
+
+## Captures
+
+> Emplacements prévus pour les captures (à alimenter).
+
+![Accueil — placeholder](docs/screenshots/home.png)
+![Itinéraire — placeholder](docs/screenshots/route.png)
+
+## Démo
+
+Démo publique : non (pour l’instant).
+Consultez le [Démarrage rapide](#démarrage-rapide) pour lancer l’application localement.
 
 ## Points forts techniques
 
@@ -15,10 +36,6 @@ Application full-stack de planification d’itinéraires vélo basée sur .NET 1
 - Tests frontend (Vitest) et end-to-end (Playwright)
 - Pipeline CI complet (formatage, lint, tests, audit dépendances)
 - Déploiement reproductible (Docker, image Valhalla épinglée)
-
-## Démonstration
-
-Une instance de démonstration sera disponible prochainement.
 
 ## Architecture
 

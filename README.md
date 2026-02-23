@@ -16,6 +16,18 @@ Application full-stack de planification d’itinéraires vélo basée sur .NET 1
 - Pipeline CI complet (formatage, lint, tests, audit dépendances)
 - Déploiement reproductible (Docker, image Valhalla épinglée)
 
+## Architecture
+
+Frontend (React + Vite)
+        ↓
+API ASP.NET Core (/api/v1)
+        ↓
+- Valhalla (routing)
+- Overpass (POI)
+- Cloud providers (OAuth)
+
+Voir aussi : docs/ARCHITECTURE.md
+
 ## Objectif
 
 BikeVoyager regroupe un backend `.NET 10` et un frontend `React + TypeScript`.

@@ -16,8 +16,6 @@ Elle est pensée pour un usage local reproductible et une montée en qualité co
 
 ## Captures
 
-> Emplacements prévus pour les captures (à alimenter).
-
 ![Accueil — placeholder](docs/screenshots/BikeVoyager1.png)
 ![Itinéraire — placeholder](docs/screenshots/BikeVoyager2.png)
 ![Itinéraire — placeholder](docs/screenshots/BikeVoyager3.png)

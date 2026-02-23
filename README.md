@@ -1,5 +1,7 @@
 # BikeVoyager
 
+Application full-stack de planification d’itinéraires vélo basée sur .NET 10 et React.
+
 [![CI](https://img.shields.io/github/actions/workflow/status/arnaud-wissart/BikeVoyager/ci.yml?branch=main&label=CI)](https://github.com/arnaud-wissart/BikeVoyager/actions/workflows/ci.yml)
 [![Licence](https://img.shields.io/github/license/arnaud-wissart/BikeVoyager.svg?cacheSeconds=3600)](LICENSE)
 

@@ -18,8 +18,8 @@ Elle est pensée pour un usage local reproductible et une montée en qualité co
 
 > Emplacements prévus pour les captures (à alimenter).
 
-![Accueil — placeholder](docs/screenshots/home.png)
-![Itinéraire — placeholder](docs/screenshots/route.png)
+![Accueil — placeholder](docs/screenshots/BikeVoyager1.png)
+![Itinéraire — placeholder](docs/screenshots/BikeVoyager2.png)
 
 ## Démo
 

@@ -20,6 +20,8 @@ Elle est pensée pour un usage local reproductible et une montée en qualité co
 
 ![Accueil — placeholder](docs/screenshots/BikeVoyager1.png)
 ![Itinéraire — placeholder](docs/screenshots/BikeVoyager2.png)
+![Itinéraire — placeholder](docs/screenshots/BikeVoyager3.png)
+![Aide — placeholder](docs/screenshots/BikeVoyager4.png)
 
 ## Démo
 

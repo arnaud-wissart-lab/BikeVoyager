@@ -16,10 +16,17 @@ Elle est pensée pour un usage local reproductible et une montée en qualité co
 
 ## Captures
 
-![Accueil — placeholder](docs/screenshots/BikeVoyager1.png)
-![Itinéraire — placeholder](docs/screenshots/BikeVoyager2.png)
-![Itinéraire — placeholder](docs/screenshots/BikeVoyager3.png)
-![Aide — placeholder](docs/screenshots/BikeVoyager4.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/arnaud-wissart/BikeVoyager/main/docs/screenshots/BikeVoyager1.png" width="800"/>
+  <span width="20"></span>
+  <img src="https://raw.githubusercontent.com/arnaud-wissart/BikeVoyager/main/docs/screenshots/BikeVoyager3.png" height="400"/>
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/arnaud-wissart/BikeVoyager/main/docs/screenshots/BikeVoyager2.png" width="800"/>
+  <span width="20"></span>
+  <img src="https://raw.githubusercontent.com/arnaud-wissart/BikeVoyager/main/docs/screenshots/BikeVoyager4.png" height="400"/>
+</p>
 
 ## Démo
 

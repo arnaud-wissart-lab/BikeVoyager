@@ -130,6 +130,14 @@ extract_json_string() {
     head -n 1
 }
 
+extract_global_health_status() {
+  local payload="$1"
+
+  printf '%s' "$payload" |
+    sed -n 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)"[[:space:]]*,"valhalla".*/\1/p' |
+    head -n 1
+}
+
 extract_valhalla_health_status() {
   local payload="$1"
 
@@ -263,7 +271,7 @@ for ((attempt=1; attempt<=valhalla_attempts; attempt+=1)); do
   if [ "$health_http_status" = "200" ]; then
     api_health_payload="$(cat "$health_payload_file")"
     compact_payload="$(printf '%s' "$api_health_payload" | tr -d '\n')"
-    global_health_status="$(extract_json_string "$compact_payload" "status")"
+    global_health_status="$(extract_global_health_status "$compact_payload")"
     valhalla_health_status="$(extract_valhalla_health_status "$compact_payload")"
 
     if [ "$global_health_status" = "OK" ] && [ "$valhalla_health_status" = "UP" ]; then

@@ -4,9 +4,15 @@ Planifiez rapidement des itinéraires vélo fiables, de la balade urbaine au par
 BikeVoyager combine calcul d’itinéraire, points d’intérêt et sécurité d’accès API dans une stack moderne orientée production.
 Le projet vise une expérience développeur robuste sans sacrifier la lisibilité produit.
 
-[![CI](https://img.shields.io/github/actions/workflow/status/arnaud-wissart/BikeVoyager/ci.yml?branch=main&label=CI)](https://github.com/arnaud-wissart/BikeVoyager/actions/workflows/ci.yml)
-[![Licence](https://img.shields.io/github/license/arnaud-wissart/BikeVoyager.svg?cacheSeconds=3600)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/arnaud-wissart-lab/BikeVoyager/ci.yml?branch=main&label=CI)](https://github.com/arnaud-wissart-lab/BikeVoyager/actions/workflows/ci.yml)
+[![Déploiement manuel](https://img.shields.io/github/actions/workflow/status/arnaud-wissart-lab/BikeVoyager/deploy-manual.yml?branch=main&label=D%C3%A9ploiement%20manuel)](https://github.com/arnaud-wissart-lab/BikeVoyager/actions/workflows/deploy-manual.yml)
+[![Licence](https://img.shields.io/github/license/arnaud-wissart-lab/BikeVoyager.svg?cacheSeconds=3600)](LICENSE)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
+
+## Démo live
+
+URL publique : à venir (placeholder en attente d'exposition Internet).
+La version opérationnelle est déployée en mode `home` via workflow manuel (voir [Production (home)](#production-home)).
 
 ## Aperçu
 
@@ -17,21 +23,16 @@ Elle est pensée pour un usage local reproductible et une montée en qualité co
 ## Captures
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/arnaud-wissart/BikeVoyager/main/docs/screenshots/BikeVoyager1.png" width="800"/>
+  <img src="https://raw.githubusercontent.com/arnaud-wissart-lab/BikeVoyager/main/docs/screenshots/BikeVoyager1.png" width="800"/>
   <span width="20"></span>
-  <img src="https://raw.githubusercontent.com/arnaud-wissart/BikeVoyager/main/docs/screenshots/BikeVoyager3.png" height="400"/>
+  <img src="https://raw.githubusercontent.com/arnaud-wissart-lab/BikeVoyager/main/docs/screenshots/BikeVoyager3.png" height="400"/>
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/arnaud-wissart/BikeVoyager/main/docs/screenshots/BikeVoyager2.png" width="800"/>
+  <img src="https://raw.githubusercontent.com/arnaud-wissart-lab/BikeVoyager/main/docs/screenshots/BikeVoyager2.png" width="800"/>
   <span width="20"></span>
-  <img src="https://raw.githubusercontent.com/arnaud-wissart/BikeVoyager/main/docs/screenshots/BikeVoyager4.png" height="400"/>
+  <img src="https://raw.githubusercontent.com/arnaud-wissart-lab/BikeVoyager/main/docs/screenshots/BikeVoyager4.png" height="400"/>
 </p>
-
-## Démo
-
-Démo publique : non (pour l’instant).
-Consultez le [Démarrage rapide](#démarrage-rapide) pour lancer l’application localement.
 
 ## Points forts techniques
 
@@ -91,9 +92,13 @@ et la reproductibilité en environnement local (orchestration Aspire).
 - `Node.js 20+` et `npm`
 - `Docker Desktop` (requis pour Valhalla)
 
-## Déploiement manuel home
+## Production (home)
 
-Pour déployer manuellement à la maison, lancer le workflow GitHub Actions `Déploiement Manuel` (`Actions > Déploiement Manuel > Run workflow`) avec `environment=home` et la `ref` à publier (branche/tag/SHA) ; les secrets requis sont `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY` et `SSH_PORT` (optionnel, défaut `22`). Le déploiement exécute `scripts/deploy-home.sh`, met à jour `/home/arnaud/apps/bikevoyager`, rebuild la stack Docker (`deploy/home.compose.yml`) et valide la disponibilité HTTP sur `http://127.0.0.1:5081`; Valhalla reste optionnel (si présent, ajustable via `VALHALLA_BASE_URL` côté machine cible).
+- Déclenchement : workflow `Déploiement Manuel` en `workflow_dispatch` (`Actions > Déploiement Manuel > Run workflow`) avec `environment=home` et la `ref` cible (branche/tag/SHA).
+- Secrets requis : `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `SSH_PORT` (optionnel, défaut `22`).
+- Ports utilisés : `5080` (API) et `5081` (frontend + healthcheck `http://127.0.0.1:5081`).
+
+Le workflow exécute `scripts/deploy-home.sh`, met à jour `/home/arnaud/apps/bikevoyager` puis relance la stack Docker définie dans `deploy/home.compose.yml`. Valhalla reste optionnel et peut être redirigé via `VALHALLA_BASE_URL`.
 
 ## Démarrage rapide
 

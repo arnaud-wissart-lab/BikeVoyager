@@ -13,16 +13,45 @@ require_env() {
   fi
 }
 
+DEBUG_ENABLED=0
+debug() {
+  if [ "$DEBUG_ENABLED" -eq 1 ]; then
+    printf '[deploy-home][debug] %s\n' "$1"
+  fi
+}
+
+# Variables d'environnement avec valeurs par défaut pour un lancement workflow_dispatch.
+: "${SSH_PORT:=22}"
+: "${DEPLOY_REF:=main}"
+: "${DEPLOY_ENVIRONMENT:=home}"
+: "${DEPLOY_DEBUG:=0}"
+: "${GITHUB_TOKEN:=}"
+
 require_env "SSH_HOST"
 require_env "SSH_USER"
 require_env "SSH_PRIVATE_KEY"
 require_env "GITHUB_REPOSITORY"
+require_env "SSH_PORT"
+require_env "DEPLOY_REF"
+require_env "DEPLOY_ENVIRONMENT"
+require_env "DEPLOY_DEBUG"
+require_env "GITHUB_TOKEN"
 
-SSH_PORT="${SSH_PORT:-22}"
-DEPLOY_REF="${DEPLOY_REF:-main}"
-DEPLOY_ENVIRONMENT="${DEPLOY_ENVIRONMENT:-home}"
+case "$DEPLOY_DEBUG" in
+  1 | true)
+    DEBUG_ENABLED=1
+    ;;
+  0 | false)
+    DEBUG_ENABLED=0
+    ;;
+  *)
+    log "Valeur DEPLOY_DEBUG invalide: '${DEPLOY_DEBUG}' (attendu: 0, 1, true, false)."
+    exit 1
+    ;;
+esac
+
 REPO_SLUG="${GITHUB_REPOSITORY}"
-REPO_TOKEN="${GITHUB_TOKEN:-}"
+REPO_TOKEN="${GITHUB_TOKEN}"
 
 if [ "$DEPLOY_ENVIRONMENT" != "home" ]; then
   log "Environnement '${DEPLOY_ENVIRONMENT}' non reconnu pour ce script (attendu: home)."
@@ -30,6 +59,8 @@ if [ "$DEPLOY_ENVIRONMENT" != "home" ]; then
 fi
 
 log "Déploiement de ${REPO_SLUG}@${DEPLOY_REF} vers ${SSH_USER}@${SSH_HOST}:${SSH_PORT}."
+debug "Mode debug activé."
+debug "Contexte: environnement=${DEPLOY_ENVIRONMENT}, ref=${DEPLOY_REF}, hôte=${SSH_HOST}, port=${SSH_PORT}."
 
 ssh_key_file="$(mktemp)"
 cleanup() {
@@ -45,16 +76,24 @@ ssh_opts=(
   -i "$ssh_key_file"
   -p "$SSH_PORT"
   -o BatchMode=yes
-  -o StrictHostKeyChecking=yes
+  -o StrictHostKeyChecking=accept-new
   -o ConnectTimeout=10
 )
+debug "Options SSH actives: BatchMode=yes, StrictHostKeyChecking=accept-new, ConnectTimeout=10."
 
 ssh "${ssh_opts[@]}" "${SSH_USER}@${SSH_HOST}" \
-  bash -se -- "$DEPLOY_REF" "$REPO_SLUG" "$REPO_TOKEN" <<'REMOTE_SCRIPT'
+  bash -se -- "$DEPLOY_REF" "$REPO_SLUG" "$REPO_TOKEN" "$DEBUG_ENABLED" <<'REMOTE_SCRIPT'
 set -euo pipefail
 
 log() {
   printf '[remote] %s\n' "$1"
+}
+
+DEPLOY_DEBUG_MODE="${4:-0}"
+debug() {
+  if [ "$DEPLOY_DEBUG_MODE" -eq 1 ]; then
+    printf '[remote][debug] %s\n' "$1"
+  fi
 }
 
 require_cmd() {
@@ -70,6 +109,16 @@ REPO_SLUG="$2"
 REPO_TOKEN="${3:-}"
 REPO_URL="https://github.com/${REPO_SLUG}.git"
 
+# Paramètres centralisés du déploiement home.
+APP_DIR="/home/arnaud/apps/bikevoyager"
+COMPOSE_FILE="deploy/home.compose.yml"
+FRONT_URL_HEALTHCHECK="http://127.0.0.1:5081"
+CONTAINER_NAMES=("bikevoyager-front" "bikevoyager-api")
+
+APP_PARENT_DIR="$(dirname "$APP_DIR")"
+COMPOSE_FILE_PATH="${APP_DIR}/${COMPOSE_FILE}"
+COMPOSE_PROJECT="bikevoyager-home"
+
 git_with_auth() {
   if [ -n "$REPO_TOKEN" ]; then
     local auth_header
@@ -80,12 +129,6 @@ git_with_auth() {
 
   git "$@"
 }
-
-APP_DIR="/home/arnaud/apps/bikevoyager"
-APP_PARENT_DIR="$(dirname "$APP_DIR")"
-COMPOSE_FILE="${APP_DIR}/deploy/home.compose.yml"
-COMPOSE_PROJECT="bikevoyager-home"
-FRONT_HEALTHCHECK_URL="http://127.0.0.1:5081"
 
 require_cmd git
 require_cmd docker
@@ -102,6 +145,7 @@ else
 fi
 
 log "Préparation du dossier ${APP_DIR}"
+debug "Config remote: compose=${COMPOSE_FILE}, healthcheck=${FRONT_URL_HEALTHCHECK}, conteneurs=${CONTAINER_NAMES[*]}."
 mkdir -p "$APP_PARENT_DIR"
 
 if [ ! -d "$APP_DIR/.git" ]; then
@@ -132,23 +176,27 @@ else
 fi
 
 deployed_commit="$(git rev-parse --short HEAD)"
+deployed_date_utc="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+deployed_host="$(hostname -f 2>/dev/null || hostname 2>/dev/null || echo "unknown-host")"
 log "Commit déployé: ${deployed_commit}"
+log "Contexte déploiement: host=${deployed_host}, date_utc=${deployed_date_utc}, ref=${DEPLOY_REF}"
+debug "Commit complet: $(git rev-parse HEAD)"
 
-if [ ! -f "$COMPOSE_FILE" ]; then
-  log "Fichier compose introuvable: ${COMPOSE_FILE}"
+if [ ! -f "$COMPOSE_FILE_PATH" ]; then
+  log "Fichier compose introuvable: ${COMPOSE_FILE_PATH}"
   exit 1
 fi
 
 log "Build et démarrage de la stack home via docker compose"
-"${compose_cmd[@]}" -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" up -d --build --remove-orphans
+"${compose_cmd[@]}" -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE_PATH" up -d --build --remove-orphans
 
-log "Vérification HTTP locale sur 127.0.0.1:5081 (attente max 60s)"
+log "Vérification HTTP locale sur ${FRONT_URL_HEALTHCHECK} (attente max 60s)"
 max_attempts=30
 sleep_seconds=2
 http_status=""
 
 for ((attempt=1; attempt<=max_attempts; attempt+=1)); do
-  http_status="$(curl -sS -o /dev/null -I -w '%{http_code}' --connect-timeout 2 --max-time 5 "$FRONT_HEALTHCHECK_URL" || true)"
+  http_status="$(curl -sS -o /dev/null -I -w '%{http_code}' --connect-timeout 2 --max-time 5 "$FRONT_URL_HEALTHCHECK" || true)"
 
   if [ "$http_status" = "200" ]; then
     log "Healthcheck OK (tentative ${attempt}/${max_attempts})"
@@ -161,14 +209,16 @@ done
 
 if [ "$http_status" != "200" ]; then
   log "La vérification HTTP a échoué après ${max_attempts} tentatives (dernier code: ${http_status:-n/a})"
-  log "Etat des conteneurs bikevoyager:"
-  docker ps -a --filter name=bikevoyager-api --filter name=bikevoyager-front || true
+  log "Etat des conteneurs suivis:"
+  for container_name in "${CONTAINER_NAMES[@]}"; do
+    docker ps -a --filter "name=^/${container_name}$" || true
+  done
   log "Etat compose:"
-  "${compose_cmd[@]}" -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" ps || true
-  log "Derniers logs du conteneur bikevoyager-api:"
-  docker logs --tail 120 bikevoyager-api || true
-  log "Derniers logs du conteneur bikevoyager-front:"
-  docker logs --tail 120 bikevoyager-front || true
+  "${compose_cmd[@]}" -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE_PATH" ps || true
+  for container_name in "${CONTAINER_NAMES[@]}"; do
+    log "Derniers logs du conteneur ${container_name}:"
+    docker logs --tail 120 "$container_name" || true
+  done
   exit 1
 fi
 

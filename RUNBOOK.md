@@ -41,6 +41,16 @@ Arrêt :
 ./scripts/dev-down
 ```
 
+## Déploiement home
+
+Le déploiement `home` est déclenché via GitHub Actions (`Déploiement Manuel`, mode `workflow_dispatch`) et exécute `scripts/deploy-home.sh` sur le runner self-hosted Linux. Le script met à jour `/home/arnaud/apps/bikevoyager`, puis relance `docker compose -f deploy/home.compose.yml up -d --build`. Les ports attendus sont `5080` (API) et `5081` (frontend).
+
+### Troubleshooting home
+
+- Vérifier l'état runtime : `docker ps --filter name=bikevoyager-api --filter name=bikevoyager-front`
+- Consulter les logs : `docker logs --tail 120 bikevoyager-api` puis `docker logs --tail 120 bikevoyager-front`
+- Contrôler l'écoute réseau : `ss -ltnp | grep -E '5080|5081'` (ou `netstat -ltnp`)
+
 ## Démarrage F5 (Visual Studio)
 
 1. Ouvrir `BikeVoyager.slnx`.

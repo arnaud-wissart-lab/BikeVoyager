@@ -35,6 +35,7 @@ export default function useCesiumViewer({
     }
 
     if (!hasWebglSupport()) {
+      console.warn('[Cesium] WebGL indisponible, bascule en affichage de secours.')
       setStatus('fallback')
       return
     }
@@ -111,7 +112,8 @@ export default function useCesiumViewer({
 
         viewerRef.current = viewer
         setStatus('ready')
-      } catch {
+      } catch (error) {
+        console.error('[Cesium] Echec d\'initialisation du viewer.', error)
         setStatus('fallback')
       }
     }

@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout de la référence demandée
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
 

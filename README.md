@@ -11,8 +11,7 @@ Le projet vise une expérience développeur robuste sans sacrifier la lisibilit�
 
 ## Démo live
 
-URL publique : à venir (placeholder en attente d'exposition Internet).
-La version opérationnelle est déployée en mode `home` via workflow manuel (voir [Production (home)](#production-home)).
+[Production (home)](#production-home))(http://bike.arnaudwissart.fr/)
 
 ## Aperçu
 

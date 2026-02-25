@@ -1,0 +1,22 @@
+# syntax=docker/dockerfile:1.7
+
+FROM node:20-alpine AS build
+WORKDIR /app/frontend
+
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+COPY frontend/ ./
+ARG VITE_API_BASE_URL=/api
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+RUN npm run build
+
+FROM nginx:1.27-alpine AS runtime
+WORKDIR /usr/share/nginx/html
+
+COPY --from=build /app/frontend/dist/ ./
+COPY deploy/frontend.nginx.conf.template /etc/nginx/templates/default.conf.template
+
+ENV FRONT_API_UPSTREAM=http://bikevoyager-api:8080
+
+EXPOSE 80

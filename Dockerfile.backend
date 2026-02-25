@@ -1,0 +1,21 @@
+# syntax=docker/dockerfile:1.7
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY backend/src/BikeVoyager.Api/BikeVoyager.Api.csproj backend/src/BikeVoyager.Api/
+COPY backend/src/BikeVoyager.Application/BikeVoyager.Application.csproj backend/src/BikeVoyager.Application/
+COPY backend/src/BikeVoyager.Domain/BikeVoyager.Domain.csproj backend/src/BikeVoyager.Domain/
+COPY backend/src/BikeVoyager.Infrastructure/BikeVoyager.Infrastructure.csproj backend/src/BikeVoyager.Infrastructure/
+RUN dotnet restore backend/src/BikeVoyager.Api/BikeVoyager.Api.csproj
+
+COPY backend/ backend/
+RUN dotnet publish backend/src/BikeVoyager.Api/BikeVoyager.Api.csproj -c Release -o /app/publish --no-restore
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+
+COPY --from=build /app/publish/ ./
+
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "BikeVoyager.Api.dll"]

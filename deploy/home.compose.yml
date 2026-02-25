@@ -1,0 +1,33 @@
+services:
+  api:
+    container_name: bikevoyager-api
+    image: bikevoyager-api:home
+    build:
+      context: ..
+      dockerfile: Dockerfile.backend
+    restart: unless-stopped
+    ports:
+      - "5080:8080"
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ApiSecurity__AllowedOrigins__0: http://127.0.0.1:5081
+      ApiSecurity__AllowedOrigins__1: http://localhost:5081
+      Valhalla__BaseUrl: ${VALHALLA_BASE_URL:-http://host.docker.internal:8002}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  front:
+    container_name: bikevoyager-front
+    image: bikevoyager-front:home
+    build:
+      context: ..
+      dockerfile: Dockerfile.frontend
+      args:
+        VITE_API_BASE_URL: /api
+    restart: unless-stopped
+    environment:
+      FRONT_API_UPSTREAM: http://bikevoyager-api:8080
+    ports:
+      - "5081:80"
+    depends_on:
+      - api

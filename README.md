@@ -91,6 +91,10 @@ et la reproductibilité en environnement local (orchestration Aspire).
 - `Node.js 20+` et `npm`
 - `Docker Desktop` (requis pour Valhalla)
 
+## Déploiement manuel home
+
+Pour déployer manuellement à la maison, lancer le workflow GitHub Actions `Déploiement Manuel` (`Actions > Déploiement Manuel > Run workflow`) avec `environment=home` et la `ref` à publier (branche/tag/SHA) ; les secrets requis sont `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY` et `SSH_PORT` (optionnel, défaut `22`). Le déploiement exécute `scripts/deploy-home.sh`, met à jour `/home/arnaud/apps/bikevoyager`, rebuild la stack Docker (`deploy/home.compose.yml`) et valide la disponibilité HTTP sur `http://127.0.0.1:5081`; Valhalla reste optionnel (si présent, ajustable via `VALHALLA_BASE_URL` côté machine cible).
+
 ## Démarrage rapide
 
 Backend seul :

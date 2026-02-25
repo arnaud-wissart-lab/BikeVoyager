@@ -20,3 +20,4 @@ COPY deploy/frontend.nginx.conf.template /etc/nginx/templates/default.conf.templ
 ENV FRONT_API_UPSTREAM=http://bikevoyager-api:8080
 
 EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

@@ -50,20 +50,14 @@ graph TD
 
 ## 📸 Captures
 
-```{=html}
+
 <p align="center">
-```
-`<img src="https://raw.githubusercontent.com/arnaud-wissart-lab/BikeVoyager/main/docs/screenshots/BikeVoyager1.png" width="800"/>`{=html}
-```{=html}
+<img src="https://raw.githubusercontent.com/arnaud-wissart-lab/BikeVoyager/main/docs/screenshots/BikeVoyager1.png" width="800"/>`{=html}
 </p>
-```
-```{=html}
+
 <p align="center">
-```
-`<img src="https://raw.githubusercontent.com/arnaud-wissart-lab/BikeVoyager/main/docs/screenshots/BikeVoyager3.png" width="800"/>`{=html}
-```{=html}
+<img src="https://raw.githubusercontent.com/arnaud-wissart-lab/BikeVoyager/main/docs/screenshots/BikeVoyager3.png" width="800"/>`{=html}
 </p>
-```
 
 ------------------------------------------------------------------------
 

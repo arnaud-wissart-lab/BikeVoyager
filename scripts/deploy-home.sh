@@ -35,7 +35,6 @@ require_env "SSH_PORT"
 require_env "DEPLOY_REF"
 require_env "DEPLOY_ENVIRONMENT"
 require_env "DEPLOY_DEBUG"
-require_env "GITHUB_TOKEN"
 
 case "$DEPLOY_DEBUG" in
   1 | true)

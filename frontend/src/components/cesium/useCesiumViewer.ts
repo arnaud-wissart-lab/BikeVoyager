@@ -113,7 +113,7 @@ export default function useCesiumViewer({
         viewerRef.current = viewer
         setStatus('ready')
       } catch (error) {
-        console.error('[Cesium] Echec d\'initialisation du viewer.', error)
+        console.error("[Cesium] Echec d'initialisation du viewer.", error)
         setStatus('fallback')
       }
     }

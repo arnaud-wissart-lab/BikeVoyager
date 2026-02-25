@@ -1,4 +1,38 @@
 services:
+  valhalla-bootstrap:
+    container_name: bikevoyager-valhalla-bootstrap
+    image: ghcr.io/valhalla/valhalla@sha256:4e287d4e78ee9e44911d282c33b52f6d916381d705f59b0a875d5b71ef565d2a
+    restart: "no"
+    volumes:
+      - bikevoyager-valhalla-data:/custom_files
+      - ../scripts/valhalla-bootstrap.sh:/opt/bikevoyager/valhalla-bootstrap.sh:ro
+    entrypoint: ["/bin/sh", "/opt/bikevoyager/valhalla-bootstrap.sh"]
+
+  valhalla:
+    container_name: bikevoyager-valhalla
+    image: ghcr.io/valhalla/valhalla@sha256:4e287d4e78ee9e44911d282c33b52f6d916381d705f59b0a875d5b71ef565d2a
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    volumes:
+      - bikevoyager-valhalla-data:/custom_files
+      - ../infra/valhalla/entrypoint.sh:/custom_files/entrypoint.sh:ro
+    entrypoint: ["/bin/sh", "/custom_files/entrypoint.sh"]
+    environment:
+      VALHALLA_CONFIG: /custom_files/live/valhalla.json
+    depends_on:
+      - valhalla-bootstrap
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "if command -v curl >/dev/null 2>&1; then curl -fsS http://127.0.0.1:8002/status >/dev/null; elif command -v wget >/dev/null 2>&1; then wget -q -O- http://127.0.0.1:8002/status >/dev/null; else exit 1; fi",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
   api:
     container_name: bikevoyager-api
     image: bikevoyager-api:home
@@ -14,9 +48,10 @@ services:
       ApiSecurity__AllowedOrigins__1: https://bike.arnaudwissart.fr
       ApiSecurity__AllowedOrigins__2: http://127.0.0.1:5081
       ApiSecurity__AllowedOrigins__3: http://localhost:5081
-      Valhalla__BaseUrl: ${VALHALLA_BASE_URL:-http://host.docker.internal:8002}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      Valhalla__DataPath: /valhalla-data
+      Valhalla__BaseUrl: ${VALHALLA_BASE_URL:-http://valhalla:8002}
+    volumes:
+      - bikevoyager-valhalla-data:/valhalla-data:ro
 
   front:
     container_name: bikevoyager-front
@@ -33,3 +68,7 @@ services:
       - "5081:80"
     depends_on:
       - api
+
+volumes:
+  bikevoyager-valhalla-data:
+    name: bikevoyager-valhalla-data

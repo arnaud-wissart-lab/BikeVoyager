@@ -103,6 +103,56 @@ require_cmd() {
   fi
 }
 
+extract_json_bool() {
+  local payload="$1"
+  local key="$2"
+
+  printf '%s' "$payload" |
+    sed -n "s/.*\"${key}\"[[:space:]]*:[[:space:]]*\\(true\\|false\\).*/\\1/p" |
+    head -n 1
+}
+
+extract_json_number() {
+  local payload="$1"
+  local key="$2"
+
+  printf '%s' "$payload" |
+    sed -n "s/.*\"${key}\"[[:space:]]*:[[:space:]]*\\([0-9][0-9]*\\).*/\\1/p" |
+    head -n 1
+}
+
+extract_json_string() {
+  local payload="$1"
+  local key="$2"
+
+  printf '%s' "$payload" |
+    sed -n "s/.*\"${key}\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p" |
+    head -n 1
+}
+
+extract_valhalla_health_status() {
+  local payload="$1"
+
+  printf '%s' "$payload" |
+    sed -n 's/.*"valhalla"[[:space:]]*:[[:space:]]*{[^}]*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' |
+    head -n 1
+}
+
+dump_runtime_diagnostics() {
+  log "Etat des conteneurs suivis:"
+  for container_name in "${CONTAINER_NAMES[@]}"; do
+    docker ps -a --filter "name=^/${container_name}$" || true
+  done
+
+  log "Etat compose:"
+  "${compose_cmd[@]}" -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE_PATH" ps || true
+
+  for container_name in "${CONTAINER_NAMES[@]}"; do
+    log "Derniers logs du conteneur ${container_name}:"
+    docker logs --tail 120 "$container_name" || true
+  done
+}
+
 DEPLOY_REF="$1"
 REPO_SLUG="$2"
 REPO_TOKEN="${3:-}"
@@ -112,7 +162,10 @@ REPO_URL="https://github.com/${REPO_SLUG}.git"
 APP_DIR="/home/arnaud/apps/bikevoyager"
 COMPOSE_FILE="deploy/home.compose.yml"
 FRONT_URL_HEALTHCHECK="http://127.0.0.1:5081"
-CONTAINER_NAMES=("bikevoyager-front" "bikevoyager-api")
+API_HEALTH_URL="http://127.0.0.1:5080/api/v1/health"
+VALHALLA_WAIT_SECONDS=1200
+VALHALLA_POLL_SECONDS=10
+CONTAINER_NAMES=("bikevoyager-front" "bikevoyager-api" "bikevoyager-valhalla" "bikevoyager-valhalla-bootstrap")
 
 APP_PARENT_DIR="$(dirname "$APP_DIR")"
 COMPOSE_FILE_PATH="${APP_DIR}/${COMPOSE_FILE}"
@@ -144,7 +197,7 @@ else
 fi
 
 log "Préparation du dossier ${APP_DIR}"
-debug "Config remote: compose=${COMPOSE_FILE}, healthcheck=${FRONT_URL_HEALTHCHECK}, conteneurs=${CONTAINER_NAMES[*]}."
+debug "Config remote: compose=${COMPOSE_FILE}, api_health=${API_HEALTH_URL}, conteneurs=${CONTAINER_NAMES[*]}."
 mkdir -p "$APP_PARENT_DIR"
 
 if [ ! -d "$APP_DIR/.git" ]; then
@@ -189,39 +242,76 @@ fi
 log "Build et démarrage de la stack home via docker compose"
 "${compose_cmd[@]}" -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE_PATH" up -d --build --remove-orphans
 
-log "Vérification HTTP locale sur ${FRONT_URL_HEALTHCHECK} (attente max 60s)"
-max_attempts=30
-sleep_seconds=2
-http_status=""
+log "Attente de santé API/Valhalla via ${API_HEALTH_URL} (timeout: ${VALHALLA_WAIT_SECONDS}s)"
+valhalla_attempts=$((VALHALLA_WAIT_SECONDS / VALHALLA_POLL_SECONDS))
+if [ "$valhalla_attempts" -lt 1 ]; then
+  valhalla_attempts=1
+fi
 
-for ((attempt=1; attempt<=max_attempts; attempt+=1)); do
-  http_status="$(curl -sS -o /dev/null -I -w '%{http_code}' --connect-timeout 2 --max-time 5 "$FRONT_URL_HEALTHCHECK" || true)"
+valhalla_ready="false"
+api_health_payload=""
+health_http_status=""
+health_payload_file="$(mktemp)"
+cleanup_health_payload() {
+  rm -f "$health_payload_file"
+}
+trap cleanup_health_payload EXIT
 
-  if [ "$http_status" = "200" ]; then
-    log "Healthcheck OK (tentative ${attempt}/${max_attempts})"
-    break
+for ((attempt=1; attempt<=valhalla_attempts; attempt+=1)); do
+  health_http_status="$(curl -sS -o "$health_payload_file" -w '%{http_code}' --connect-timeout 3 --max-time 8 "$API_HEALTH_URL" || true)"
+
+  if [ "$health_http_status" = "200" ]; then
+    api_health_payload="$(cat "$health_payload_file")"
+    compact_payload="$(printf '%s' "$api_health_payload" | tr -d '\n')"
+    global_health_status="$(extract_json_string "$compact_payload" "status")"
+    valhalla_health_status="$(extract_valhalla_health_status "$compact_payload")"
+
+    if [ "$global_health_status" = "OK" ] && [ "$valhalla_health_status" = "UP" ]; then
+      valhalla_ready="true"
+      log "Health API OK et Valhalla UP (tentative ${attempt}/${valhalla_attempts})."
+      break
+    fi
+
+    build_state="$(extract_json_string "$compact_payload" "state")"
+    build_phase="$(extract_json_string "$compact_payload" "phase")"
+    build_progress="$(extract_json_number "$compact_payload" "progressPct")"
+    build_message="$(extract_json_string "$compact_payload" "message")"
+    reason_value="$(extract_json_string "$compact_payload" "reason")"
+
+    if [ "$valhalla_health_status" = "BUILDING" ]; then
+      log "Valhalla BUILDING (tentative ${attempt}/${valhalla_attempts}, phase=${build_phase:-initialisation}, progression=${build_progress:-0}%, message=${build_message:-n/a})."
+    elif [ "$valhalla_health_status" = "DOWN" ]; then
+      log "Valhalla DOWN (tentative ${attempt}/${valhalla_attempts}, reason=${reason_value:-n/a}, message=${build_message:-n/a})."
+    elif [ "$build_state" = "failed" ]; then
+      log "Valhalla en echec (tentative ${attempt}/${valhalla_attempts}, message=${build_message:-n/a}, reason=${reason_value:-n/a})."
+    else
+      log "Health API DEGRADE (tentative ${attempt}/${valhalla_attempts}, global=${global_health_status:-n/a}, valhalla=${valhalla_health_status:-unknown})."
+    fi
+  else
+    log "Health API indisponible (tentative ${attempt}/${valhalla_attempts}, code=${health_http_status:-n/a})."
   fi
 
-  log "Service pas encore prêt (tentative ${attempt}/${max_attempts}, code: ${http_status:-n/a})"
-  sleep "$sleep_seconds"
+  sleep "$VALHALLA_POLL_SECONDS"
 done
 
-if [ "$http_status" != "200" ]; then
-  log "La vérification HTTP a échoué après ${max_attempts} tentatives (dernier code: ${http_status:-n/a})"
-  log "Etat des conteneurs suivis:"
-  for container_name in "${CONTAINER_NAMES[@]}"; do
-    docker ps -a --filter "name=^/${container_name}$" || true
-  done
-  log "Etat compose:"
-  "${compose_cmd[@]}" -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE_PATH" ps || true
-  for container_name in "${CONTAINER_NAMES[@]}"; do
-    log "Derniers logs du conteneur ${container_name}:"
-    docker logs --tail 120 "$container_name" || true
-  done
+if [ "$valhalla_ready" != "true" ]; then
+  log "Health API / Valhalla non prêts après ${VALHALLA_WAIT_SECONDS}s."
+  if [ -n "$api_health_payload" ]; then
+    log "Dernier payload health: $api_health_payload"
+  fi
+  dump_runtime_diagnostics
   exit 1
 fi
 
-log "Déploiement terminé avec succès (HTTP ${http_status})"
+log "Vérification finale frontend via ${FRONT_URL_HEALTHCHECK}"
+front_http_status="$(curl -sS -o /dev/null -I -w '%{http_code}' --connect-timeout 2 --max-time 5 "$FRONT_URL_HEALTHCHECK" || true)"
+if [ "$front_http_status" != "200" ]; then
+  log "Frontend indisponible après readiness API (code=${front_http_status:-n/a})."
+  dump_runtime_diagnostics
+  exit 1
+fi
+
+log "Déploiement terminé avec succès (API health + frontend OK)"
 REMOTE_SCRIPT
 
 log "Script terminé."

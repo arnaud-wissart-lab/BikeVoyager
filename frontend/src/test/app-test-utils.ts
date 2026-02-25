@@ -36,6 +36,29 @@ export const createDefaultApiResponse = (url: string): Response => {
     })
   }
 
+  if (url === apiPaths.health) {
+    return createJsonResponse({
+      status: 'OK',
+      valhalla: {
+        status: 'UP',
+        message: 'Valhalla est prêt et joignable.',
+        reason: null,
+        serviceReachable: true,
+        serviceError: null,
+        build: {
+          state: 'completed',
+          phase: 'ready',
+          progressPct: 100,
+          message: 'Valhalla est prêt.',
+          updatedAt: '2026-02-15T10:00:00Z',
+        },
+      },
+      version: '1.0.0',
+      commit: 'abc123',
+      checkedAt: '2026-02-15T10:30:00Z',
+    })
+  }
+
   if (url === apiPaths.valhallaStatus) {
     return createJsonResponse({
       ready: true,

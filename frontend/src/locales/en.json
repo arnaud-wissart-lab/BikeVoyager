@@ -67,6 +67,8 @@
   "unitHour": "h",
   "routeErrorMissingPlace": "Select a start and destination from the list.",
   "routeErrorUnavailable": "The routing engine is being prepared. Please try again in a few minutes.",
+  "routeErrorValhallaBuilding": "The routing engine is being prepared. Please try again in a few minutes.",
+  "routeErrorValhallaDown": "The routing engine is currently unavailable. Check the Help tab for diagnostics.",
   "routeErrorTimeout": "The calculation took too long. Please try again in a few minutes.",
   "routeErrorGateway": "The routing engine did not respond correctly. Please try again in a few minutes.",
   "routeErrorFailed": "Unable to compute the route right now.",

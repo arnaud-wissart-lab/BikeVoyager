@@ -43,13 +43,24 @@ Arrêt :
 
 ## Déploiement home
 
-Le déploiement `home` est déclenché via GitHub Actions (`Déploiement Manuel`, mode `workflow_dispatch`) et exécute `scripts/deploy-home.sh` sur le runner self-hosted Linux. Le script met à jour `/home/arnaud/apps/bikevoyager`, puis relance `docker compose -f deploy/home.compose.yml up -d --build`. Les ports attendus sont `5080` (API) et `5081` (frontend).
+Le déploiement `home` est déclenché via GitHub Actions (`Déploiement Manuel`, mode `workflow_dispatch`) et exécute `scripts/deploy-home.sh` sur le runner self-hosted Linux. Le script met à jour `/home/arnaud/apps/bikevoyager`, puis relance `docker compose -f deploy/home.compose.yml up -d --build`.
+
+Stack home:
+
+- `bikevoyager-front` (port `5081`)
+- `bikevoyager-api` (port `5080`)
+- `bikevoyager-valhalla` (port `8002`, debug local)
+- `bikevoyager-valhalla-bootstrap` (one-shot de download/build)
+
+Le volume Docker `bikevoyager-valhalla-data` conserve les donnees Valhalla (`live/tiles`, `build-status.json`, etc.).
 
 ### Troubleshooting home
 
-- Vérifier l'état runtime : `docker ps --filter name=bikevoyager-api --filter name=bikevoyager-front`
-- Consulter les logs : `docker logs --tail 120 bikevoyager-api` puis `docker logs --tail 120 bikevoyager-front`
-- Contrôler l'écoute réseau : `ss -ltnp | grep -E '5080|5081'` (ou `netstat -ltnp`)
+- Vérifier l'etat runtime : `docker ps --filter name=bikevoyager-api --filter name=bikevoyager-front --filter name=bikevoyager-valhalla --filter name=bikevoyager-valhalla-bootstrap`
+- Suivre le bootstrap tuiles : `docker logs -f bikevoyager-valhalla-bootstrap`
+- Vérifier le statut fonctionnel : `curl http://127.0.0.1:5080/api/v1/valhalla/status`
+- Consulter les logs applicatifs : `docker logs --tail 120 bikevoyager-api` puis `docker logs --tail 120 bikevoyager-valhalla`
+- Controler l'ecoute reseau : `ss -ltnp | grep -E '5080|5081|8002'` (ou `netstat -ltnp`)
 
 ## Démarrage F5 (Visual Studio)
 

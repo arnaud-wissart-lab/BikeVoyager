@@ -5,6 +5,7 @@ export const apiPaths = {
   route: '/api/v1/route',
   loop: '/api/v1/loop',
   exportGpx: '/api/v1/export/gpx',
+  health: '/api/v1/health',
   valhallaStatus: '/api/v1/valhalla/status',
   valhallaUpdateStart: '/api/v1/valhalla/update/start',
   cloudProviders: '/api/v1/cloud/providers',

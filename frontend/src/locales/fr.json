@@ -67,6 +67,8 @@
   "unitHour": "h",
   "routeErrorMissingPlace": "Sélectionnez un lieu de départ et d'arrivée dans la liste.",
   "routeErrorUnavailable": "Le moteur d'itinéraire est en cours de préparation. Réessayez dans quelques minutes.",
+  "routeErrorValhallaBuilding": "Le moteur d'itinéraire est en cours de préparation. Réessayez dans quelques minutes.",
+  "routeErrorValhallaDown": "Le moteur d'itinéraire est indisponible pour le moment. Consultez l'onglet Aide pour le diagnostic.",
   "routeErrorTimeout": "Le calcul a pris trop de temps. Réessayez dans quelques minutes.",
   "routeErrorGateway": "Le moteur d'itinéraire ne répond pas correctement. Réessayez dans quelques minutes.",
   "routeErrorFailed": "Impossible de calculer l'itinéraire pour le moment.",

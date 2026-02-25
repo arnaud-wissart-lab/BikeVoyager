@@ -1,5 +1,6 @@
 import { apiPaths } from './apiPaths'
 import type {
+  ApiHealthStatus,
   LoopResult,
   LoopRequestPayload,
   RouteElevationPoint,
@@ -105,6 +106,16 @@ export const fetchLoop = async (requestBody: LoopRequestPayload) => {
       elevation_profile: Array.isArray(data.elevation_profile) ? data.elevation_profile : [],
     },
   }
+}
+
+export const fetchApiHealth = async () => {
+  const response = await fetch(apiPaths.health)
+  if (!response.ok) {
+    return { ok: false as const }
+  }
+
+  const data = (await response.json()) as ApiHealthStatus
+  return { ok: true as const, data }
 }
 
 export const fetchValhallaStatus = async () => {

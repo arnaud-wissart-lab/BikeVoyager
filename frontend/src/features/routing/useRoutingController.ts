@@ -1,5 +1,6 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
+  fetchApiHealth,
   fetchValhallaStatus,
   readApiMessage,
   startValhallaUpdate,
@@ -7,6 +8,7 @@ import {
   exportRouteAsGpx,
 } from './api'
 import {
+  type ApiHealthStatus,
   buildGpxFileName,
   defaultProfileSettings,
   downloadBlob,
@@ -69,6 +71,7 @@ export const useRoutingController = ({
     setValhallaStatusError,
     setProfileSettings,
   } = store
+  const [apiHealthStatus, setApiHealthStatus] = useState<ApiHealthStatus | null>(null)
 
   const activeStartPlace = tripType === 'loop' ? loopStartPlace : onewayStartPlace
   const hasStartSelection = Boolean(activeStartPlace)
@@ -166,6 +169,19 @@ export const useRoutingController = ({
     isFeedbackSubmitting,
   )
 
+  const loadApiHealthStatus = useCallback(async () => {
+    try {
+      const result = await fetchApiHealth()
+      if (!result.ok) {
+        return
+      }
+
+      setApiHealthStatus(result.data)
+    } catch {
+      // Ignore les erreurs réseau ponctuelles: le front se basera sur la dernière valeur connue.
+    }
+  }, [])
+
   const handleSubmitDeveloperFeedback = async () => {
     await submitDeveloperFeedbackAction({
       canSubmitFeedback,
@@ -246,6 +262,32 @@ export const useRoutingController = ({
     setExportError(null)
     setIsExporting(false)
   }, [routeResult, setExportError, setIsExporting])
+
+  useEffect(() => {
+    if (route !== 'planifier' && route !== 'carte' && route !== 'aide') {
+      return
+    }
+
+    void loadApiHealthStatus()
+  }, [loadApiHealthStatus, route])
+
+  useEffect(() => {
+    if (route !== 'planifier' && route !== 'carte' && route !== 'aide') {
+      return
+    }
+
+    if (apiHealthStatus?.valhalla?.status !== 'BUILDING') {
+      return
+    }
+
+    const intervalId = window.setInterval(() => {
+      void loadApiHealthStatus()
+    }, 5000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [apiHealthStatus?.valhalla?.status, loadApiHealthStatus, route])
 
   useEffect(() => {
     if (route !== 'aide') {
@@ -330,6 +372,11 @@ export const useRoutingController = ({
     routeErrorMessage,
     routeErrorKey,
     t,
+    apiHealthStatus?.valhalla?.status === 'BUILDING'
+      ? t('routeErrorValhallaBuilding')
+      : apiHealthStatus?.valhalla?.status === 'DOWN'
+        ? t('routeErrorValhallaDown')
+        : null,
   )
   const isValhallaBuildRunning = valhallaStatus?.build?.state === 'running'
   const valhallaUpdateAvailable = valhallaStatus?.update?.update_available === true

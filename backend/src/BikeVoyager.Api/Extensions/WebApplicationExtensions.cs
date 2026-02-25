@@ -50,7 +50,7 @@ public static class WebApplicationExtensions
         app.MapCloudEndpoints();
         app.MapFeedbackEndpoints();
         app.MapValhallaEndpoints(options.ValhallaDataPath, options.ValhallaBaseUrl);
-        app.MapHealthEndpoints();
+        app.MapHealthEndpoints(options.ValhallaDataPath, options.ValhallaBaseUrl);
         app.MapTripEndpoints();
         app.MapExternalEndpoints();
 

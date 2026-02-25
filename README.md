@@ -95,9 +95,28 @@ et la reproductibilité en environnement local (orchestration Aspire).
 
 - Déclenchement : workflow `Déploiement Manuel` en `workflow_dispatch` (`Actions > Déploiement Manuel > Run workflow`) avec `environment=home` et la `ref` cible (branche/tag/SHA).
 - Secrets requis : `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `SSH_PORT` (optionnel, défaut `22`).
-- Ports utilisés : `5080` (API) et `5081` (frontend + healthcheck `http://127.0.0.1:5081`).
+- Ports utilisés : `5080` (API), `5081` (frontend) et `8002` (Valhalla, debug local optionnel).
+- Stack Docker home : `front` + `api` + `valhalla` + `valhalla-bootstrap` (one-shot idempotent).
+- Volume persistant Valhalla : `bikevoyager-valhalla-data` (monté en `/custom_files` côté Valhalla et en `/valhalla-data` côté API).
 
-Le workflow exécute `scripts/deploy-home.sh`, met à jour `/home/arnaud/apps/bikevoyager` puis relance la stack Docker définie dans `deploy/home.compose.yml`. Valhalla reste optionnel et peut être redirigé via `VALHALLA_BASE_URL`.
+Le workflow exécute `scripts/deploy-home.sh`, met à jour `/home/arnaud/apps/bikevoyager` puis relance la stack Docker définie dans `deploy/home.compose.yml`.
+
+Premier démarrage home :
+
+- le service `valhalla-bootstrap` télécharge l'extract OSM France si nécessaire puis génère les tuiles.
+- cette phase peut prendre plusieurs minutes (jusqu'à ~10-20 min selon machine/réseau).
+- tant que Valhalla n'est pas prêt, l'API renvoie `503` avec un message explicite de préparation.
+
+Vérifier l'état :
+
+- statut agrégé : `curl http://127.0.0.1:5080/api/v1/valhalla/status`
+- logs bootstrap : `docker logs -f bikevoyager-valhalla-bootstrap`
+- logs service Valhalla : `docker logs -f bikevoyager-valhalla`
+
+Données persistées :
+
+- tuiles actives : volume `bikevoyager-valhalla-data`, dossier `live/tiles`
+- marqueur prêt : `live/tiles/.valhalla_ready`
 
 ## Démarrage rapide
 

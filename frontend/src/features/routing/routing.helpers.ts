@@ -44,7 +44,8 @@ export const resolveRouteErrorDisplayMessage = (
   routeErrorMessage: string | null,
   routeErrorKey: string | null,
   t: TFunction,
-) => routeErrorMessage ?? (routeErrorKey ? t(routeErrorKey) : null)
+  serviceStatusMessage?: string | null,
+) => routeErrorMessage ?? (routeErrorKey ? t(routeErrorKey) : (serviceStatusMessage ?? null))
 
 export const resolveAlternativeRouteLabel = (routeResult: TripResult | null, t: TFunction) =>
   routeResult?.kind === 'loop' ? t('mapRegenerateLoopVariant') : t('mapRecalculateRouteVariant')

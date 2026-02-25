@@ -161,6 +161,27 @@ export type ValhallaStatus = {
   }
 }
 
+export type ApiHealthStatus = {
+  status: string
+  valhalla: {
+    status: string
+    message: string
+    reason: string | null
+    serviceReachable?: boolean | null
+    serviceError?: string | null
+    build?: {
+      state: string
+      phase: string
+      progressPct: number
+      message: string
+      updatedAt: string | null
+    }
+  }
+  version?: string | null
+  commit?: string | null
+  checkedAt?: string | null
+}
+
 export type PlannerDraft = {
   mode: Mode | null
   tripType: TripType | null

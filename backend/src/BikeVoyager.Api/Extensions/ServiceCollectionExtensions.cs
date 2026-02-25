@@ -1,6 +1,7 @@
 using BikeVoyager.Api.Cloud;
 using BikeVoyager.Api.Cloud.OAuth;
 using BikeVoyager.Api.Cloud.Providers;
+using BikeVoyager.Api.Health;
 using BikeVoyager.Api.Feedback;
 using BikeVoyager.Api.Middleware;
 using BikeVoyager.Api.Security;
@@ -46,6 +47,7 @@ public static class ServiceCollectionExtensions
         services.AddEndpointsApiExplorer();
         services.AddOpenApi();
         services.AddDataProtection();
+        services.AddSingleton<ApiHealthStatusService>();
 
         services.Configure<CloudSyncOptions>(configuration.GetSection("CloudSync"));
         services.AddSingleton<TimeProvider>(TimeProvider.System);

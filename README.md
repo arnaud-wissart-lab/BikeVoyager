@@ -11,7 +11,7 @@ Le projet vise une expérience développeur robuste sans sacrifier la lisibilit�
 
 ## Démo live
 
-[Production (home)](#production-home))(http://bike.arnaudwissart.fr/)
+http://bike.arnaudwissart.fr/
 
 ## Aperçu
 

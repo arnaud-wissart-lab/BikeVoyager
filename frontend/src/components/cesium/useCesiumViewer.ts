@@ -44,12 +44,12 @@ export default function useCesiumViewer({
 
     const initializeViewer = async () => {
       try {
-        const Cesium = await import('cesium')
+        const cesiumModule = await import('cesium')
         if (!isActive || !containerRef.current) {
           return
         }
 
-        cesiumRef.current = Cesium
+        cesiumRef.current = cesiumModule
 
         const baseUrl =
           typeof CESIUM_BASE_URL !== 'undefined'
@@ -61,20 +61,20 @@ export default function useCesiumViewer({
 
         const ionToken = import.meta.env.VITE_CESIUM_ION_TOKEN
         if (ionToken) {
-          Cesium.Ion.defaultAccessToken = ionToken
+          cesiumModule.Ion.defaultAccessToken = ionToken
         }
 
         const terrainProvider = ionToken
-          ? await Cesium.createWorldTerrainAsync({
+          ? await cesiumModule.createWorldTerrainAsync({
               requestVertexNormals: true,
               requestWaterMask: true,
             })
-          : new Cesium.EllipsoidTerrainProvider()
+          : new cesiumModule.EllipsoidTerrainProvider()
 
-        const viewer = new Cesium.Viewer(containerRef.current, {
+        const viewer = new cesiumModule.Viewer(containerRef.current, {
           terrainProvider,
-          baseLayer: new Cesium.ImageryLayer(
-            new Cesium.OpenStreetMapImageryProvider({
+          baseLayer: new cesiumModule.ImageryLayer(
+            new cesiumModule.OpenStreetMapImageryProvider({
               url: 'https://tile.openstreetmap.org/',
               maximumLevel: 19,
             }),

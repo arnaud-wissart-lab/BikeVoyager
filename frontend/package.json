@@ -23,7 +23,7 @@
     "@mantine/hooks": "^8.3.18",
     "@mantine/notifications": "^8.3.18",
     "@tabler/icons-react": "^3.44.0",
-    "cesium": "^1.142.0",
+    "cesium": "^1.143.0",
     "i18next": "^25.10.10",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

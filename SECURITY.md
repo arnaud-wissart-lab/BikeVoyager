@@ -74,6 +74,20 @@ Propriétés :
 - Surveiller les erreurs OAuth et de refresh token.
 - Limiter CORS aux origines strictement nécessaires.
 
+## Vulnérabilités de dépendances
+
+Les vulnérabilités NuGet et npm sont traitées comme des corrections de sécurité, y compris lorsqu'elles sont transitives. Le dépôt garde les versions de référence dans `global.json`, `.nvmrc`, `frontend/package.json`, `frontend/package-lock.json` et les fichiers `.csproj`.
+
+Commandes minimales avant publication :
+
+```powershell
+dotnet list BikeVoyager.sln package --vulnerable --include-transitive
+npm --prefix frontend audit --omit=dev
+npm --prefix frontend audit
+```
+
+Les montées majeures non nécessaires à la correction d'une vulnérabilité doivent être séparées des correctifs de sécurité afin de conserver des revues ciblées et réversibles.
+
 ## Politique de headers HTTP (API)
 
 En environnement non `Development`, l'API applique :

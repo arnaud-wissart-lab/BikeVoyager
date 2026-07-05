@@ -44,9 +44,9 @@ Schéma détaillé: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 ## Stack technique
 - Backend: ASP.NET Core `net10.0`, Minimal APIs, FluentValidation, Serilog, architecture `Domain / Application / Infrastructure`.
-- Frontend: React `19.2.4`, TypeScript `5.9.x`, Vite `7.3.1`, Mantine `8.3.17`, Cesium `1.139.1`, i18next.
+- Frontend: React `19.2.7`, TypeScript `5.9.x`, Vite `7.3.6`, Mantine `8.3.18`, Cesium `1.143.0`, i18next.
 - Tests: xUnit (`BikeVoyager.UnitTests`, `BikeVoyager.ApiTests`), Vitest (`frontend`), Playwright E2E.
-- AppHost local: .NET Aspire (`Aspire.AppHost.Sdk 13.1.1`, `Aspire.Hosting.Redis 13.1.1`).
+- AppHost local: .NET Aspire (`Aspire.AppHost.Sdk 13.4.6`, `Aspire.Hosting.Redis 13.4.6`).
 - Conteneurs: Dockerfiles backend/frontend + stack Compose `front/api/valhalla/valhalla-bootstrap`.
 - Moteur de routage: image Valhalla épinglée par digest SHA256 dans `deploy/home.compose.yml` et `infra/valhalla.compose.yml`.
 
@@ -101,10 +101,30 @@ npm --prefix frontend run e2e
 Commandes agrégées:
 ```powershell
 ./scripts/dev-test
-./scripts/dev-audit
+./scripts/dev-audit      # Unix/Git Bash
+./scripts/dev-audit.ps1  # PowerShell Windows
 ```
 
 Pipeline CI référence: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+
+## Maintenance dépendances et SDK
+Les versions de référence sont ancrées dans `global.json`, `.nvmrc`, `frontend/package.json`, `frontend/package-lock.json`, les fichiers `.csproj` et les images Docker épinglées. Avant de proposer un alignement, vérifier les versions déclarées et verrouillées, puis distinguer les correctifs de sécurité des montées majeures fonctionnelles.
+
+Commandes de contrôle recommandées:
+```powershell
+dotnet list BikeVoyager.sln package --vulnerable --include-transitive
+dotnet list BikeVoyager.sln package --outdated --include-transitive
+npm --prefix frontend audit --omit=dev
+npm --prefix frontend audit
+npm --prefix frontend outdated
+```
+
+Politique minimale:
+- appliquer en priorité les correctifs de sécurité et les versions patch/mineures compatibles ;
+- garder Node aligné sur `.nvmrc` et `frontend/package.json` (`22.x`) ;
+- garder les types Node sur la ligne `22.x` ;
+- ne pas monter Mantine, i18next, React i18next ou une image Docker majeure sans validation dédiée ;
+- après tout alignement, exécuter `./scripts/dev-test`, `./scripts/dev-audit` ou `./scripts/dev-audit.ps1` sous PowerShell Windows, `npm --prefix frontend run lint`, `npm --prefix frontend run build` et les E2E si le frontend ou le lockfile change.
 
 ## Sécurité & configuration
 Protections API appliquées:

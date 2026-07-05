@@ -20,7 +20,7 @@ Valhalla (build, mises à jour, et nettoyage disque).
 ## Prérequis
 
 - .NET SDK 10.x
-- Node.js 20+ et npm
+- Node.js 22.x et npm
 - Docker Desktop (nécessaire pour Valhalla)
 - Dépendances frontend installées une fois : `npm ci` dans `frontend/`
 - `npm ci` nécessite `package-lock.json` (présent dans le repo).
@@ -28,6 +28,48 @@ Valhalla (build, mises à jour, et nettoyage disque).
 ## Version image Valhalla
 
 Pour mettre à jour Valhalla de façon reproductible, choisir un tag cible `ghcr.io/valhalla/valhalla:<tag>`, récupérer son digest via `docker buildx imagetools inspect ghcr.io/valhalla/valhalla:<tag>`, puis remplacer la référence épinglée `ghcr.io/valhalla/valhalla@sha256:...` dans `infra/valhalla.compose.yml`, `scripts/valhalla-build-france.ps1`, `scripts/valhalla-build-france.sh` et `backend/src/BikeVoyager.AppHost/AppHostBuilderExtensions.cs` (constante `ValhallaImageReference`); terminer par `docker compose -f infra/valhalla.compose.yml pull valhalla` avant de committer le bump.
+
+## Alignement dépendances et SDK
+
+Sources d'ancrage :
+
+- `global.json` pour le SDK .NET.
+- `.nvmrc` et `frontend/package.json` pour Node.js.
+- `frontend/package-lock.json` pour les dépendances npm résolues.
+- Les fichiers `.csproj` pour NuGet et Aspire.
+- `Dockerfile.frontend`, `Dockerfile.backend`, `deploy/home.compose.yml` et `infra/valhalla.compose.yml` pour les images.
+
+Commandes de diagnostic :
+
+```powershell
+dotnet list BikeVoyager.sln package --vulnerable --include-transitive
+dotnet list BikeVoyager.sln package --outdated --include-transitive
+npm --prefix frontend audit --omit=dev
+npm --prefix frontend audit
+npm --prefix frontend outdated
+```
+
+Règles de décision :
+
+- Traiter d'abord les vulnérabilités directes ou transitives.
+- Privilégier les correctifs patch/mineurs compatibles avec les versions déjà ancrées.
+- Garder `@types/node` sur la ligne `22.x`, cohérente avec `.nvmrc` et `frontend/package.json`.
+- Ne pas changer de feature band SDK .NET, de version majeure npm ou d'image Docker majeure sans validation explicite.
+- Pour `Microsoft.OpenApi`, conserver un override compatible si une version majeure casse le générateur OpenAPI.
+
+Validation après alignement :
+
+```powershell
+dotnet restore BikeVoyager.sln
+dotnet build BikeVoyager.sln --no-restore
+dotnet test BikeVoyager.sln --no-build
+./scripts/dev-audit      # Unix/Git Bash
+./scripts/dev-audit.ps1  # PowerShell Windows
+npm --prefix frontend run lint
+npm --prefix frontend run test
+npm --prefix frontend run build
+npm --prefix frontend run e2e
+```
 
 ## Démarrage local
 
@@ -52,15 +94,15 @@ Stack home:
 - `bikevoyager-valhalla` (port `8002`, debug local)
 - `bikevoyager-valhalla-bootstrap` (one-shot de download/build)
 
-Le volume Docker `bikevoyager-valhalla-data` conserve les donnees Valhalla (`live/tiles`, `build-status.json`, etc.).
+Le volume Docker `bikevoyager-valhalla-data` conserve les données Valhalla (`live/tiles`, `build-status.json`, etc.).
 
 ### Troubleshooting home
 
-- Vérifier l'etat runtime : `docker ps --filter name=bikevoyager-api --filter name=bikevoyager-front --filter name=bikevoyager-valhalla --filter name=bikevoyager-valhalla-bootstrap`
+- Vérifier l'état runtime : `docker ps --filter name=bikevoyager-api --filter name=bikevoyager-front --filter name=bikevoyager-valhalla --filter name=bikevoyager-valhalla-bootstrap`
 - Suivre le bootstrap tuiles : `docker logs -f bikevoyager-valhalla-bootstrap`
 - Vérifier le statut fonctionnel : `curl http://127.0.0.1:5080/api/v1/valhalla/status`
 - Consulter les logs applicatifs : `docker logs --tail 120 bikevoyager-api` puis `docker logs --tail 120 bikevoyager-valhalla`
-- Controler l'ecoute reseau : `ss -ltnp | grep -E '5080|5081|8002'` (ou `netstat -ltnp`)
+- Contrôler l'écoute réseau : `ss -ltnp | grep -E '5080|5081|8002'` (ou `netstat -ltnp`)
 
 ## Démarrage F5 (Visual Studio)
 
@@ -315,7 +357,8 @@ Scripts agrégés :
 
 ```powershell
 ./scripts/dev-test
-./scripts/dev-audit
+./scripts/dev-audit      # Unix/Git Bash
+./scripts/dev-audit.ps1  # PowerShell Windows
 ```
 
 ## Audit UI

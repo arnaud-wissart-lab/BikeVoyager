@@ -1,38 +1,39 @@
 # RUNBOOK
 
 ## Objet
-Runbook operationnel de BikeVoyager (local + deploiement `home`) sans donnees sensibles.
+Runbook opérationnel de BikeVoyager (local + déploiement `home`) sans données sensibles.
 
-## Prerequis
+## Prérequis
 - .NET SDK `10.0.x`
-- Node.js `20` + npm
+- Node.js `22.x` + npm
 - Docker + Docker Compose
 - PowerShell (`pwsh`) pour les scripts `scripts/dev-*`
 
-## Local: demarrer / arreter
-Demarrage (backend + frontend, et Valhalla si les donnees existent):
+## Local: démarrer / arrêter
+Démarrage (backend + frontend, et Valhalla si les données existent):
 
 ```powershell
 ./scripts/dev-up
 ```
 
-Arret:
+Arrêt:
 
 ```powershell
 ./scripts/dev-down
 ```
 
 ## Local: commandes utiles
-Tests agreges:
+Tests agrégés:
 
 ```powershell
 ./scripts/dev-test
 ```
 
-Audit dependances:
+Audit dépendances:
 
 ```powershell
-./scripts/dev-audit
+./scripts/dev-audit      # Unix/Git Bash
+./scripts/dev-audit.ps1  # PowerShell Windows
 ```
 
 Backend seul:
@@ -54,22 +55,48 @@ AppHost (.NET Aspire):
 dotnet run --project backend/src/BikeVoyager.AppHost/BikeVoyager.AppHost.csproj
 ```
 
-## Deploiement home
-Pipeline de reference: [`.github/workflows/deploy-manual.yml`](../.github/workflows/deploy-manual.yml)
+## Alignement dépendances et SDK
+Sources à vérifier avant tout alignement :
+
+- `global.json` pour le SDK .NET.
+- `.nvmrc` et `frontend/package.json` pour Node.js.
+- `frontend/package-lock.json` pour npm.
+- Les fichiers `.csproj` pour NuGet et Aspire.
+- Les Dockerfiles et compose pour les images.
+
+Commandes de diagnostic :
+
+```powershell
+dotnet list BikeVoyager.sln package --vulnerable --include-transitive
+dotnet list BikeVoyager.sln package --outdated --include-transitive
+npm --prefix frontend audit --omit=dev
+npm --prefix frontend audit
+npm --prefix frontend outdated
+```
+
+Règles courantes :
+
+- Corriger en priorité les vulnérabilités directes et transitives.
+- Préférer les mises à jour patch/mineures compatibles.
+- Garder Node et `@types/node` sur la ligne `22.x`.
+- Traiter les montées majeures et les images Docker comme des changements dédiés.
+
+## Déploiement home
+Pipeline de référence: [`.github/workflows/deploy-manual.yml`](../.github/workflows/deploy-manual.yml)
 
 - Type: `workflow_dispatch` (inputs: `environment`, `ref`)
 - Runner: `self-hosted`, `linux`, `ci`
-- Script execute: [`scripts/deploy-home.sh`](../scripts/deploy-home.sh)
+- Script exécuté: [`scripts/deploy-home.sh`](../scripts/deploy-home.sh)
 - Compose cible: [`deploy/home.compose.yml`](../deploy/home.compose.yml)
 
-Validation post-deploiement (API + Valhalla):
+Validation post-déploiement (API + Valhalla):
 
 ```bash
 curl http://127.0.0.1:5080/api/v1/health
 curl http://127.0.0.1:5080/api/v1/valhalla/status
 ```
 
-## Valhalla: operations
+## Valhalla: opérations
 Compose local Valhalla:
 
 ```bash
@@ -83,12 +110,12 @@ Scripts de build / update / cleanup:
 - [`scripts/valhalla-cleanup.ps1`](../scripts/valhalla-cleanup.ps1)
 
 ## Configuration sensible
-- Ne pas versionner de secrets dans le depot.
-- Utiliser des placeholders dans `deploy/home.env` (modele: [`deploy/home.env.example`](../deploy/home.env.example)).
-- Variables OAuth cloud supportees: `CloudSync__GoogleDrive__*`, `CloudSync__OneDrive__*`.
-- Variables feedback SMTP supportees: `FEEDBACK__*`.
+- Ne pas versionner de secrets dans le dépôt.
+- Utiliser des placeholders dans `deploy/home.env` (modèle: [`deploy/home.env.example`](../deploy/home.env.example)).
+- Variables OAuth cloud supportées: `CloudSync__GoogleDrive__*`, `CloudSync__OneDrive__*`.
+- Variables feedback SMTP supportées: `FEEDBACK__*`.
 
-## Documentation de reference
+## Documentation de référence
 - [README.md](../README.md)
 - [docs/API.md](./API.md)
 - [docs/ARCHITECTURE.md](./ARCHITECTURE.md)

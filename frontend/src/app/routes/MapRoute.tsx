@@ -14,6 +14,7 @@ import {
 import { useRoutingController } from '../../features/routing/useRoutingController'
 import type { AppStore } from '../../state/appStore'
 import MapPage from '../../ui/pages/MapPage'
+import RouteAlternativeComparisonDialog from '../../ui/pages/RouteAlternativeComparisonDialog'
 import { useAppDetourHandlers } from '../useAppDetourHandlers'
 
 type MapRouteProps = {
@@ -137,7 +138,7 @@ export default function MapRoute({
     elevationProfile,
     detourSummary: mapController.detourSummary,
     hasRoute: mapController.hasRoute,
-    isRouteLoading: store.isRouteLoading,
+    isRouteLoading: store.isRouteLoading || store.isAlternativeLoading,
     alternativeRouteLabel: routingController.alternativeRouteLabel,
     isExporting: store.isExporting,
     exportError: store.exportError,
@@ -258,98 +259,113 @@ export default function MapRoute({
   }
 
   return (
-    <MapPage
-      availableViewportHeight={availableViewportHeight}
-      mapBackgroundColor={isDarkTheme ? theme.colors.gray[9] : theme.colors.gray[1]}
-      loadingOverlayColor={isDarkTheme ? 'rgba(18, 20, 24, 0.62)' : 'rgba(255, 255, 255, 0.64)'}
-      setupOverlayColor={isDarkTheme ? 'rgba(10, 12, 16, 0.62)' : 'rgba(255, 255, 255, 0.62)'}
-      loadingSpinnerColor={theme.colors.blue[6]}
-      routeResult={store.routeResult}
-      expandedRouteBounds={mapController.expandedRouteBounds}
-      mapViewMode={mapController.mapViewMode}
-      mapCommand={mapController.mapCommand}
-      mapCommandSeq={mapController.mapCommandSeq}
-      poiEnabled={mapController.poiEnabled}
-      visiblePoiItems={mapController.visiblePoiItems}
-      selectedPoiId={mapController.selectedPoiId}
-      onPoiSelect={mapController.handlePoiSelect}
-      isNavigationActive={store.isNavigationActive}
-      navigationProgress={store.navigationProgress}
-      navigationCameraMode={store.navigationCameraMode}
-      hasRoute={mapController.hasRoute}
-      mapOverlayPadding={isDesktop ? 20 : 12}
-      isDesktop={isDesktop}
-      isSummaryPanelExpanded={mapController.isSummaryPanelExpanded}
-      onToggleSummaryPanel={mapController.handleToggleSummaryPanel}
-      summaryPanelProps={mapSummaryPanelProps}
-      isPoiPanelExpanded={mapController.isPoiPanelExpanded}
-      onTogglePoiPanel={mapController.handleTogglePoiPanel}
-      poiPanelProps={poiPanelProps}
-      renderPoiLoadIndicator={renderPoiLoadIndicator}
-      surfaceColor={surfaceColor}
-      panelTransitionDuration={routingController.panelTransitionDuration}
-      panelTransitionTiming={routingController.panelTransitionTiming}
-      onResetRouteView={() => mapController.triggerMapCommand('resetRoute')}
-      chromeFooterHeight={chromeFooterHeight}
-      isMobileMapPanelExpanded={mapController.isMobileMapPanelExpanded}
-      onToggleMobileMapPanel={mapController.handleToggleMobileMapPanel}
-      mobileMapPanelTransition={[
-        'max-height 360ms cubic-bezier(0.22, 1, 0.36, 1)',
-        'opacity 260ms cubic-bezier(0.16, 1, 0.3, 1)',
-        'transform 360ms cubic-bezier(0.22, 1, 0.36, 1)',
-        'filter 260ms cubic-bezier(0.16, 1, 0.3, 1)',
-        'padding-top 320ms cubic-bezier(0.22, 1, 0.36, 1)',
-      ].join(', ')}
-      isPoiModalOpen={mapController.isPoiModalOpen}
-      selectedPoi={mapController.selectedPoi}
-      selectedPoiDisplayName={mapController.selectedPoiDisplayName}
-      selectedPoiCategoryLabel={mapController.selectedPoiCategoryLabel}
-      selectedPoiKind={mapController.selectedPoiKind}
-      onZoomOutPoi={() => mapController.triggerMapCommand('zoomOutPoi')}
-      onZoomInPoi={() => mapController.triggerMapCommand('zoomInPoi')}
-      isRouteLoading={store.isRouteLoading}
-      isMobilePoiDetailsExpanded={mapController.isMobilePoiDetailsExpanded}
-      onToggleMobilePoiDetails={mapController.handleToggleMobilePoiDetails}
-      onClosePoiModal={() => mapController.setIsPoiModalOpen(false)}
-      poiDetourIds={mapController.poiDetourIds}
-      onAddSelectedPoiWaypoint={() => {
-        if (!mapController.selectedPoi) {
-          return
-        }
-        void detourHandlers.handleAddPoiWaypoint({
-          ...mapController.selectedPoi,
-          name: mapController.selectedPoiDisplayName,
-        })
-      }}
-      formatDistance={mapController.formatDistance}
-      formatCoordinate={mapController.formatCoordinate}
-      selectedPoiUsefulRows={mapController.selectedPoiUsefulRows}
-      selectedPoiExternalLinks={mapController.selectedPoiExternalLinks}
-      selectedPoiTechnicalRows={mapController.selectedPoiTechnicalRows}
-      mobilePoiPanelTransition={[
-        'max-height 340ms cubic-bezier(0.22, 1, 0.36, 1)',
-        'opacity 240ms cubic-bezier(0.16, 1, 0.3, 1)',
-        'transform 340ms cubic-bezier(0.22, 1, 0.36, 1)',
-        'filter 240ms cubic-bezier(0.16, 1, 0.3, 1)',
-      ].join(', ')}
-      isNavigationSetupOpen={mapController.isNavigationSetupOpen}
-      onCloseNavigationSetup={mapController.handleCloseNavigationSetup}
-      navigationOptionsPanelProps={navigationOptionsPanelProps}
-      onStartNavigation={mapController.handleStartNavigation}
-      navigationMode={store.navigationMode}
-      onExitNavigation={mapController.handleExitNavigation}
-      distanceLabel={mapController.distanceLabel}
-      etaLabel={mapController.etaLabel}
-      navigationProgressPct={mapController.navigationProgressPct}
-      onNavigationCameraModeChange={mapController.handleNavigationCameraModeChange}
-      navigationError={mapController.navigationError}
-      activePoiAlert={mapController.activePoiAlert}
-      getPoiDisplayName={mapController.getPoiDisplayName}
-      poiCategoryLabels={mapController.poiCategoryLabels}
-      onAddActivePoiAlertWaypoint={() => {
-        void detourHandlers.handleAddActivePoiAlertWaypoint()
-      }}
-      onDismissPoiAlert={mapController.handleDismissPoiAlert}
-    />
+    <>
+      <MapPage
+        availableViewportHeight={availableViewportHeight}
+        mapBackgroundColor={isDarkTheme ? theme.colors.gray[9] : theme.colors.gray[1]}
+        loadingOverlayColor={isDarkTheme ? 'rgba(18, 20, 24, 0.62)' : 'rgba(255, 255, 255, 0.64)'}
+        setupOverlayColor={isDarkTheme ? 'rgba(10, 12, 16, 0.62)' : 'rgba(255, 255, 255, 0.62)'}
+        loadingSpinnerColor={theme.colors.blue[6]}
+        routeResult={store.routeResult}
+        expandedRouteBounds={mapController.expandedRouteBounds}
+        mapViewMode={mapController.mapViewMode}
+        mapCommand={mapController.mapCommand}
+        mapCommandSeq={mapController.mapCommandSeq}
+        poiEnabled={mapController.poiEnabled}
+        visiblePoiItems={mapController.visiblePoiItems}
+        selectedPoiId={mapController.selectedPoiId}
+        onPoiSelect={mapController.handlePoiSelect}
+        isNavigationActive={store.isNavigationActive}
+        navigationProgress={store.navigationProgress}
+        navigationCameraMode={store.navigationCameraMode}
+        hasRoute={mapController.hasRoute}
+        mapOverlayPadding={isDesktop ? 20 : 12}
+        isDesktop={isDesktop}
+        isSummaryPanelExpanded={mapController.isSummaryPanelExpanded}
+        onToggleSummaryPanel={mapController.handleToggleSummaryPanel}
+        summaryPanelProps={mapSummaryPanelProps}
+        isPoiPanelExpanded={mapController.isPoiPanelExpanded}
+        onTogglePoiPanel={mapController.handleTogglePoiPanel}
+        poiPanelProps={poiPanelProps}
+        renderPoiLoadIndicator={renderPoiLoadIndicator}
+        surfaceColor={surfaceColor}
+        panelTransitionDuration={routingController.panelTransitionDuration}
+        panelTransitionTiming={routingController.panelTransitionTiming}
+        onResetRouteView={() => mapController.triggerMapCommand('resetRoute')}
+        chromeFooterHeight={chromeFooterHeight}
+        isMobileMapPanelExpanded={mapController.isMobileMapPanelExpanded}
+        onToggleMobileMapPanel={mapController.handleToggleMobileMapPanel}
+        mobileMapPanelTransition={[
+          'max-height 360ms cubic-bezier(0.22, 1, 0.36, 1)',
+          'opacity 260ms cubic-bezier(0.16, 1, 0.3, 1)',
+          'transform 360ms cubic-bezier(0.22, 1, 0.36, 1)',
+          'filter 260ms cubic-bezier(0.16, 1, 0.3, 1)',
+          'padding-top 320ms cubic-bezier(0.22, 1, 0.36, 1)',
+        ].join(', ')}
+        isPoiModalOpen={mapController.isPoiModalOpen}
+        selectedPoi={mapController.selectedPoi}
+        selectedPoiDisplayName={mapController.selectedPoiDisplayName}
+        selectedPoiCategoryLabel={mapController.selectedPoiCategoryLabel}
+        selectedPoiKind={mapController.selectedPoiKind}
+        onZoomOutPoi={() => mapController.triggerMapCommand('zoomOutPoi')}
+        onZoomInPoi={() => mapController.triggerMapCommand('zoomInPoi')}
+        isRouteLoading={store.isRouteLoading}
+        isMobilePoiDetailsExpanded={mapController.isMobilePoiDetailsExpanded}
+        onToggleMobilePoiDetails={mapController.handleToggleMobilePoiDetails}
+        onClosePoiModal={() => mapController.setIsPoiModalOpen(false)}
+        poiDetourIds={mapController.poiDetourIds}
+        onAddSelectedPoiWaypoint={() => {
+          if (!mapController.selectedPoi) {
+            return
+          }
+          void detourHandlers.handleAddPoiWaypoint({
+            ...mapController.selectedPoi,
+            name: mapController.selectedPoiDisplayName,
+          })
+        }}
+        formatDistance={mapController.formatDistance}
+        formatCoordinate={mapController.formatCoordinate}
+        selectedPoiUsefulRows={mapController.selectedPoiUsefulRows}
+        selectedPoiExternalLinks={mapController.selectedPoiExternalLinks}
+        selectedPoiTechnicalRows={mapController.selectedPoiTechnicalRows}
+        mobilePoiPanelTransition={[
+          'max-height 340ms cubic-bezier(0.22, 1, 0.36, 1)',
+          'opacity 240ms cubic-bezier(0.16, 1, 0.3, 1)',
+          'transform 340ms cubic-bezier(0.22, 1, 0.36, 1)',
+          'filter 240ms cubic-bezier(0.16, 1, 0.3, 1)',
+        ].join(', ')}
+        isNavigationSetupOpen={mapController.isNavigationSetupOpen}
+        onCloseNavigationSetup={mapController.handleCloseNavigationSetup}
+        navigationOptionsPanelProps={navigationOptionsPanelProps}
+        onStartNavigation={mapController.handleStartNavigation}
+        navigationMode={store.navigationMode}
+        onExitNavigation={mapController.handleExitNavigation}
+        distanceLabel={mapController.distanceLabel}
+        etaLabel={mapController.etaLabel}
+        navigationProgressPct={mapController.navigationProgressPct}
+        onNavigationCameraModeChange={mapController.handleNavigationCameraModeChange}
+        navigationError={mapController.navigationError}
+        activePoiAlert={mapController.activePoiAlert}
+        getPoiDisplayName={mapController.getPoiDisplayName}
+        poiCategoryLabels={mapController.poiCategoryLabels}
+        onAddActivePoiAlertWaypoint={() => {
+          void detourHandlers.handleAddActivePoiAlertWaypoint()
+        }}
+        onDismissPoiAlert={mapController.handleDismissPoiAlert}
+      />
+      <RouteAlternativeComparisonDialog
+        opened={store.isAlternativeComparisonOpen}
+        isCompact={!isDesktop}
+        isLoading={store.isAlternativeLoading}
+        comparison={store.routeComparison}
+        routeErrorMessage={routingController.routeErrorDisplayMessage}
+        onApplyAlternative={routingController.handleApplyAlternativeRoute}
+        onKeepCurrentRoute={routingController.handleKeepCurrentRoute}
+        onRecalculateAlternative={() => {
+          void routingController.handleRecalculateAlternative()
+        }}
+        onClose={routingController.handleCloseAlternativeComparison}
+      />
+    </>
   )
 }

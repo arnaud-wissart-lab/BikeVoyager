@@ -2,12 +2,19 @@ import { configDefaults, defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import cesium from 'vite-plugin-cesium'
 import { VitePWA } from 'vite-plugin-pwa'
+import { createRequire } from 'node:module'
+
+const require = createRequire(import.meta.url)
+const packageJson = require('./package.json') as { version: string }
 
 const apiBaseUrl = process.env.VITE_API_BASE_URL ?? 'http://localhost:5024'
 const frontendPort = Number(process.env.VITE_DEV_PORT ?? 5173)
 const strictPort = (process.env.VITE_STRICT_PORT ?? 'true') === 'true'
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(packageJson.version),
+  },
   plugins: [
     react(),
     cesium(),

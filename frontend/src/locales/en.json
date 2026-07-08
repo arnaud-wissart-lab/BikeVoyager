@@ -352,6 +352,16 @@
   "commonYes": "yes",
   "commonNo": "no",
   "commonCancel": "Cancel",
+  "releaseNotesTooltip": "See what’s new",
+  "releaseNotesTitle": "What’s new",
+  "releaseNotesSubtitle": "Important BikeVoyager changes, summarized for everyday use.",
+  "releaseNotesClose": "Close what’s new",
+  "releaseNotesEmpty": "No release notes are available yet.",
+  "releaseNotesType": {
+    "added": "Added",
+    "improved": "Improved",
+    "fixed": "Fixed"
+  },
   "installPromptTitle": "Install the app",
   "installPromptBody": "Add BikeVoyager to your home screen for quick access.",
   "installPromptInstall": "Install",

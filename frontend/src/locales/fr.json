@@ -352,6 +352,16 @@
   "commonYes": "oui",
   "commonNo": "non",
   "commonCancel": "Annuler",
+  "releaseNotesTooltip": "Voir les nouveautés",
+  "releaseNotesTitle": "Nouveautés",
+  "releaseNotesSubtitle": "Les changements importants de BikeVoyager, résumés pour l’usage quotidien.",
+  "releaseNotesClose": "Fermer les nouveautés",
+  "releaseNotesEmpty": "Aucune note de version n’est disponible pour le moment.",
+  "releaseNotesType": {
+    "added": "Ajouté",
+    "improved": "Amélioré",
+    "fixed": "Corrigé"
+  },
   "installPromptTitle": "Installer l’app",
   "installPromptBody": "Ajoutez BikeVoyager à votre écran d’accueil pour un accès rapide.",
   "installPromptInstall": "Installer",

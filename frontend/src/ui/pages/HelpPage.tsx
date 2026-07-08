@@ -14,10 +14,13 @@ import {
   Title,
   type MantineTheme,
 } from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
 import { IconDatabase, IconMail, IconRoute } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
 import type { CloudDiagnostics } from '../../features/cloud/cloudSync'
 import type { ValhallaStatus } from '../../features/routing/domain'
+import AppVersionBadge from '../app/AppVersionBadge'
+import ReleaseNotesDialog from '../app/ReleaseNotesDialog'
 
 type HelpPageProps = {
   contentSize: string
@@ -73,16 +76,21 @@ export default function HelpPage({
   onSubmitFeedback,
 }: HelpPageProps) {
   const { t } = useTranslation()
+  const [releaseNotesOpened, { open: openReleaseNotes, close: closeReleaseNotes }] =
+    useDisclosure(false)
 
   return (
     <Container size={contentSize} py="lg">
       <Stack gap="xl">
-        <Stack gap={4}>
-          <Title order={2}>{t('helpTitle')}</Title>
-          <Text size="sm" c="dimmed">
-            {t('helpSubtitle')}
-          </Text>
-        </Stack>
+        <Group justify="space-between" align="flex-start" gap="md">
+          <Stack gap={4} style={{ minWidth: 0, flex: 1 }}>
+            <Title order={2}>{t('helpTitle')}</Title>
+            <Text size="sm" c="dimmed">
+              {t('helpSubtitle')}
+            </Text>
+          </Stack>
+          <AppVersionBadge onClick={openReleaseNotes} />
+        </Group>
 
         <Paper withBorder radius="md" p={isDesktop ? 'md' : 'lg'}>
           <Stack gap={isDesktop ? 'sm' : 'md'}>
@@ -286,6 +294,13 @@ export default function HelpPage({
           </Stack>
         </Paper>
       </Stack>
+
+      <ReleaseNotesDialog
+        opened={releaseNotesOpened}
+        onClose={closeReleaseNotes}
+        isDesktop={isDesktop}
+        isFrench={isFrench}
+      />
     </Container>
   )
 }

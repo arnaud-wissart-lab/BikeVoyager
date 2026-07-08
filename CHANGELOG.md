@@ -6,6 +6,31 @@ Historique public des évolutions notables du projet.
 
 - Aucun changement publié.
 
+## 0.1.0 - 2026-07-08
+
+### Ajouté
+
+- Affichage discret de la version BikeVoyager dans l’écran Aide et à propos.
+- Modale “Nouveautés” accessible depuis l’interface, avec des notes de version orientées utilisateur.
+- Street View au clic droit sur la carte.
+- Profil d’altitude avec D+, D-, pente maximale et difficulté vélo/VAE.
+- Filtres POI avancés avec sauvegarde des préférences.
+
+### Amélioré
+
+- Détails POI plus lisibles, avec les informations utiles mieux mises en avant.
+- Base de version applicative centralisée côté frontend pour préparer les prochaines notes de version.
+
+### Corrigé
+
+- Désélection des POI qui ne sont plus visibles après application des filtres avancés.
+
+### Technique
+
+- Version frontend initialisée à `0.1.0`.
+- Injection de la version frontend au build depuis `frontend/package.json`.
+- Notes de version utilisateur structurées et typées côté frontend.
+
 ## 2026-02-17
 
 ### Refactors majeurs

@@ -1,10 +1,20 @@
-import { useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { buildGoogleStreetViewUrl } from './cesium/googleStreetView'
 import useCameraControls from './cesium/useCameraControls'
 import useCesiumViewer from './cesium/useCesiumViewer'
 import useInteractionHandlers from './cesium/useInteractionHandlers'
 import useMapLayers from './cesium/useMapLayers'
 import useRouteEntities from './cesium/useRouteEntities'
-import type { CesiumRouteMapProps, CesiumModule } from './cesium/types'
+import type {
+  CesiumRouteMapProps,
+  CesiumModule,
+  StreetViewContextMenuRequest,
+  StreetViewTarget,
+} from './cesium/types'
+
+const openGoogleStreetView = ({ lat, lon, heading }: StreetViewTarget) => {
+  window.open(buildGoogleStreetViewUrl(lat, lon, heading), '_blank', 'noopener,noreferrer')
+}
 
 export default function CesiumRouteMap({
   geometry,
@@ -17,6 +27,7 @@ export default function CesiumRouteMap({
   pois,
   activePoiId,
   onPoiSelect,
+  onOpenStreetView = openGoogleStreetView,
   navigationActive = false,
   navigationProgress = null,
   navigationCameraMode = 'follow_3d',
@@ -31,6 +42,16 @@ export default function CesiumRouteMap({
   const lastProcessedCommandSeqRef = useRef(0)
   const cesiumRef = useRef<CesiumModule | null>(null)
   const poiClickHandlerRef = useRef<import('cesium').ScreenSpaceEventHandler | null>(null)
+  const streetViewMenuRef = useRef<HTMLDivElement | null>(null)
+  const [streetViewMenu, setStreetViewMenu] = useState<StreetViewContextMenuRequest | null>(null)
+
+  const closeStreetViewMenu = useCallback(() => {
+    setStreetViewMenu(null)
+  }, [])
+
+  const requestStreetViewContextMenu = useCallback((request: StreetViewContextMenuRequest) => {
+    setStreetViewMenu(request)
+  }, [])
 
   const status = useCesiumViewer({
     containerRef,
@@ -55,10 +76,49 @@ export default function CesiumRouteMap({
   useInteractionHandlers({
     status,
     onPoiSelect,
+    onStreetViewContextMenu: requestStreetViewContextMenu,
+    onMapStateChange: closeStreetViewMenu,
     viewerRef,
     cesiumRef,
     poiClickHandlerRef,
   })
+  const visibleStreetViewMenu = status === 'ready' ? streetViewMenu : null
+
+  const handleOpenStreetView = useCallback(() => {
+    if (!visibleStreetViewMenu) {
+      return
+    }
+
+    onOpenStreetView(visibleStreetViewMenu.target)
+    closeStreetViewMenu()
+  }, [closeStreetViewMenu, onOpenStreetView, visibleStreetViewMenu])
+
+  useEffect(() => {
+    if (!visibleStreetViewMenu) {
+      return
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && streetViewMenuRef.current?.contains(event.target)) {
+        return
+      }
+
+      closeStreetViewMenu()
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeStreetViewMenu()
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [closeStreetViewMenu, visibleStreetViewMenu])
 
   useRouteEntities({
     status,
@@ -117,6 +177,48 @@ export default function CesiumRouteMap({
           }}
         >
           <span>{fallbackLabel}</span>
+        </div>
+      )}
+      {visibleStreetViewMenu && (
+        <div
+          ref={streetViewMenuRef}
+          role="menu"
+          aria-label="Actions de carte"
+          data-testid="street-view-context-menu"
+          onContextMenu={(event) => event.preventDefault()}
+          style={{
+            position: 'absolute',
+            left: Math.max(8, visibleStreetViewMenu.x),
+            top: Math.max(8, visibleStreetViewMenu.y),
+            zIndex: 20,
+            minWidth: '214px',
+            padding: '4px',
+            border: '1px solid rgba(15, 23, 42, 0.16)',
+            borderRadius: '8px',
+            backgroundColor: 'rgba(255, 255, 255, 0.98)',
+            boxShadow: '0 12px 28px rgba(15, 23, 42, 0.22)',
+            transform: 'translate(6px, 6px)',
+          }}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={handleOpenStreetView}
+            style={{
+              width: '100%',
+              border: 0,
+              borderRadius: '6px',
+              padding: '8px 10px',
+              backgroundColor: 'transparent',
+              color: '#111827',
+              cursor: 'pointer',
+              font: 'inherit',
+              fontSize: '0.875rem',
+              textAlign: 'left',
+            }}
+          >
+            Voir dans Google Street View
+          </button>
         </div>
       )}
     </div>

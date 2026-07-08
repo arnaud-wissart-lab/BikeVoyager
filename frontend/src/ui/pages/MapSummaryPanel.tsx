@@ -1,6 +1,8 @@
 import { Button, Group, Stack, Text } from '@mantine/core'
 import { IconDeviceFloppy, IconDownload, IconPlayerPlay, IconRefresh } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
+import type { RouteElevationPoint } from '../../features/routing/domain'
+import ElevationProfileChart from './ElevationProfileChart'
 
 type MapSummaryPanelProps = {
   isCompact: boolean
@@ -8,8 +10,14 @@ type MapSummaryPanelProps = {
   etaLabel: string
   overlapLabel: string | null
   overlapHint: string | null
-  elevationValueLabel: string
+  elevationGainLabel: string
+  elevationLossLabel: string
+  elevationRangeLabel: string
+  maxSlopeLabel: string | null
+  routeDifficultyLabel: string | null
+  routeDifficultyHint: string | null
   elevationHint: string | null
+  elevationProfile: RouteElevationPoint[] | null
   detourSummary: string | null
   hasRoute: boolean
   isRouteLoading: boolean
@@ -30,8 +38,14 @@ export default function MapSummaryPanel({
   etaLabel,
   overlapLabel,
   overlapHint,
-  elevationValueLabel,
+  elevationGainLabel,
+  elevationLossLabel,
+  elevationRangeLabel,
+  maxSlopeLabel,
+  routeDifficultyLabel,
+  routeDifficultyHint,
   elevationHint,
+  elevationProfile,
   detourSummary,
   hasRoute,
   isRouteLoading,
@@ -47,36 +61,25 @@ export default function MapSummaryPanel({
 }: MapSummaryPanelProps) {
   const { t } = useTranslation()
   const metricTextSize = isCompact ? 'xs' : 'sm'
+  const renderMetricRow = (label: string, value: string) => (
+    <Group justify="space-between" align="baseline" gap="sm" wrap="nowrap">
+      <Text size={metricTextSize} c="dimmed" style={{ minWidth: 0, flex: 1 }}>
+        {label}
+      </Text>
+      <Text size={metricTextSize} fw={600} ta="right" style={{ flexShrink: 0 }}>
+        {value}
+      </Text>
+    </Group>
+  )
 
   return (
     <Stack gap={isCompact ? 'sm' : 'md'}>
       <Stack gap={6}>
-        <Group justify="space-between">
-          <Text size={metricTextSize} c="dimmed">
-            {t('mapSummaryDistance')}
-          </Text>
-          <Text size={metricTextSize} fw={600}>
-            {distanceLabel}
-          </Text>
-        </Group>
-        <Group justify="space-between">
-          <Text size={metricTextSize} c="dimmed">
-            {t('mapSummaryEta')}
-          </Text>
-          <Text size={metricTextSize} fw={600}>
-            {etaLabel}
-          </Text>
-        </Group>
+        {renderMetricRow(t('mapSummaryDistance'), distanceLabel)}
+        {renderMetricRow(t('mapSummaryEta'), etaLabel)}
         {overlapLabel && (
           <>
-            <Group justify="space-between">
-              <Text size={metricTextSize} c="dimmed">
-                {t('mapSummaryOverlap')}
-              </Text>
-              <Text size={metricTextSize} fw={600}>
-                {overlapLabel}
-              </Text>
-            </Group>
+            {renderMetricRow(t('mapSummaryOverlap'), overlapLabel)}
             {overlapHint && (
               <Text size="xs" c="dimmed">
                 {overlapHint}
@@ -84,18 +87,25 @@ export default function MapSummaryPanel({
             )}
           </>
         )}
-        <Group justify="space-between">
-          <Text size={metricTextSize} c="dimmed">
-            {t('mapSummaryElevation')}
-          </Text>
-          <Text size={metricTextSize} fw={600}>
-            {elevationValueLabel}
-          </Text>
-        </Group>
-        {elevationHint && (
+        {elevationHint ? (
           <Text size="xs" c="dimmed">
             {elevationHint}
           </Text>
+        ) : (
+          <>
+            {renderMetricRow(t('mapSummaryElevationGain'), elevationGainLabel)}
+            {renderMetricRow(t('mapSummaryElevationLoss'), elevationLossLabel)}
+            {renderMetricRow(t('mapSummaryAltitudeRange'), elevationRangeLabel)}
+            {maxSlopeLabel && renderMetricRow(t('mapSummaryMaxSlope'), maxSlopeLabel)}
+            {routeDifficultyLabel &&
+              renderMetricRow(t('mapSummaryDifficulty'), routeDifficultyLabel)}
+            {routeDifficultyHint && (
+              <Text size="xs" c="dimmed">
+                {routeDifficultyHint}
+              </Text>
+            )}
+            <ElevationProfileChart profile={elevationProfile} isCompact={isCompact} />
+          </>
         )}
         {detourSummary && (
           <Group justify="space-between">

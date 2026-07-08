@@ -4,8 +4,8 @@
 Runbook opérationnel de BikeVoyager (local + déploiement `home`) sans données sensibles.
 
 ## Prérequis
-- .NET SDK `10.0.x`
-- Node.js `22.x` + npm
+- .NET SDK `10.0.203` ou patch compatible dans la même bande
+- Node.js `22.23.1` + npm
 - Docker + Docker Compose
 - PowerShell (`pwsh`) pour les scripts `scripts/dev-*`
 
@@ -78,8 +78,9 @@ Règles courantes :
 
 - Corriger en priorité les vulnérabilités directes et transitives.
 - Préférer les mises à jour patch/mineures compatibles.
-- Garder Node et `@types/node` sur la ligne `22.x`.
-- Traiter les montées majeures et les images Docker comme des changements dédiés.
+- Garder Node aligné sur `.nvmrc` (`22.23.1`) et `@types/node` sur la ligne `22.x`.
+- Garder les images Docker applicatives épinglées (`dotnet/sdk:10.0.203`, `dotnet/aspnet:10.0.9`, `node:22.23.1-alpine`, `nginx:1.31.2-alpine`).
+- Traiter les montées majeures de dépendances et d'images Docker comme des changements dédiés.
 
 ## Déploiement home
 Pipeline de référence: [`.github/workflows/deploy-manual.yml`](../.github/workflows/deploy-manual.yml)

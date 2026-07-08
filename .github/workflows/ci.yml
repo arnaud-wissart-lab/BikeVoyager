@@ -18,10 +18,10 @@ jobs:
   backend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: '10.0.203'
       - name: Restaurer
         run: dotnet restore BikeVoyager.sln
       - name: Format whitespace (vérification SDK)
@@ -36,7 +36,7 @@ jobs:
   frontend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Verifier LOC report a jour
         run: |
           set -euo pipefail
@@ -49,7 +49,7 @@ jobs:
           fi
       - uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: 'frontend/package-lock.json'
       - name: Installer

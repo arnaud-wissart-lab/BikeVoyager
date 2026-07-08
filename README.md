@@ -47,13 +47,13 @@ Schéma détaillé: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - Frontend: React `19.2.7`, TypeScript `5.9.x`, Vite `7.3.6`, Mantine `8.3.18`, Cesium `1.143.0`, i18next.
 - Tests: xUnit (`BikeVoyager.UnitTests`, `BikeVoyager.ApiTests`), Vitest (`frontend`), Playwright E2E.
 - AppHost local: .NET Aspire (`Aspire.AppHost.Sdk 13.4.6`, `Aspire.Hosting.Redis 13.4.6`).
-- Conteneurs: Dockerfiles backend/frontend + stack Compose `front/api/valhalla/valhalla-bootstrap`.
+- Conteneurs: Dockerfiles backend/frontend avec bases épinglées (`dotnet/sdk:10.0.203`, `dotnet/aspnet:10.0.9`, `node:22.23.1-alpine`, `nginx:1.31.2-alpine`) + stack Compose `front/api/valhalla/valhalla-bootstrap`.
 - Moteur de routage: image Valhalla épinglée par digest SHA256 dans `deploy/home.compose.yml` et `infra/valhalla.compose.yml`.
 
 ## Démarrage rapide (dev local)
 Prérequis:
-- .NET SDK `10.0.x` (CI: `actions/setup-dotnet@v5`)
-- Node.js `22` + npm (CI: `actions/setup-node@v6`, fichier `.nvmrc`)
+- .NET SDK `10.0.203` ou patch compatible dans la même bande (CI: `actions/setup-dotnet@v5`)
+- Node.js `22.23.1` + npm (CI: `actions/setup-node@v6`, fichier `.nvmrc`)
 - Docker + Docker Compose (nécessaires pour Valhalla)
 - PowerShell (`pwsh`) pour les scripts `scripts/dev-*`
 
@@ -121,7 +121,7 @@ npm --prefix frontend outdated
 
 Politique minimale:
 - appliquer en priorité les correctifs de sécurité et les versions patch/mineures compatibles ;
-- garder Node aligné sur `.nvmrc` et `frontend/package.json` (`22.x`) ;
+- garder Node aligné sur `.nvmrc` (`22.23.1`) et `frontend/package.json` (`22.x`) ;
 - garder les types Node sur la ligne `22.x` ;
 - ne pas monter Mantine, i18next, React i18next ou une image Docker majeure sans validation dédiée ;
 - après tout alignement, exécuter `./scripts/dev-test`, `./scripts/dev-audit` ou `./scripts/dev-audit.ps1` sous PowerShell Windows, `npm --prefix frontend run lint`, `npm --prefix frontend run build` et les E2E si le frontend ou le lockfile change.

@@ -37,6 +37,7 @@ type UseMapNavigationEffectsParams = {
   setIsNavigationActive: (value: boolean) => void
   setIsNavigationSetupOpen: (value: boolean) => void
   setIsMobileMapPanelExpanded: (value: boolean) => void
+  setSelectedPoiId: (value: string | null) => void
   setIsPoiModalOpen: (value: boolean) => void
   setIsMobilePoiDetailsExpanded: (value: boolean) => void
   setNavigationProgress: Dispatch<SetStateAction<NavigationProgress | null>>
@@ -69,6 +70,7 @@ export const useMapNavigationEffects = ({
   setIsNavigationActive,
   setIsNavigationSetupOpen,
   setIsMobileMapPanelExpanded,
+  setSelectedPoiId,
   setIsPoiModalOpen,
   setIsMobilePoiDetailsExpanded,
   setNavigationProgress,
@@ -106,8 +108,15 @@ export const useMapNavigationEffects = ({
     }
 
     setIsPoiModalOpen(false)
+    setSelectedPoiId(null)
     setIsMobilePoiDetailsExpanded(true)
-  }, [selectedPoiId, setIsMobilePoiDetailsExpanded, setIsPoiModalOpen, visiblePoiItems])
+  }, [
+    selectedPoiId,
+    setIsMobilePoiDetailsExpanded,
+    setIsPoiModalOpen,
+    setSelectedPoiId,
+    visiblePoiItems,
+  ])
 
   useEffect(() => {
     if (isNavigationActive) {

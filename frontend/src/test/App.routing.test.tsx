@@ -331,6 +331,8 @@ describe('App routing', () => {
     await user.click(screen.getByRole('button', { name: 'Afficher le panneau' }))
     await screen.findByText('Parking voiture')
     await screen.findByText('Arceaux vélo')
+    await user.click(screen.getByText('Parking voiture'))
+    expect(screen.getByRole('button', { name: 'Fermer les détails' })).toBeInTheDocument()
 
     expect(screen.getByText('Filtrer les POI')).toBeInTheDocument()
     await user.click(screen.getByText('Filtrer les POI'))
@@ -340,6 +342,7 @@ describe('App routing', () => {
     await waitFor(() => {
       expect(screen.queryByText('Parking voiture')).not.toBeInTheDocument()
     })
+    expect(screen.queryByRole('button', { name: 'Fermer les détails' })).not.toBeInTheDocument()
     expect(screen.getByText('Arceaux vélo')).toBeInTheDocument()
 
     await waitFor(() => {

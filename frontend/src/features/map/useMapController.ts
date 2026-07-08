@@ -315,6 +315,7 @@ export const useMapController = ({
     setIsNavigationActive,
     setIsNavigationSetupOpen,
     setIsMobileMapPanelExpanded,
+    setSelectedPoiId,
     setIsPoiModalOpen,
     setIsMobilePoiDetailsExpanded,
     setNavigationProgress,

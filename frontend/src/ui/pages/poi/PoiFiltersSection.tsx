@@ -1,5 +1,6 @@
 import { Button, Checkbox, Group, Slider, Stack, Text } from '@mantine/core'
 import { IconRefresh } from '@tabler/icons-react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PoiCategory } from '../../../features/routing/domain'
 import type { PoiCategoryOption, PoiCorridorRange } from './types'
@@ -8,6 +9,7 @@ type PoiFiltersSectionProps = {
   poiCategoryOptions: PoiCategoryOption[]
   poiCategories: PoiCategory[]
   onPoiCategoryChange: (values: string[]) => void
+  advancedFiltersControl: ReactNode
   poiCorridorMeters: number
   onPoiCorridorMetersChange: (value: number) => void
   hasPoiCategories: boolean
@@ -20,6 +22,7 @@ export default function PoiFiltersSection({
   poiCategoryOptions,
   poiCategories,
   onPoiCategoryChange,
+  advancedFiltersControl,
   poiCorridorMeters,
   onPoiCorridorMetersChange,
   hasPoiCategories,
@@ -47,6 +50,7 @@ export default function PoiFiltersSection({
             ))}
           </Group>
         </Checkbox.Group>
+        {advancedFiltersControl}
         <Group justify="space-between" align="center">
           <Text size="xs" c="dimmed">
             {t('poiCorridorLabel', { distance: poiCorridorMeters })}

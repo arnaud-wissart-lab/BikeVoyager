@@ -30,6 +30,9 @@ describe('dataPortability', () => {
       poiAlertDistanceMeters: 9000,
       poiAlertCategories: ['invalide' as never],
       poiCategories: ['monuments'],
+      poiAdvancedFilterSettings: {
+        services: ['drinking_water', 'invalide'],
+      } as never,
       poiCorridorMeters: 50,
       cloudProvider: 'google-drive',
     })
@@ -38,6 +41,8 @@ describe('dataPortability', () => {
     expect(normalized.poiAlertDistanceMeters).toBe(2000)
     expect(normalized.poiAlertCategories).toEqual(['paysages'])
     expect(normalized.poiCategories).toEqual(['monuments'])
+    expect(normalized.poiAdvancedFilterSettings.services).toEqual(['drinking_water'])
+    expect(normalized.poiAdvancedFilterSettings.commerces).toContain('bakery')
     expect(normalized.poiCorridorMeters).toBe(200)
     expect(normalized.cloudProvider).toBe('google-drive')
   })

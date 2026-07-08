@@ -165,7 +165,9 @@ describe('elevationMetrics', () => {
   })
 
   it('ne classe pas une route trop courte pour une difficulté heuristique', () => {
-    expect(computeRouteDifficulty(routeDifficultyMinimumDistanceMeters - 1, 30, null, 'bike')).toBeNull()
+    expect(
+      computeRouteDifficulty(routeDifficultyMinimumDistanceMeters - 1, 30, null, 'bike'),
+    ).toBeNull()
   })
 
   it('retourne null pour les entrées de difficulté incomplètes', () => {

@@ -10,6 +10,7 @@ import type {
   TripResult,
   TripType,
 } from '../../routing/domain'
+import type { PoiAdvancedFilterSettings } from '../../pois/types'
 
 export type CloudProvider = 'none' | 'onedrive' | 'google-drive'
 export type ThemeModePreference = 'auto' | 'light' | 'dark'
@@ -23,6 +24,7 @@ export type AppPreferences = {
   poiAlertDistanceMeters: number
   poiAlertCategories: PoiCategory[]
   poiCategories: PoiCategory[]
+  poiAdvancedFilterSettings: PoiAdvancedFilterSettings
   poiCorridorMeters: number
   cloudProvider: CloudProvider
   cloudAutoBackupEnabled: boolean

@@ -11,6 +11,7 @@ import {
   type ProfileSettings,
   type TripType,
 } from '../../routing/domain'
+import { normalizePoiAdvancedFilterSettings } from '../../pois/advancedFilters'
 import { addressBookMaxItems, defaultAppPreferences, savedTripsMaxItems } from './constants'
 import type {
   AddressBookEntry,
@@ -76,6 +77,7 @@ export const normalizeAppPreferences = (
       defaultAppPreferences.poiAlertCategories,
     ),
     poiCategories: normalizeCategoryList(value.poiCategories, defaultAppPreferences.poiCategories),
+    poiAdvancedFilterSettings: normalizePoiAdvancedFilterSettings(value.poiAdvancedFilterSettings),
     poiCorridorMeters: corridorDistance,
     cloudProvider: isCloudProvider(value.cloudProvider)
       ? value.cloudProvider

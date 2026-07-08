@@ -26,6 +26,7 @@ type DataImportStoreSlice = Pick<
   | 'setPoiAlertDistanceMeters'
   | 'setPoiAlertCategories'
   | 'setPoiCategories'
+  | 'setPoiAdvancedFilterSettings'
   | 'setPoiCorridorMeters'
   | 'setCloudProvider'
   | 'setCloudAutoBackupEnabled'
@@ -62,6 +63,7 @@ const applyImportedPreferences = (
   store.setPoiAlertDistanceMeters(preferences.appPreferences.poiAlertDistanceMeters)
   store.setPoiAlertCategories(preferences.appPreferences.poiAlertCategories)
   store.setPoiCategories(preferences.appPreferences.poiCategories)
+  store.setPoiAdvancedFilterSettings(preferences.appPreferences.poiAdvancedFilterSettings)
   store.setPoiCorridorMeters(preferences.appPreferences.poiCorridorMeters)
   store.setCloudProvider(preferences.appPreferences.cloudProvider)
   store.setCloudAutoBackupEnabled(preferences.appPreferences.cloudAutoBackupEnabled)

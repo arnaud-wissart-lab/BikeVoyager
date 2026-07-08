@@ -38,6 +38,7 @@ export const useMapController = ({
     profileSettings,
     detourPoints,
     poiCategories,
+    poiAdvancedFilterSettings,
     poiItems,
     activePoiAlertId,
     isRouteLoading,
@@ -65,6 +66,7 @@ export const useMapController = ({
   } = store
 
   const { hasPoiCategories, visiblePoiItems } = usePoisFeatureSlice({
+    poiAdvancedFilterSettings,
     poiCategories,
     poiItems,
   })

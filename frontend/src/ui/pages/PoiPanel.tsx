@@ -4,16 +4,36 @@ import type { PlaceCandidate } from '../../components/PlaceSearchInput'
 import type { AddressBookEntry } from '../../features/data/dataPortability'
 import type { DetourPoint, PoiCategory, PoiItem } from '../../features/routing/domain'
 import DeliveryPlannerPanel from './DeliveryPlannerPanel'
+import PoiAdvancedFiltersDialog from './poi/PoiAdvancedFiltersDialog'
 import PoiDetourManagerPanel from './poi/PoiDetourManagerPanel'
 import PoiFiltersSection from './poi/PoiFiltersSection'
 import PoiResultsList from './poi/PoiResultsList'
 import type { PoiCategoryOption, PoiCorridorRange } from './poi/types'
+import type {
+  PoiAdvancedFilterGroup,
+  PoiAdvancedFilterGroupKey,
+  PoiAdvancedFilterOptionKey,
+  PoiAdvancedFilterSettings,
+} from '../../features/pois/types'
 
 type PoiPanelProps = {
   isCompact: boolean
   poiCategoryOptions: PoiCategoryOption[]
   poiCategories: PoiCategory[]
   onPoiCategoryChange: (values: string[]) => void
+  poiAdvancedFilterGroups: PoiAdvancedFilterGroup[]
+  poiAdvancedFilterSettings: PoiAdvancedFilterSettings
+  poiAdvancedFilterSelectedCount: number
+  onPoiAdvancedFilterGroupChange: (
+    groupKey: PoiAdvancedFilterGroupKey,
+    values: PoiAdvancedFilterOptionKey[],
+  ) => void
+  onPoiAdvancedFilterGroupSelectAll: (groupKey: PoiAdvancedFilterGroupKey) => void
+  onPoiAdvancedFilterGroupHideAll: (groupKey: PoiAdvancedFilterGroupKey) => void
+  onPoiAdvancedFilterSelectAll: () => void
+  onPoiAdvancedFilterHideAll: () => void
+  onPoiAdvancedFilterReset: () => void
+  onPoiAdvancedFilterUsefulBikePreset: () => void
   poiCorridorMeters: number
   onPoiCorridorMetersChange: (value: number) => void
   hasPoiCategories: boolean
@@ -70,6 +90,16 @@ export default function PoiPanel({
   poiCategoryOptions,
   poiCategories,
   onPoiCategoryChange,
+  poiAdvancedFilterGroups,
+  poiAdvancedFilterSettings,
+  poiAdvancedFilterSelectedCount,
+  onPoiAdvancedFilterGroupChange,
+  onPoiAdvancedFilterGroupSelectAll,
+  onPoiAdvancedFilterGroupHideAll,
+  onPoiAdvancedFilterSelectAll,
+  onPoiAdvancedFilterHideAll,
+  onPoiAdvancedFilterReset,
+  onPoiAdvancedFilterUsefulBikePreset,
   poiCorridorMeters,
   onPoiCorridorMetersChange,
   hasPoiCategories,
@@ -125,6 +155,21 @@ export default function PoiPanel({
         poiCategoryOptions={poiCategoryOptions}
         poiCategories={poiCategories}
         onPoiCategoryChange={onPoiCategoryChange}
+        advancedFiltersControl={
+          <PoiAdvancedFiltersDialog
+            isCompact={isCompact}
+            groups={poiAdvancedFilterGroups}
+            settings={poiAdvancedFilterSettings}
+            selectedCount={poiAdvancedFilterSelectedCount}
+            onGroupChange={onPoiAdvancedFilterGroupChange}
+            onGroupSelectAll={onPoiAdvancedFilterGroupSelectAll}
+            onGroupHideAll={onPoiAdvancedFilterGroupHideAll}
+            onSelectAll={onPoiAdvancedFilterSelectAll}
+            onHideAll={onPoiAdvancedFilterHideAll}
+            onReset={onPoiAdvancedFilterReset}
+            onApplyUsefulBikePreset={onPoiAdvancedFilterUsefulBikePreset}
+          />
+        }
         poiCorridorMeters={poiCorridorMeters}
         onPoiCorridorMetersChange={onPoiCorridorMetersChange}
         hasPoiCategories={hasPoiCategories}

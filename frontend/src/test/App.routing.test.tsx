@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../App'
+import { appPreferencesStorageKey } from '../features/data/dataPortability'
 import { apiPaths } from '../features/routing/apiPaths'
 import {
   createAppFetchMock,
@@ -17,7 +18,7 @@ describe('App routing', () => {
     vi.stubGlobal('fetch', createAppFetchMock())
   })
 
-  it('isole le depart entre aller simple et boucle', async () => {
+  it('isole le départ entre aller simple et boucle', async () => {
     const user = userEvent.setup()
 
     renderWithProviders(<App />)
@@ -131,7 +132,7 @@ describe('App routing', () => {
     })
   })
 
-  it('masque les POI paysages quand la categorie est deselectionnee', async () => {
+  it('masque les POI paysages quand la catégorie est désélectionnée', async () => {
     const user = userEvent.setup()
 
     setDesktopMatchMedia()
@@ -274,7 +275,92 @@ describe('App routing', () => {
     })
   })
 
-  it('n envoie pas de requete POI supplementaire quand aucune categorie visible n est selectionnee hors navigation', async () => {
+  it('filtre les parkings voiture sans masquer le stationnement vélo et persiste le choix', async () => {
+    const user = userEvent.setup()
+
+    setDesktopMatchMedia()
+    window.location.hash = '/carte'
+    saveRouteResultToStorage({
+      kind: 'route',
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [2.3522, 48.8566],
+          [2.36, 48.86],
+        ],
+      },
+      distance_m: 1200,
+      duration_s_engine: 500,
+      eta_s: 500,
+      turn_by_turn: [],
+      elevation_profile: [],
+    })
+
+    const mockFetch = createAppFetchMock((url, input) => {
+      if (url.endsWith(apiPaths.poiAroundRoute) || isPoiAroundRouteUrl(input)) {
+        return createJsonResponse([
+          {
+            id: 'poi-car-parking',
+            name: 'Parking voiture',
+            lat: 48.8568,
+            lon: 2.353,
+            category: 'services',
+            kind: 'amenity:parking',
+            distance_m: 120,
+            tags: { name: 'Parking voiture', amenity: 'parking' },
+          },
+          {
+            id: 'poi-bike-parking',
+            name: 'Arceaux vélo',
+            lat: 48.8571,
+            lon: 2.354,
+            category: 'services',
+            kind: 'amenity:bicycle_parking',
+            distance_m: 180,
+            tags: { name: 'Arceaux vélo', amenity: 'bicycle_parking' },
+          },
+        ])
+      }
+
+      return undefined
+    })
+    vi.stubGlobal('fetch', mockFetch)
+
+    renderWithProviders(<App />)
+
+    await user.click(screen.getByRole('button', { name: 'Afficher le panneau' }))
+    await screen.findByText('Parking voiture')
+    await screen.findByText('Arceaux vélo')
+
+    expect(screen.getByText('Filtrer les POI')).toBeInTheDocument()
+    await user.click(screen.getByText('Filtrer les POI'))
+    await user.click(await screen.findByLabelText('Parking voiture'))
+    await user.keyboard('{Escape}')
+
+    await waitFor(() => {
+      expect(screen.queryByText('Parking voiture')).not.toBeInTheDocument()
+    })
+    expect(screen.getByText('Arceaux vélo')).toBeInTheDocument()
+
+    await waitFor(() => {
+      const stored = JSON.parse(localStorage.getItem(appPreferencesStorageKey) ?? '{}') as {
+        poiAdvancedFilterSettings?: { services?: string[] }
+      }
+      expect(stored.poiAdvancedFilterSettings?.services).not.toContain('car_parking')
+      expect(stored.poiAdvancedFilterSettings?.services).toContain('bicycle_parking')
+    })
+
+    await user.click(screen.getByText('Filtrer les POI'))
+    await user.click(screen.getByRole('button', { name: 'Réinitialiser' }))
+    await user.keyboard('{Escape}')
+
+    await waitFor(() => {
+      expect(screen.getByText('Parking voiture')).toBeInTheDocument()
+    })
+    expect(screen.getByText('Arceaux vélo')).toBeInTheDocument()
+  })
+
+  it('n’envoie pas de requête POI supplémentaire quand aucune catégorie visible n’est sélectionnée hors navigation', async () => {
     const user = userEvent.setup()
 
     setDesktopMatchMedia()

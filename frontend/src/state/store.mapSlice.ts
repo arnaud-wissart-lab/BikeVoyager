@@ -74,6 +74,9 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
   const [systemNotificationsEnabled, setSystemNotificationsEnabled] = useState(false)
   const [activePoiAlertId, setActivePoiAlertId] = useState<string | null>(null)
   const [poiCategories, setPoiCategories] = useState(() => initialAppPreferences.poiCategories)
+  const [poiAdvancedFilterSettings, setPoiAdvancedFilterSettings] = useState(
+    () => initialAppPreferences.poiAdvancedFilterSettings,
+  )
   const [poiCorridorMeters, setPoiCorridorMeters] = useState(
     () => initialAppPreferences.poiCorridorMeters,
   )
@@ -175,6 +178,8 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
     setActivePoiAlertId,
     poiCategories,
     setPoiCategories,
+    poiAdvancedFilterSettings,
+    setPoiAdvancedFilterSettings,
     poiCorridorMeters,
     setPoiCorridorMeters,
     poiItems,

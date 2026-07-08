@@ -3,7 +3,18 @@ import type { TFunction } from 'i18next'
 import { fetchPoisAroundRoute } from './api'
 import type { AppStore } from '../../state/appStore'
 import type { RouteKey } from '../routing/domain'
-import type { PoiCategoryOption } from './types'
+import {
+  createDefaultPoiAdvancedFilterSettings,
+  getPoiAdvancedFilterOptionKeys,
+  getPoiAdvancedFilterSelectedCount,
+  poiAdvancedFilterGroups,
+  usefulBikePoiAdvancedFilterSettings,
+} from './advancedFilters'
+import type {
+  PoiAdvancedFilterGroupKey,
+  PoiAdvancedFilterOptionKey,
+  PoiCategoryOption,
+} from './types'
 
 type UsePoisControllerParams = {
   store: AppStore
@@ -30,7 +41,9 @@ export const usePoisController = ({
     poiRefreshKey,
     isNavigationActive,
     activePoiAlertId,
+    poiAdvancedFilterSettings,
     setPoiCategories,
+    setPoiAdvancedFilterSettings,
     setPoiAlertCategories,
     setPoiItems,
     setPoiError,
@@ -68,6 +81,56 @@ export const usePoisController = ({
 
   const handlePoiCategoryChange = (values: string[]) => {
     setPoiCategories(values as typeof poiCategories)
+  }
+
+  const handlePoiAdvancedFilterGroupChange = (
+    groupKey: PoiAdvancedFilterGroupKey,
+    values: string[],
+  ) => {
+    setPoiAdvancedFilterSettings((current) => ({
+      ...current,
+      [groupKey]: values as PoiAdvancedFilterOptionKey[],
+    }))
+  }
+
+  const handlePoiAdvancedFilterGroupSelectAll = (groupKey: PoiAdvancedFilterGroupKey) => {
+    setPoiAdvancedFilterSettings((current) => ({
+      ...current,
+      [groupKey]: getPoiAdvancedFilterOptionKeys(groupKey),
+    }))
+  }
+
+  const handlePoiAdvancedFilterGroupHideAll = (groupKey: PoiAdvancedFilterGroupKey) => {
+    setPoiAdvancedFilterSettings((current) => ({
+      ...current,
+      [groupKey]: [],
+    }))
+  }
+
+  const handlePoiAdvancedFilterSelectAll = () => {
+    setPoiAdvancedFilterSettings(createDefaultPoiAdvancedFilterSettings())
+  }
+
+  const handlePoiAdvancedFilterHideAll = () => {
+    setPoiAdvancedFilterSettings({
+      services: [],
+      commerces: [],
+      paysages: [],
+      monuments: [],
+    })
+  }
+
+  const handlePoiAdvancedFilterReset = () => {
+    setPoiAdvancedFilterSettings(createDefaultPoiAdvancedFilterSettings())
+  }
+
+  const handlePoiAdvancedFilterUsefulBikePreset = () => {
+    setPoiAdvancedFilterSettings({
+      services: [...usefulBikePoiAdvancedFilterSettings.services],
+      commerces: [...usefulBikePoiAdvancedFilterSettings.commerces],
+      paysages: [...usefulBikePoiAdvancedFilterSettings.paysages],
+      monuments: [...usefulBikePoiAdvancedFilterSettings.monuments],
+    })
   }
 
   const handlePoiAlertCategoryChange = (values: string[]) => {
@@ -217,7 +280,17 @@ export const usePoisController = ({
     poiEnabled,
     poiCategoryOptions,
     poiCategoryLabels,
+    poiAdvancedFilterGroups,
+    poiAdvancedFilterSettings,
+    poiAdvancedFilterSelectedCount: getPoiAdvancedFilterSelectedCount(poiAdvancedFilterSettings),
     handlePoiCategoryChange,
+    handlePoiAdvancedFilterGroupChange,
+    handlePoiAdvancedFilterGroupSelectAll,
+    handlePoiAdvancedFilterGroupHideAll,
+    handlePoiAdvancedFilterSelectAll,
+    handlePoiAdvancedFilterHideAll,
+    handlePoiAdvancedFilterReset,
+    handlePoiAdvancedFilterUsefulBikePreset,
     handlePoiAlertCategoryChange,
     handlePoiRefresh,
   }

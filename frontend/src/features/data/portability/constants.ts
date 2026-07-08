@@ -1,4 +1,5 @@
 import { defaultPoiAlertCategories, defaultPoiCategories } from '../../routing/domain'
+import { defaultPoiAdvancedFilterSettings } from '../../pois/advancedFilters'
 import type { AppPreferences } from './types'
 
 export const appPreferencesStorageKey = 'bv_app_preferences'
@@ -16,6 +17,7 @@ export const defaultAppPreferences: AppPreferences = {
   poiAlertDistanceMeters: 300,
   poiAlertCategories: defaultPoiAlertCategories,
   poiCategories: defaultPoiCategories,
+  poiAdvancedFilterSettings: defaultPoiAdvancedFilterSettings,
   poiCorridorMeters: 800,
   cloudProvider: 'none',
   cloudAutoBackupEnabled: false,

@@ -4,10 +4,12 @@ import { useDataController } from '../../features/data/useDataController'
 import { useMapController } from '../../features/map/useMapController'
 import { usePoisController } from '../../features/pois/usePoisController'
 import {
+  computeElevationStats,
+  computeRouteDifficulty,
   normalizeNumericInput,
   poiAlertDistanceRange,
   poiCorridorRange,
-  type RouteElevationPoint,
+  type RouteDifficulty,
 } from '../../features/routing/domain'
 import { useRoutingController } from '../../features/routing/useRoutingController'
 import type { AppStore } from '../../state/appStore'
@@ -31,20 +33,11 @@ type MapRouteProps = {
   detourHandlers: ReturnType<typeof useAppDetourHandlers>
 }
 
-const computeElevationGain = (profile: RouteElevationPoint[] | null | undefined) => {
-  if (!profile || profile.length < 2) {
-    return null
-  }
-
-  let gain = 0
-  for (let i = 1; i < profile.length; i += 1) {
-    const delta = profile[i].elevation_m - profile[i - 1].elevation_m
-    if (Number.isFinite(delta) && delta > 0) {
-      gain += delta
-    }
-  }
-
-  return gain
+const routeDifficultyTranslationKeys: Record<RouteDifficulty, string> = {
+  easy: 'routeDifficultyEasy',
+  moderate: 'routeDifficultyModerate',
+  demanding: 'routeDifficultyDemanding',
+  hard: 'routeDifficultyHard',
 }
 
 export default function MapRoute({
@@ -72,13 +65,34 @@ export default function MapRoute({
         : overlapLabel === 'élevé'
           ? t('mapOverlapHighHelp')
           : null
-  const elevationGain = store.routeResult
-    ? computeElevationGain(store.routeResult.elevation_profile)
+  const elevationProfile = store.routeResult?.elevation_profile ?? null
+  const elevationStats = computeElevationStats(elevationProfile)
+  const routeDifficulty = computeRouteDifficulty(
+    mapController.routeDistanceMeters,
+    elevationStats.elevationGainMeters,
+    elevationStats.maxSlopePercent,
+    store.mode,
+    store.profileSettings.ebikeAssist,
+  )
+  const formatElevationMeters = (value: number | null) =>
+    value !== null ? `${Math.round(value)} ${t('unitM')}` : t('placeholderValue')
+  const formatSlopePercent = (value: number | null) =>
+    value !== null ? `${Number(value.toFixed(1))} %` : null
+  const elevationGainLabel = formatElevationMeters(elevationStats.elevationGainMeters)
+  const elevationLossLabel = formatElevationMeters(elevationStats.elevationLossMeters)
+  const elevationRangeLabel = elevationStats.elevationMinMax
+    ? `${Math.round(elevationStats.elevationMinMax.min)} - ${Math.round(
+        elevationStats.elevationMinMax.max,
+      )} ${t('unitM')}`
+    : t('placeholderValue')
+  const maxSlopeLabel = formatSlopePercent(elevationStats.maxSlopePercent)
+  const routeDifficultyLabel = routeDifficulty
+    ? t(routeDifficultyTranslationKeys[routeDifficulty])
     : null
-  const elevationValueLabel =
-    elevationGain !== null ? `${Math.round(elevationGain)} ${t('unitM')}` : t('placeholderValue')
+  const routeDifficultyHint =
+    store.mode === 'ebike' && routeDifficulty ? t('mapSummaryEbikeDifficultyHint') : null
   const elevationHint =
-    store.routeResult && elevationGain === null ? t('mapElevationUnavailable') : null
+    store.routeResult && !elevationStats.isAvailable ? t('mapElevationUnavailable') : null
 
   const renderPoiLoadIndicator = (size: 'xs' | 'sm' = 'xs') => {
     if (store.isPoiLoading) {
@@ -113,8 +127,14 @@ export default function MapRoute({
     etaLabel: mapController.etaLabel,
     overlapLabel,
     overlapHint,
-    elevationValueLabel,
+    elevationGainLabel,
+    elevationLossLabel,
+    elevationRangeLabel,
+    maxSlopeLabel,
+    routeDifficultyLabel,
+    routeDifficultyHint,
     elevationHint,
+    elevationProfile,
     detourSummary: mapController.detourSummary,
     hasRoute: mapController.hasRoute,
     isRouteLoading: store.isRouteLoading,

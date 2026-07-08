@@ -31,6 +31,12 @@ export type StreetViewTarget = {
   heading?: number
 }
 
+export type StreetViewContextMenuRequest = {
+  x: number
+  y: number
+  target: StreetViewTarget
+}
+
 export type CesiumRouteMapProps = {
   geometry: RouteGeometry | null
   bounds: RouteBounds | null

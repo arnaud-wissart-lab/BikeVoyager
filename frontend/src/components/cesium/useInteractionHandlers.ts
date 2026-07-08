@@ -1,11 +1,17 @@
 import { useEffect, type MutableRefObject } from 'react'
 import { normalizeHeadingDegrees } from './math'
-import type { CesiumModule, CesiumStatus, StreetViewTarget } from './types'
+import type {
+  CesiumModule,
+  CesiumStatus,
+  StreetViewContextMenuRequest,
+  StreetViewTarget,
+} from './types'
 
 type UseInteractionHandlersParams = {
   status: CesiumStatus
   onPoiSelect?: (poiId: string) => void
-  onOpenStreetView?: (target: StreetViewTarget) => void
+  onStreetViewContextMenu?: (request: StreetViewContextMenuRequest) => void
+  onMapStateChange?: () => void
   viewerRef: MutableRefObject<import('cesium').Viewer | null>
   cesiumRef: MutableRefObject<CesiumModule | null>
   poiClickHandlerRef: MutableRefObject<import('cesium').ScreenSpaceEventHandler | null>
@@ -53,7 +59,8 @@ const pickStreetViewTarget = (
 export default function useInteractionHandlers({
   status,
   onPoiSelect,
-  onOpenStreetView,
+  onStreetViewContextMenu,
+  onMapStateChange,
   viewerRef,
   cesiumRef,
   poiClickHandlerRef,
@@ -73,8 +80,11 @@ export default function useInteractionHandlers({
     const preventNativeContextMenu = (event: MouseEvent) => {
       event.preventDefault()
     }
+    const removeCameraMoveStartListener = onMapStateChange
+      ? viewer.camera.moveStart.addEventListener(onMapStateChange)
+      : undefined
 
-    if (onOpenStreetView) {
+    if (onStreetViewContextMenu) {
       viewer.scene.canvas.addEventListener('contextmenu', preventNativeContextMenu)
     }
 
@@ -104,11 +114,17 @@ export default function useInteractionHandlers({
       }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
 
-    if (onOpenStreetView) {
+    if (onStreetViewContextMenu) {
       handler.setInputAction((movement: { position: import('cesium').Cartesian2 }) => {
         const target = pickStreetViewTarget(Cesium, viewer, movement.position)
         if (target) {
-          onOpenStreetView(target)
+          onStreetViewContextMenu({
+            x: movement.position.x,
+            y: movement.position.y,
+            target,
+          })
+        } else {
+          onMapStateChange?.()
         }
       }, Cesium.ScreenSpaceEventType.RIGHT_CLICK)
     }
@@ -116,11 +132,22 @@ export default function useInteractionHandlers({
     poiClickHandlerRef.current = handler
 
     return () => {
-      viewer.scene.canvas.removeEventListener('contextmenu', preventNativeContextMenu)
+      if (onStreetViewContextMenu) {
+        viewer.scene.canvas.removeEventListener('contextmenu', preventNativeContextMenu)
+      }
+      removeCameraMoveStartListener?.()
       if (poiClickHandlerRef.current && !poiClickHandlerRef.current.isDestroyed()) {
         poiClickHandlerRef.current.destroy()
       }
       poiClickHandlerRef.current = null
     }
-  }, [cesiumRef, onOpenStreetView, onPoiSelect, poiClickHandlerRef, status, viewerRef])
+  }, [
+    cesiumRef,
+    onMapStateChange,
+    onPoiSelect,
+    onStreetViewContextMenu,
+    poiClickHandlerRef,
+    status,
+    viewerRef,
+  ])
 }

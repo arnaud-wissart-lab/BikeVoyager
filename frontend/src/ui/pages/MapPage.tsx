@@ -12,6 +12,7 @@ import type {
   RouteBounds,
   TripResult,
 } from '../../features/routing/domain'
+import type { PoiDisplayRow, PoiExternalLink } from '../../features/map/poiDetailsPresentation'
 import MapSummaryPanel from './MapSummaryPanel'
 import NavigationOptionsPanel from './NavigationOptionsPanel'
 import PoiPanel from './PoiPanel'
@@ -71,12 +72,11 @@ type MapPageProps = {
   onClosePoiModal: () => void
   poiDetourIds: Set<string>
   onAddSelectedPoiWaypoint: () => void
-  selectedPoiWebsite: string | null
   formatDistance: (distanceMeters: number | null) => string
   formatCoordinate: (coordinate: number) => string
-  selectedPoiTags: Array<[string, string]>
-  formatPoiTagLabel: (key: string) => string
-  formatPoiTagValue: (value: string) => string
+  selectedPoiUsefulRows: PoiDisplayRow[]
+  selectedPoiExternalLinks: PoiExternalLink[]
+  selectedPoiTechnicalRows: PoiDisplayRow[]
   mobilePoiPanelTransition: string
   isNavigationSetupOpen: boolean
   onCloseNavigationSetup: () => void
@@ -145,12 +145,11 @@ export default function MapPage({
   onClosePoiModal,
   poiDetourIds,
   onAddSelectedPoiWaypoint,
-  selectedPoiWebsite,
   formatDistance,
   formatCoordinate,
-  selectedPoiTags,
-  formatPoiTagLabel,
-  formatPoiTagValue,
+  selectedPoiUsefulRows,
+  selectedPoiExternalLinks,
+  selectedPoiTechnicalRows,
   mobilePoiPanelTransition,
   isNavigationSetupOpen,
   onCloseNavigationSetup,
@@ -289,12 +288,11 @@ export default function MapPage({
         onClosePoiModal={onClosePoiModal}
         poiDetourIds={poiDetourIds}
         onAddSelectedPoiWaypoint={onAddSelectedPoiWaypoint}
-        selectedPoiWebsite={selectedPoiWebsite}
         formatDistance={formatDistance}
         formatCoordinate={formatCoordinate}
-        selectedPoiTags={selectedPoiTags}
-        formatPoiTagLabel={formatPoiTagLabel}
-        formatPoiTagValue={formatPoiTagValue}
+        selectedPoiUsefulRows={selectedPoiUsefulRows}
+        selectedPoiExternalLinks={selectedPoiExternalLinks}
+        selectedPoiTechnicalRows={selectedPoiTechnicalRows}
         mobilePoiPanelTransition={mobilePoiPanelTransition}
       />
 

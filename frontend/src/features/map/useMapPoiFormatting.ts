@@ -1,12 +1,11 @@
 import { useMemo } from 'react'
-import {
-  osmTagLabels,
-  osmValueLabels,
-  poiPreferredTagOrder,
-  type PoiCategory,
-  type PoiItem,
-} from '../routing/domain'
+import { osmTagLabels, osmValueLabels, type PoiCategory, type PoiItem } from '../routing/domain'
 import type { TFunction } from 'i18next'
+import {
+  buildPoiDisplayRows,
+  buildPoiExternalLinks,
+  buildPoiTechnicalRows,
+} from './poiDetailsPresentation'
 
 type UseMapPoiFormattingParams = {
   selectedPoi: PoiItem | null
@@ -121,30 +120,12 @@ export const useMapPoiFormatting = ({ selectedPoi, t, isFrench }: UseMapPoiForma
     [t],
   )
   const selectedPoiCategoryLabel = selectedPoi ? poiCategoryLabels[selectedPoi.category] : null
-  const selectedPoiTags = useMemo(() => {
-    if (!selectedPoi?.tags) {
-      return [] as Array<[string, string]>
-    }
-
-    return Object.entries(selectedPoi.tags)
-      .filter(([key, value]) => Boolean(key?.trim()) && Boolean(value?.trim()))
-      .sort(([leftKey], [rightKey]) => {
-        const leftIndex = poiPreferredTagOrder.indexOf(leftKey.toLowerCase())
-        const rightIndex = poiPreferredTagOrder.indexOf(rightKey.toLowerCase())
-        if (leftIndex !== -1 && rightIndex !== -1) {
-          return leftIndex - rightIndex
-        }
-        if (leftIndex !== -1) {
-          return -1
-        }
-        if (rightIndex !== -1) {
-          return 1
-        }
-        return leftKey.localeCompare(rightKey)
-      })
-  }, [selectedPoi])
-  const selectedPoiWebsite =
-    selectedPoi?.tags?.website ?? selectedPoi?.tags?.['contact:website'] ?? null
+  const selectedPoiUsefulRows = useMemo(
+    () => buildPoiDisplayRows(selectedPoi, { isFrench }),
+    [isFrench, selectedPoi],
+  )
+  const selectedPoiExternalLinks = useMemo(() => buildPoiExternalLinks(selectedPoi), [selectedPoi])
+  const selectedPoiTechnicalRows = useMemo(() => buildPoiTechnicalRows(selectedPoi), [selectedPoi])
 
   return {
     formatPoiTagLabel,
@@ -155,7 +136,8 @@ export const useMapPoiFormatting = ({ selectedPoi, t, isFrench }: UseMapPoiForma
     selectedPoiKind,
     poiCategoryLabels,
     selectedPoiCategoryLabel,
-    selectedPoiTags,
-    selectedPoiWebsite,
+    selectedPoiUsefulRows,
+    selectedPoiExternalLinks,
+    selectedPoiTechnicalRows,
   }
 }

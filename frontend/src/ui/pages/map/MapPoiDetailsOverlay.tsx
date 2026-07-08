@@ -9,6 +9,7 @@ import {
   IconX,
 } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
+import type { PoiDisplayRow, PoiExternalLink } from '../../../features/map/poiDetailsPresentation'
 import type { PoiItem } from '../../../features/routing/domain'
 
 type MapPoiDetailsOverlayProps = {
@@ -29,12 +30,11 @@ type MapPoiDetailsOverlayProps = {
   onClosePoiModal: () => void
   poiDetourIds: Set<string>
   onAddSelectedPoiWaypoint: () => void
-  selectedPoiWebsite: string | null
   formatDistance: (distanceMeters: number | null) => string
   formatCoordinate: (coordinate: number) => string
-  selectedPoiTags: Array<[string, string]>
-  formatPoiTagLabel: (key: string) => string
-  formatPoiTagValue: (value: string) => string
+  selectedPoiUsefulRows: PoiDisplayRow[]
+  selectedPoiExternalLinks: PoiExternalLink[]
+  selectedPoiTechnicalRows: PoiDisplayRow[]
   mobilePoiPanelTransition: string
 }
 
@@ -56,12 +56,11 @@ export default function MapPoiDetailsOverlay({
   onClosePoiModal,
   poiDetourIds,
   onAddSelectedPoiWaypoint,
-  selectedPoiWebsite,
   formatDistance,
   formatCoordinate,
-  selectedPoiTags,
-  formatPoiTagLabel,
-  formatPoiTagValue,
+  selectedPoiUsefulRows,
+  selectedPoiExternalLinks,
+  selectedPoiTechnicalRows,
   mobilePoiPanelTransition,
 }: MapPoiDetailsOverlayProps) {
   const { t } = useTranslation()
@@ -69,6 +68,17 @@ export default function MapPoiDetailsOverlay({
   if (!isOpen || !selectedPoi || isNavigationActive) {
     return null
   }
+
+  const renderRow = (row: PoiDisplayRow) => (
+    <Group key={row.key} justify="space-between" align="flex-start" wrap="nowrap" gap={8}>
+      <Text size="xs" c="dimmed">
+        {row.labelKey.startsWith('poiDetails') ? t(row.labelKey) : row.labelKey}
+      </Text>
+      <Text size="xs" ta="right">
+        {row.value}
+      </Text>
+    </Group>
+  )
 
   return (
     <Paper
@@ -181,20 +191,32 @@ export default function MapPoiDetailsOverlay({
               >
                 {t('poiAddWaypoint')}
               </Button>
-              {selectedPoiWebsite && (
+              {selectedPoiExternalLinks.map((link) => (
                 <Button
+                  key={link.key}
                   size="xs"
                   variant="default"
                   component="a"
-                  href={selectedPoiWebsite}
+                  href={link.url}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   leftSection={<IconExternalLink size={14} />}
                 >
-                  {t('poiDetailsWebsite')}
+                  {t(link.labelKey)}
                 </Button>
-              )}
+              ))}
             </Group>
+
+            <Text size="xs" c="dimmed">
+              {t('poiDetailsUsefulTitle')}
+            </Text>
+            {selectedPoiUsefulRows.length === 0 ? (
+              <Text size="xs" c="dimmed">
+                {t('poiDetailsNoData')}
+              </Text>
+            ) : (
+              <Stack gap={4}>{selectedPoiUsefulRows.map(renderRow)}</Stack>
+            )}
 
             <Group justify="space-between" align="center" wrap="nowrap" gap={8}>
               <Text size="xs" c="dimmed">
@@ -222,45 +244,27 @@ export default function MapPoiDetailsOverlay({
                 {formatCoordinate(selectedPoi.lat)} ; {formatCoordinate(selectedPoi.lon)}
               </Text>
             </Group>
-            {selectedPoi.osm_type && typeof selectedPoi.osm_id === 'number' && (
-              <Group justify="space-between" align="center" wrap="nowrap" gap={8}>
-                <Text size="xs" c="dimmed">
-                  {t('poiDetailsSource')}
-                </Text>
-                <Text size="xs" fw={600} ta="right">
-                  {selectedPoi.osm_type}/{selectedPoi.osm_id}
-                </Text>
-              </Group>
-            )}
 
-            <Text size="xs" c="dimmed">
-              {t('poiDetailsTags')}
-            </Text>
-            {selectedPoiTags.length === 0 ? (
-              <Text size="xs" c="dimmed">
-                {t('poiDetailsNoData')}
-              </Text>
-            ) : (
-              <ScrollArea.Autosize mah={isDesktop ? 180 : 140} offsetScrollbars>
-                <Stack gap={4}>
-                  {selectedPoiTags.map(([key, value]) => (
-                    <Group
-                      key={key}
-                      justify="space-between"
-                      align="flex-start"
-                      wrap="nowrap"
-                      gap={8}
-                    >
-                      <Text size="xs" c="dimmed">
-                        {formatPoiTagLabel(key)}
-                      </Text>
-                      <Text size="xs" ta="right">
-                        {formatPoiTagValue(value)}
-                      </Text>
-                    </Group>
-                  ))}
-                </Stack>
-              </ScrollArea.Autosize>
+            {selectedPoiTechnicalRows.length > 0 && (
+              <Box
+                component="details"
+                style={{
+                  borderTop: '1px solid var(--mantine-color-default-border)',
+                  paddingTop: 6,
+                }}
+              >
+                <Text
+                  component="summary"
+                  size="xs"
+                  c="dimmed"
+                  style={{ cursor: 'pointer', userSelect: 'none' }}
+                >
+                  {t('poiDetailsTechnicalTitle')}
+                </Text>
+                <ScrollArea.Autosize mah={isDesktop ? 130 : 100} mt={6} offsetScrollbars>
+                  <Stack gap={4}>{selectedPoiTechnicalRows.map(renderRow)}</Stack>
+                </ScrollArea.Autosize>
+              </Box>
             )}
           </Stack>
         </Box>

@@ -311,12 +311,11 @@ export default function MapRoute({
           name: mapController.selectedPoiDisplayName,
         })
       }}
-      selectedPoiWebsite={mapController.selectedPoiWebsite}
       formatDistance={mapController.formatDistance}
       formatCoordinate={mapController.formatCoordinate}
-      selectedPoiTags={mapController.selectedPoiTags}
-      formatPoiTagLabel={mapController.formatPoiTagLabel}
-      formatPoiTagValue={mapController.formatPoiTagValue}
+      selectedPoiUsefulRows={mapController.selectedPoiUsefulRows}
+      selectedPoiExternalLinks={mapController.selectedPoiExternalLinks}
+      selectedPoiTechnicalRows={mapController.selectedPoiTechnicalRows}
       mobilePoiPanelTransition={[
         'max-height 340ms cubic-bezier(0.22, 1, 0.36, 1)',
         'opacity 240ms cubic-bezier(0.16, 1, 0.3, 1)',

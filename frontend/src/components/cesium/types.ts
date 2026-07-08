@@ -25,6 +25,12 @@ export type PoiMarker = {
   kind?: string | null
 }
 
+export type StreetViewTarget = {
+  lat: number
+  lon: number
+  heading?: number
+}
+
 export type CesiumRouteMapProps = {
   geometry: RouteGeometry | null
   bounds: RouteBounds | null
@@ -36,6 +42,7 @@ export type CesiumRouteMapProps = {
   pois?: PoiMarker[]
   activePoiId?: string | null
   onPoiSelect?: (poiId: string) => void
+  onOpenStreetView?: (target: StreetViewTarget) => void
   navigationActive?: boolean
   navigationProgress?: NavigationProgress | null
   navigationCameraMode?: NavigationCameraMode

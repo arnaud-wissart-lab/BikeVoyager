@@ -1,10 +1,15 @@
 import { useRef } from 'react'
+import { buildGoogleStreetViewUrl } from './cesium/googleStreetView'
 import useCameraControls from './cesium/useCameraControls'
 import useCesiumViewer from './cesium/useCesiumViewer'
 import useInteractionHandlers from './cesium/useInteractionHandlers'
 import useMapLayers from './cesium/useMapLayers'
 import useRouteEntities from './cesium/useRouteEntities'
-import type { CesiumRouteMapProps, CesiumModule } from './cesium/types'
+import type { CesiumRouteMapProps, CesiumModule, StreetViewTarget } from './cesium/types'
+
+const openGoogleStreetView = ({ lat, lon, heading }: StreetViewTarget) => {
+  window.open(buildGoogleStreetViewUrl(lat, lon, heading), '_blank', 'noopener,noreferrer')
+}
 
 export default function CesiumRouteMap({
   geometry,
@@ -17,6 +22,7 @@ export default function CesiumRouteMap({
   pois,
   activePoiId,
   onPoiSelect,
+  onOpenStreetView = openGoogleStreetView,
   navigationActive = false,
   navigationProgress = null,
   navigationCameraMode = 'follow_3d',
@@ -55,6 +61,7 @@ export default function CesiumRouteMap({
   useInteractionHandlers({
     status,
     onPoiSelect,
+    onOpenStreetView,
     viewerRef,
     cesiumRef,
     poiClickHandlerRef,

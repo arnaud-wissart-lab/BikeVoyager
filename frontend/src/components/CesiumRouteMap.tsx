@@ -16,10 +16,25 @@ const openGoogleStreetView = ({ lat, lon, heading }: StreetViewTarget) => {
   window.open(buildGoogleStreetViewUrl(lat, lon, heading), '_blank', 'noopener,noreferrer')
 }
 
+const hasRenderableRouteGeometry = (geometry: CesiumRouteMapProps['geometry']) =>
+  Boolean(
+    geometry &&
+    geometry.type === 'LineString' &&
+    geometry.coordinates.filter(
+      (coordinate) =>
+        Array.isArray(coordinate) &&
+        coordinate.length >= 2 &&
+        Number.isFinite(coordinate[0]) &&
+        Number.isFinite(coordinate[1]),
+    ).length >= 2,
+  )
+
 export default function CesiumRouteMap({
   geometry,
+  alternativeGeometry = null,
   bounds,
   elevationProfile,
+  alternativeElevationProfile = null,
   viewMode,
   mapCommand,
   mapCommandSeq = 0,
@@ -35,15 +50,21 @@ export default function CesiumRouteMap({
   const containerRef = useRef<HTMLDivElement | null>(null)
   const viewerRef = useRef<import('cesium').Viewer | null>(null)
   const routeEntityRef = useRef<import('cesium').Entity | null>(null)
+  const alternativeRouteEntityRef = useRef<import('cesium').Entity | null>(null)
   const poiEntitiesRef = useRef<import('cesium').Entity[]>([])
   const navigationEntityRef = useRef<import('cesium').Entity | null>(null)
   const smoothedHeadingRef = useRef<number | null>(null)
   const lastRouteSignatureRef = useRef<string | null>(null)
+  const lastAlternativeRouteSignatureRef = useRef<string | null>(null)
   const lastProcessedCommandSeqRef = useRef(0)
   const cesiumRef = useRef<CesiumModule | null>(null)
   const poiClickHandlerRef = useRef<import('cesium').ScreenSpaceEventHandler | null>(null)
   const streetViewMenuRef = useRef<HTMLDivElement | null>(null)
   const [streetViewMenu, setStreetViewMenu] = useState<StreetViewContextMenuRequest | null>(null)
+  const routeLayerCount =
+    (hasRenderableRouteGeometry(geometry) ? 1 : 0) +
+    (hasRenderableRouteGeometry(alternativeGeometry) ? 1 : 0)
+  const hasAlternativeRouteLayer = hasRenderableRouteGeometry(alternativeGeometry)
 
   const closeStreetViewMenu = useCallback(() => {
     setStreetViewMenu(null)
@@ -57,10 +78,12 @@ export default function CesiumRouteMap({
     containerRef,
     viewerRef,
     routeEntityRef,
+    alternativeRouteEntityRef,
     poiEntitiesRef,
     navigationEntityRef,
     smoothedHeadingRef,
     lastRouteSignatureRef,
+    lastAlternativeRouteSignatureRef,
     cesiumRef,
     poiClickHandlerRef,
   })
@@ -123,8 +146,10 @@ export default function CesiumRouteMap({
   useRouteEntities({
     status,
     geometry,
+    alternativeGeometry,
     bounds,
     elevationProfile,
+    alternativeElevationProfile,
     navigationActive,
     navigationProgress,
     viewMode,
@@ -133,9 +158,11 @@ export default function CesiumRouteMap({
     viewerRef,
     cesiumRef,
     routeEntityRef,
+    alternativeRouteEntityRef,
     poiEntitiesRef,
     navigationEntityRef,
     lastRouteSignatureRef,
+    lastAlternativeRouteSignatureRef,
   })
 
   useCameraControls({
@@ -157,7 +184,12 @@ export default function CesiumRouteMap({
   })
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div
+      data-testid="cesium-route-map"
+      data-route-layer-count={routeLayerCount}
+      data-alternative-route-visible={hasAlternativeRouteLayer ? 'true' : 'false'}
+      style={{ position: 'relative', width: '100%', height: '100%' }}
+    >
       <div
         ref={containerRef}
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}

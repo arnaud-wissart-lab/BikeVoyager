@@ -2,6 +2,7 @@ import { act, fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import CesiumRouteMap from '../components/CesiumRouteMap'
 import type { StreetViewContextMenuRequest } from '../components/cesium/types'
+import type { RouteGeometry } from '../features/routing/domain'
 import { renderWithProviders } from './test-utils'
 
 const hookMocks = vi.hoisted(() => ({
@@ -47,10 +48,26 @@ const streetViewRequest: StreetViewContextMenuRequest = {
   },
 }
 
-const renderMap = (onOpenStreetView = vi.fn()) =>
+const routeGeometry: RouteGeometry = {
+  type: 'LineString',
+  coordinates: [
+    [2.3522, 48.8566],
+    [2.36, 48.86],
+  ],
+}
+
+const alternativeGeometry: RouteGeometry = {
+  type: 'LineString',
+  coordinates: [
+    [2.3522, 48.8566],
+    [2.37, 48.865],
+  ],
+}
+
+const renderMap = (onOpenStreetView = vi.fn(), geometry: RouteGeometry | null = null) =>
   renderWithProviders(
     <CesiumRouteMap
-      geometry={null}
+      geometry={geometry}
       bounds={null}
       viewMode="3d"
       fallbackLabel="Carte indisponible"
@@ -114,5 +131,52 @@ describe('Menu Street View de CesiumRouteMap', () => {
     })
 
     expect(screen.queryByTestId('street-view-context-menu')).not.toBeInTheDocument()
+  })
+
+  it('transmet le tracé alternatif au rendu Cesium', () => {
+    renderWithProviders(
+      <CesiumRouteMap
+        geometry={routeGeometry}
+        alternativeGeometry={alternativeGeometry}
+        bounds={null}
+        viewMode="3d"
+        fallbackLabel="Carte indisponible"
+      />,
+    )
+
+    expect(screen.getByTestId('cesium-route-map')).toHaveAttribute('data-route-layer-count', '2')
+    expect(screen.getByTestId('cesium-route-map')).toHaveAttribute(
+      'data-alternative-route-visible',
+      'true',
+    )
+    expect(hookMocks.useRouteEntities).toHaveBeenCalledWith(
+      expect.objectContaining({
+        geometry: routeGeometry,
+        alternativeGeometry,
+      }),
+    )
+  })
+
+  it('ignore un tracé alternatif sans géométrie exploitable côté indicateur observable', () => {
+    const emptyAlternativeGeometry: RouteGeometry = {
+      type: 'LineString',
+      coordinates: [],
+    }
+
+    renderWithProviders(
+      <CesiumRouteMap
+        geometry={routeGeometry}
+        alternativeGeometry={emptyAlternativeGeometry}
+        bounds={null}
+        viewMode="3d"
+        fallbackLabel="Carte indisponible"
+      />,
+    )
+
+    expect(screen.getByTestId('cesium-route-map')).toHaveAttribute('data-route-layer-count', '1')
+    expect(screen.getByTestId('cesium-route-map')).toHaveAttribute(
+      'data-alternative-route-visible',
+      'false',
+    )
   })
 })

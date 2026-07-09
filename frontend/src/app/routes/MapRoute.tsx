@@ -278,6 +278,7 @@ export default function MapRoute({
         setupOverlayColor={isDarkTheme ? 'rgba(10, 12, 16, 0.62)' : 'rgba(255, 255, 255, 0.62)'}
         loadingSpinnerColor={theme.colors.blue[6]}
         routeResult={store.routeResult}
+        pendingAlternativeRoute={store.pendingAlternativeRoute?.route ?? null}
         expandedRouteBounds={mapController.expandedRouteBounds}
         mapViewMode={mapController.mapViewMode}
         mapCommand={mapController.mapCommand}

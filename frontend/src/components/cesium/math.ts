@@ -97,10 +97,22 @@ export const buildRouteSignature = (
     return null
   }
 
-  const first = geometry.coordinates[0]
-  const last = geometry.coordinates[geometry.coordinates.length - 1]
+  const coordinates = geometry.coordinates.filter(
+    (coordinate): coordinate is [number, number] =>
+      Array.isArray(coordinate) &&
+      coordinate.length >= 2 &&
+      Number.isFinite(coordinate[0]) &&
+      Number.isFinite(coordinate[1]),
+  )
+
+  if (coordinates.length < 2) {
+    return null
+  }
+
+  const first = coordinates[0]
+  const last = coordinates[coordinates.length - 1]
   const altitudeKey = elevationProfile?.length ?? 0
-  return `${geometry.coordinates.length}:${first[0].toFixed(5)}:${first[1].toFixed(5)}:${last[0].toFixed(5)}:${last[1].toFixed(5)}:${altitudeKey}`
+  return `${coordinates.length}:${first[0].toFixed(5)}:${first[1].toFixed(5)}:${last[0].toFixed(5)}:${last[1].toFixed(5)}:${altitudeKey}`
 }
 
 export const normalizeHeadingDegrees = (heading: number) => {

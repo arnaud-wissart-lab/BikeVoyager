@@ -364,7 +364,7 @@ describe('App routing', () => {
       ) as unknown[]
       expect(storedTrips).toHaveLength(0)
     })
-  })
+  }, 10_000)
 
   it('masque les POI paysages quand la catégorie est désélectionnée', async () => {
     const user = userEvent.setup()

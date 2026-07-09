@@ -1,22 +1,28 @@
 import {
   Button,
+  Badge,
   Container,
   Group,
   NumberInput,
   Paper,
   SegmentedControl,
+  SimpleGrid,
   Slider,
   Stack,
   Text,
   Title,
 } from '@mantine/core'
-import { IconRefresh } from '@tabler/icons-react'
+import { IconCheck, IconRefresh } from '@tabler/icons-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  getActiveProfilePresetKey,
   normalizeNumericInput,
+  profilePresets,
   speedRanges,
   type AssistLevel,
   type Mode,
+  type ProfilePreset,
   type ProfileSettings,
 } from '../../features/routing/domain'
 
@@ -26,6 +32,7 @@ type ProfilesPageProps = {
   profileSettings: ProfileSettings
   onSpeedChange: (targetMode: Mode, value: number | '') => void
   onAssistChange: (value: AssistLevel) => void
+  onPresetApply: (settings: ProfileSettings) => void
   onReset: () => void
 }
 
@@ -35,9 +42,17 @@ export default function ProfilesPage({
   profileSettings,
   onSpeedChange,
   onAssistChange,
+  onPresetApply,
   onReset,
 }: ProfilesPageProps) {
   const { t } = useTranslation()
+  const [appliedPresetKey, setAppliedPresetKey] = useState<string | null>(null)
+  const activePresetKey = getActiveProfilePresetKey(profileSettings)
+
+  const handlePresetApply = (preset: ProfilePreset) => {
+    onPresetApply(preset.settings)
+    setAppliedPresetKey(preset.key)
+  }
 
   return (
     <Container size={contentSize} py="lg">
@@ -48,6 +63,97 @@ export default function ProfilesPage({
             {t('profilesSubtitle')}
           </Text>
         </Stack>
+
+        <Paper withBorder radius="md" p="lg">
+          <Stack gap="md">
+            <Group justify="space-between" align="flex-start" gap="sm">
+              <Stack gap={2}>
+                <Text fw={600}>{t('profilePresetsTitle')}</Text>
+                <Text size="sm" c="dimmed">
+                  {t('profilePresetsSubtitle')}
+                </Text>
+              </Stack>
+              {appliedPresetKey !== null ? (
+                <Text size="sm" c="teal" fw={600}>
+                  {t('profilePresetApplied')}
+                </Text>
+              ) : null}
+            </Group>
+
+            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="sm" verticalSpacing="sm">
+              {profilePresets.map((preset) => {
+                const isActive = activePresetKey === preset.key
+
+                return (
+                  <Paper
+                    key={preset.key}
+                    withBorder
+                    radius="sm"
+                    p="md"
+                    data-testid={`profile-preset-${preset.key}`}
+                  >
+                    <Stack gap="sm" h="100%">
+                      <Group justify="space-between" align="flex-start" gap="xs">
+                        <Stack gap={2}>
+                          <Text fw={600}>{t(preset.labelKey)}</Text>
+                          <Text size="sm" c="dimmed">
+                            {t(preset.descriptionKey)}
+                          </Text>
+                        </Stack>
+                        {isActive ? (
+                          <Badge variant="light" color="teal" leftSection={<IconCheck size={12} />}>
+                            {t('profilePresetActive')}
+                          </Badge>
+                        ) : null}
+                      </Group>
+
+                      <Stack gap={4}>
+                        <Text size="xs" c="dimmed">
+                          {t('profilePresetWalkValue', {
+                            value: preset.settings.speeds.walk,
+                            unit: t('unitKmh'),
+                          })}
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          {t('profilePresetBikeValue', {
+                            value: preset.settings.speeds.bike,
+                            unit: t('unitKmh'),
+                          })}
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          {t('profilePresetEbikeValue', {
+                            value: preset.settings.speeds.ebike,
+                            unit: t('unitKmh'),
+                          })}
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          {t('profilePresetAssistValue', {
+                            value:
+                              preset.settings.ebikeAssist === 'low'
+                                ? t('assistLow')
+                                : preset.settings.ebikeAssist === 'high'
+                                  ? t('assistHigh')
+                                  : t('assistMedium'),
+                          })}
+                        </Text>
+                      </Stack>
+
+                      <Button
+                        mt="auto"
+                        variant={isActive ? 'light' : 'outline'}
+                        color={isActive ? 'teal' : undefined}
+                        fullWidth
+                        onClick={() => handlePresetApply(preset)}
+                      >
+                        {t('profilePresetApply')}
+                      </Button>
+                    </Stack>
+                  </Paper>
+                )
+              })}
+            </SimpleGrid>
+          </Stack>
+        </Paper>
 
         <Paper withBorder radius="md" p="lg">
           <Stack gap={isDesktop ? 'sm' : 'md'}>
@@ -70,6 +176,7 @@ export default function ProfilesPage({
             />
             <Group gap="xs" align="center">
               <NumberInput
+                aria-label={t('profileWalkSpeedInputLabel')}
                 value={profileSettings.speeds.walk}
                 onChange={(value) => onSpeedChange('walk', normalizeNumericInput(value))}
                 min={speedRanges.walk.min}
@@ -106,6 +213,7 @@ export default function ProfilesPage({
             />
             <Group gap="xs" align="center">
               <NumberInput
+                aria-label={t('profileBikeSpeedInputLabel')}
                 value={profileSettings.speeds.bike}
                 onChange={(value) => onSpeedChange('bike', normalizeNumericInput(value))}
                 min={speedRanges.bike.min}
@@ -142,6 +250,7 @@ export default function ProfilesPage({
             />
             <Group gap="xs" align="center">
               <NumberInput
+                aria-label={t('profileEbikeSpeedInputLabel')}
                 value={profileSettings.speeds.ebike}
                 onChange={(value) => onSpeedChange('ebike', normalizeNumericInput(value))}
                 min={speedRanges.ebike.min}

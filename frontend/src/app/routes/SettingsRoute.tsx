@@ -27,6 +27,7 @@ export default function SettingsRoute({
           ebikeAssist: value,
         }))
       }
+      onPresetApply={(settings) => store.setProfileSettings(settings)}
       onReset={routingController.handleResetProfiles}
     />
   )

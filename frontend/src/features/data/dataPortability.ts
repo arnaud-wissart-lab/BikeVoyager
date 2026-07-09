@@ -3,6 +3,10 @@ export {
   addressBookStorageKey,
   appPreferencesStorageKey,
   defaultAppPreferences,
+  savedTripMaxTags,
+  savedTripNameMaxLength,
+  savedTripNotesMaxLength,
+  savedTripTagMaxLength,
   savedTripsMaxItems,
   savedTripsStorageKey,
 } from './portability/constants'
@@ -10,11 +14,13 @@ export { loadAddressBook, loadAppPreferences, loadSavedTrips } from './portabili
 export {
   createAddressBookEntry,
   createSavedTripRecord,
+  duplicateSavedTrip,
   normalizeAddressBook,
   normalizeAppPreferences,
   normalizeSavedTrips,
   sortAndLimitAddressBook,
   sortAndLimitSavedTrips,
+  updateSavedTripMetadata,
   upsertAddressBookEntry,
   upsertSavedTrip,
 } from './portability/mappers'
@@ -34,6 +40,7 @@ export type {
   CloudProvider,
   ExportedPreferences,
   ParsedImportedData,
+  SavedTripMetadataInput,
   SavedTripRecord,
   SupportedLanguage,
   ThemeModePreference,

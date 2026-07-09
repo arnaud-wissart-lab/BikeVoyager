@@ -1,10 +1,17 @@
 import {
   createAddressBookEntry,
   createSavedTripRecord,
+  duplicateSavedTrip,
   normalizeAppPreferences,
+  normalizeSavedTrips,
   parseImportedBikeVoyagerData,
+  updateSavedTripMetadata,
   upsertAddressBookEntry,
 } from '../features/data/dataPortability'
+import {
+  filterSavedTripsForLibrary,
+  sortSavedTripsForLibrary,
+} from '../features/data/savedTripsLibrary'
 import type { TripResult } from '../features/routing/domain'
 
 const sampleRoute: TripResult = {
@@ -177,5 +184,154 @@ describe('dataPortability', () => {
 
     expect(imported.trip.name).toBe('Paris Lyon')
     expect(imported.trip.trip.kind).toBe('route')
+  })
+
+  it('cree un trajet sauvegarde avec notes tags et favori', () => {
+    const trip = createSavedTripRecord({
+      trip: sampleRoute,
+      mode: 'bike',
+      startLabel: 'Paris',
+      endLabel: 'Lyon',
+      targetDistanceKm: '',
+      name: 'Paris Lyon',
+      notes: 'À refaire au printemps',
+      tags: ['Vacances', '  vacances ', 'Train'],
+      favorite: true,
+    })
+
+    expect(trip.notes).toBe('À refaire au printemps')
+    expect(trip.tags).toEqual(['vacances', 'train'])
+    expect(trip.favorite).toBe(true)
+    expect(trip.updatedAt).toBe(trip.savedAt)
+  })
+
+  it('normalise les anciens trajets sans metadonnees', () => {
+    const [trip] = normalizeSavedTrips([
+      {
+        id: 'legacy',
+        name: 'Ancien trajet',
+        savedAt: '2026-02-01T10:00:00.000Z',
+        tripType: 'oneway',
+        mode: 'bike',
+        startLabel: 'Paris',
+        endLabel: 'Lyon',
+        targetDistanceKm: null,
+        trip: sampleRoute,
+      },
+    ])
+
+    expect(trip.notes).toBeUndefined()
+    expect(trip.tags).toEqual([])
+    expect(trip.favorite).toBe(false)
+    expect(trip.updatedAt).toBe('2026-02-01T10:00:00.000Z')
+  })
+
+  it('nettoie les tags invalides et tronque les notes trop longues', () => {
+    const [trip] = normalizeSavedTrips([
+      {
+        id: 'dirty',
+        name: 'Trajet',
+        savedAt: '2026-02-01T10:00:00.000Z',
+        trip: sampleRoute,
+        notes: 'x'.repeat(1200),
+        tags: [' Café ', '', 42, 'CAFÉ', 'tag-de-plus-de-trente-deux-caracteres'],
+        favorite: 'yes',
+      },
+    ])
+
+    expect(trip.notes).toHaveLength(1000)
+    expect(trip.tags).toEqual(['café', 'tag-de-plus-de-trente-deux-carac'])
+    expect(trip.favorite).toBe(false)
+  })
+
+  it('trie le carnet par favori puis date recente', () => {
+    const trips = normalizeSavedTrips([
+      {
+        id: 'recent',
+        name: 'Récent',
+        savedAt: '2026-02-03T10:00:00.000Z',
+        updatedAt: '2026-02-03T10:00:00.000Z',
+        trip: sampleRoute,
+      },
+      {
+        id: 'favorite',
+        name: 'Favori',
+        savedAt: '2026-02-01T10:00:00.000Z',
+        updatedAt: '2026-02-01T10:00:00.000Z',
+        trip: sampleRoute,
+        favorite: true,
+      },
+    ])
+
+    expect(sortSavedTripsForLibrary(trips).map((trip) => trip.id)).toEqual(['favorite', 'recent'])
+  })
+
+  it('filtre le carnet par nom note tag type et favori', () => {
+    const route = createSavedTripRecord({
+      trip: sampleRoute,
+      mode: 'bike',
+      startLabel: 'Paris',
+      endLabel: 'Lyon',
+      targetDistanceKm: '',
+      name: 'Via Saône',
+      notes: 'Pause café',
+      tags: ['weekend'],
+      favorite: true,
+    })
+    const loop = createSavedTripRecord({
+      trip: { ...sampleRoute, kind: 'loop', overlapScore: 'faible', segmentsCount: 3 },
+      mode: 'walk',
+      startLabel: 'Annecy',
+      endLabel: null,
+      targetDistanceKm: 10,
+      name: 'Boucle lac',
+      tags: ['famille'],
+    })
+
+    expect(filterSavedTripsForLibrary([route, loop], { query: 'saône', filter: 'all' })).toEqual([
+      route,
+    ])
+    expect(filterSavedTripsForLibrary([route, loop], { query: 'week', filter: 'all' })).toEqual([
+      route,
+    ])
+    expect(filterSavedTripsForLibrary([route, loop], { query: '', filter: 'favorites' })).toEqual([
+      route,
+    ])
+    expect(filterSavedTripsForLibrary([route, loop], { query: '', filter: 'loops' })).toEqual([
+      loop,
+    ])
+    expect(filterSavedTripsForLibrary([route, loop], { query: '', filter: 'routes' })).toEqual([
+      route,
+    ])
+  })
+
+  it('met a jour les metadonnees et duplique un trajet', () => {
+    const trip = createSavedTripRecord({
+      trip: sampleRoute,
+      mode: 'bike',
+      startLabel: 'Paris',
+      endLabel: 'Lyon',
+      targetDistanceKm: '',
+      name: 'Paris Lyon',
+    })
+
+    const updated = updateSavedTripMetadata([trip], trip.id, {
+      name: 'Paris Dijon',
+      notes: 'Variante calme',
+      tags: ['calme'],
+      favorite: true,
+    })
+    expect(updated[0]).toMatchObject({
+      id: trip.id,
+      name: 'Paris Dijon',
+      notes: 'Variante calme',
+      tags: ['calme'],
+      favorite: true,
+    })
+
+    const duplicated = duplicateSavedTrip(updated, updated[0], 'Paris Dijon (copie)')
+    expect(duplicated).toHaveLength(2)
+    expect(duplicated[0].id).not.toBe(trip.id)
+    expect(duplicated[0].name).toBe('Paris Dijon (copie)')
   })
 })

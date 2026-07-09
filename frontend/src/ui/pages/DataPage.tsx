@@ -3,12 +3,17 @@ import { IconDeviceFloppy, IconMapPinPlus, IconRoute } from '@tabler/icons-react
 import { useState, type ChangeEvent, type ComponentProps, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ActiveCloudProvider, CloudAuthState } from '../../features/cloud/cloudSync'
-import type { CloudProvider, SavedTripRecord } from '../../features/data/dataPortability'
+import type {
+  CloudProvider,
+  SavedTripMetadataInput,
+  SavedTripRecord,
+} from '../../features/data/dataPortability'
 import AddressBookPanel from './AddressBookPanel'
 import BackupRestoreSection from './data/BackupRestoreSection'
 import CloudSyncSection from './data/CloudSyncSection'
 import DataPageHeader from './data/DataPageHeader'
 import DeleteSavedTripModal from './data/DeleteSavedTripModal'
+import SavedTripMetadataDialog from './data/SavedTripMetadataDialog'
 import SavedTripsSection from './data/SavedTripsSection'
 
 type DataPageProps = {
@@ -28,6 +33,8 @@ type DataPageProps = {
   onOpenSavedTrip: (trip: SavedTripRecord) => void
   onExportSavedTrip: (trip: SavedTripRecord) => void | Promise<void>
   onDeleteSavedTrip: (tripId: string) => void
+  onUpdateSavedTrip: (tripId: string, metadata: SavedTripMetadataInput) => void
+  onDuplicateSavedTrip: (trip: SavedTripRecord) => void
   hasAnyConfiguredCloudProvider: boolean
   cloudProvider: CloudProvider
   onCloudProviderChange: (value: string) => void
@@ -69,6 +76,8 @@ export default function DataPage({
   onOpenSavedTrip,
   onExportSavedTrip,
   onDeleteSavedTrip,
+  onUpdateSavedTrip,
+  onDuplicateSavedTrip,
   hasAnyConfiguredCloudProvider,
   cloudProvider,
   onCloudProviderChange,
@@ -94,6 +103,7 @@ export default function DataPage({
 }: DataPageProps) {
   const { t } = useTranslation()
   const [deleteTripCandidate, setDeleteTripCandidate] = useState<SavedTripRecord | null>(null)
+  const [editTripCandidate, setEditTripCandidate] = useState<SavedTripRecord | null>(null)
   const mobileActionButtonStyles = isDesktop
     ? undefined
     : ({
@@ -124,6 +134,15 @@ export default function DataPage({
     setDeleteTripCandidate(null)
   }
 
+  const confirmUpdateTrip = (metadata: SavedTripMetadataInput) => {
+    if (!editTripCandidate) {
+      return
+    }
+
+    onUpdateSavedTrip(editTripCandidate.id, metadata)
+    setEditTripCandidate(null)
+  }
+
   return (
     <Container size={contentSize} py="lg">
       <Stack gap="xl">
@@ -132,6 +151,19 @@ export default function DataPage({
           isFrench={isFrench}
           onClose={closeDeleteTripModal}
           onConfirm={confirmDeleteTrip}
+        />
+        <SavedTripMetadataDialog
+          opened={editTripCandidate !== null}
+          title={t('dataSavedTripEditTitle')}
+          submitLabel={t('dataSavedTripSaveAction')}
+          initialValues={{
+            name: editTripCandidate?.name ?? '',
+            notes: editTripCandidate?.notes ?? '',
+            tags: editTripCandidate?.tags ?? [],
+            favorite: editTripCandidate?.favorite === true,
+          }}
+          onClose={() => setEditTripCandidate(null)}
+          onSubmit={confirmUpdateTrip}
         />
         <DataPageHeader />
 
@@ -203,6 +235,8 @@ export default function DataPage({
                 formatDistance={formatDistance}
                 onOpenSavedTrip={onOpenSavedTrip}
                 onExportSavedTrip={onExportSavedTrip}
+                onEditSavedTripRequest={setEditTripCandidate}
+                onDuplicateSavedTrip={onDuplicateSavedTrip}
                 onDeleteSavedTripRequest={setDeleteTripCandidate}
               />
             </Accordion.Panel>

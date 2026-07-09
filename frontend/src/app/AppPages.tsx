@@ -62,6 +62,7 @@ export default function AppPages({
         theme={theme}
         isDesktop={isDesktop}
         isDarkTheme={isDarkTheme}
+        isFrench={isFrench}
         surfaceColor={surfaceColor}
         borderColor={borderColor}
         availableViewportHeight={availableViewportHeight}

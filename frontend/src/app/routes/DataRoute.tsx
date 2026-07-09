@@ -47,6 +47,8 @@ export default function DataRoute({
       onOpenSavedTrip={dataController.handleOpenSavedTrip}
       onExportSavedTrip={dataController.handleExportSavedTrip}
       onDeleteSavedTrip={dataController.handleDeleteSavedTrip}
+      onUpdateSavedTrip={dataController.handleUpdateSavedTrip}
+      onDuplicateSavedTrip={dataController.handleDuplicateSavedTrip}
       hasAnyConfiguredCloudProvider={cloudController.hasAnyConfiguredCloudProvider}
       cloudProvider={store.cloudProvider}
       onCloudProviderChange={cloudController.handleCloudProviderChange}

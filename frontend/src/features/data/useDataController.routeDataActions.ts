@@ -5,10 +5,14 @@ import { downloadBlob } from '../routing/domain'
 import {
   buildTripExport,
   createSavedTripRecord,
+  duplicateSavedTrip,
+  updateSavedTripMetadata,
   upsertSavedTrip,
+  type SavedTripMetadataInput,
   type SavedTripRecord,
 } from './dataPortability'
 import type { ImportedDataApplyMode, ImportedDataApplyResult } from './types'
+import type { RouteKey } from '../routing/domain'
 
 const buildDateStamp = () => new Date().toISOString().slice(0, 10)
 const serializeJsonContent = (payload: unknown) => `${JSON.stringify(payload, null, 2)}\n`
@@ -26,6 +30,9 @@ type DataRouteActionsStoreSlice = Pick<
   | 'setDetourPoints'
   | 'setRouteAlternativeIndex'
   | 'setLoopAlternativeIndex'
+  | 'setPendingAlternativeRoute'
+  | 'setRouteComparison'
+  | 'setIsAlternativeComparisonOpen'
   | 'setRouteErrorKey'
   | 'setRouteErrorMessage'
   | 'setMode'
@@ -43,7 +50,9 @@ type CreateDataRouteActionsParams = {
   store: DataRouteActionsStoreSlice
   t: TFunction
   startLabel: string
+  endLabel: string
   mapHeaderTitle: string
+  onNavigate: (next: RouteKey, force?: boolean) => void
   buildBackupPayload: () => unknown
   importPayload: (
     payload: unknown,
@@ -57,7 +66,9 @@ export const createDataRouteActions = ({
   store,
   t,
   startLabel,
+  endLabel,
   mapHeaderTitle,
+  onNavigate,
   buildBackupPayload,
   importPayload,
   showSuccessToast,
@@ -75,6 +86,9 @@ export const createDataRouteActions = ({
     setDetourPoints,
     setRouteAlternativeIndex,
     setLoopAlternativeIndex,
+    setPendingAlternativeRoute,
+    setRouteComparison,
+    setIsAlternativeComparisonOpen,
     setRouteErrorKey,
     setRouteErrorMessage,
     setMode,
@@ -104,9 +118,9 @@ export const createDataRouteActions = ({
     showSuccessToast(params.successMessage)
   }
 
-  const handleSaveCurrentLoop = () => {
-    if (!routeResult || routeResult.kind !== 'loop') {
-      showErrorToast(t('dataLoopSaveUnavailable'), { title: t('dataSaveLoop') })
+  const handleSaveCurrentTrip = (metadata: SavedTripMetadataInput) => {
+    if (!routeResult) {
+      showErrorToast(t('dataSavedTripSaveUnavailable'), { title: t('dataSaveTrip') })
       return
     }
 
@@ -114,12 +128,15 @@ export const createDataRouteActions = ({
       trip: routeResult,
       mode,
       startLabel: startLabel || null,
-      endLabel: null,
+      endLabel: routeResult.kind === 'loop' ? null : endLabel || null,
       targetDistanceKm,
-      name: mapHeaderTitle || t('dataSavedLoopDefaultName'),
+      name: metadata.name || mapHeaderTitle || t('dataSavedTripDefaultName'),
+      notes: metadata.notes,
+      tags: metadata.tags,
+      favorite: metadata.favorite,
     })
     setSavedTrips((current) => upsertSavedTrip(current, savedTrip))
-    showSuccessToast(t('dataLoopSavedSuccess'), { title: t('dataSaveLoop') })
+    showSuccessToast(t('dataSavedTripSaved'), { title: t('dataSaveTrip') })
   }
 
   const handleOpenSavedTrip = (trip: SavedTripRecord) => {
@@ -129,6 +146,9 @@ export const createDataRouteActions = ({
     setDetourPoints([])
     setRouteAlternativeIndex(0)
     setLoopAlternativeIndex(0)
+    setPendingAlternativeRoute(null)
+    setRouteComparison(null)
+    setIsAlternativeComparisonOpen(false)
     setRouteErrorKey(null)
     setRouteErrorMessage(null)
     setMode(trip.mode)
@@ -146,6 +166,7 @@ export const createDataRouteActions = ({
       setEndValue(trip.endLabel ?? '')
       setLoopStartValue('')
     }
+    onNavigate('carte')
     showSuccessToast(t('dataSavedTripOpened'))
   }
 
@@ -160,6 +181,18 @@ export const createDataRouteActions = ({
       fileNamePrefix: 'bikevoyager-trip',
       successMessage: t('dataSavedTripExported'),
     })
+  }
+
+  const handleUpdateSavedTrip = (tripId: string, metadata: SavedTripMetadataInput) => {
+    setSavedTrips((current) => updateSavedTripMetadata(current, tripId, metadata))
+    showSuccessToast(t('dataSavedTripUpdated'))
+  }
+
+  const handleDuplicateSavedTrip = (trip: SavedTripRecord) => {
+    setSavedTrips((current) =>
+      duplicateSavedTrip(current, trip, t('dataSavedTripCopyName', { name: trip.name })),
+    )
+    showSuccessToast(t('dataSavedTripDuplicated'))
   }
 
   const handleExportBackup = async () => {
@@ -212,10 +245,12 @@ export const createDataRouteActions = ({
   }
 
   return {
-    handleSaveCurrentLoop,
+    handleSaveCurrentTrip,
     handleOpenSavedTrip,
     handleDeleteSavedTrip,
     handleExportSavedTrip,
+    handleUpdateSavedTrip,
+    handleDuplicateSavedTrip,
     handleExportBackup,
     handleImportData,
     handleImportFileChange,

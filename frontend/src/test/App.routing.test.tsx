@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../App'
-import { appPreferencesStorageKey } from '../features/data/dataPortability'
+import { appPreferencesStorageKey, savedTripsStorageKey } from '../features/data/dataPortability'
 import { apiPaths } from '../features/routing/apiPaths'
 import {
   plannerDraftStorageKey,
@@ -277,6 +277,94 @@ describe('App routing', () => {
       expect(screen.getByTestId('nav-setup-open')).toBeInTheDocument()
     })
   })
+
+  it('sauvegarde, modifie, ouvre et supprime un trajet depuis le carnet', async () => {
+    const user = userEvent.setup()
+
+    setDesktopMatchMedia()
+    window.location.hash = '/carte'
+    localStorage.setItem(
+      plannerDraftStorageKey,
+      JSON.stringify({
+        mode: 'bike',
+        tripType: 'oneway',
+        onewayStartValue: 'Paris',
+        endValue: 'Lyon',
+      }),
+    )
+    saveRouteResultToStorage({
+      kind: 'route',
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [2.3522, 48.8566],
+          [4.8357, 45.764],
+        ],
+      },
+      distance_m: 465000,
+      duration_s_engine: 10000,
+      eta_s: 10000,
+      turn_by_turn: [],
+      elevation_profile: [],
+    })
+
+    renderWithProviders(<App />)
+
+    await user.click(await screen.findByRole('button', { name: 'Sauvegarder ce trajet' }))
+    expect(await screen.findByLabelText('Nom du trajet')).toHaveValue('Paris → Lyon')
+    await user.type(screen.getByLabelText('Notes personnelles'), 'Pause à Dijon')
+    await user.type(screen.getByPlaceholderText('Ajouter un tag'), 'weekend')
+    await user.click(screen.getByLabelText('Ajouter un tag'))
+    await user.click(screen.getByLabelText('Favori'))
+    await user.click(screen.getByRole('button', { name: 'Sauvegarder' }))
+
+    await waitFor(() => {
+      const storedTrips = JSON.parse(
+        localStorage.getItem(savedTripsStorageKey) ?? '[]',
+      ) as unknown[]
+      expect(storedTrips).toHaveLength(1)
+    })
+
+    await user.click(screen.getByRole('tab', { name: 'Données' }))
+    await user.click(await screen.findByText('Trajets sauvegardés'))
+    expect(await screen.findByText('Paris → Lyon')).toBeInTheDocument()
+    expect(screen.getByText('Pause à Dijon')).toBeInTheDocument()
+    expect(screen.getByText('weekend')).toBeInTheDocument()
+
+    await user.click(screen.getByPlaceholderText('Rechercher un trajet'))
+    await user.type(screen.getByPlaceholderText('Rechercher un trajet'), 'week')
+    expect(screen.getByText('Paris → Lyon')).toBeInTheDocument()
+
+    await user.click(screen.getByLabelText('Modifier'))
+    await user.clear(screen.getByLabelText('Nom du trajet'))
+    await user.type(screen.getByLabelText('Nom du trajet'), 'Paris Lyon été')
+    await user.clear(screen.getByLabelText('Notes personnelles'))
+    await user.type(screen.getByLabelText('Notes personnelles'), 'Variante testée')
+    await user.click(screen.getByRole('button', { name: 'Sauvegarder' }))
+
+    expect(await screen.findByText('Paris Lyon été')).toBeInTheDocument()
+    expect(screen.getByText('Variante testée')).toBeInTheDocument()
+
+    await user.clear(screen.getByPlaceholderText('Rechercher un trajet'))
+    await user.click(screen.getByRole('button', { name: 'Ouvrir sur la carte' }))
+
+    await waitFor(() => {
+      expect(window.location.hash).toBe('#/carte')
+    })
+    expect(screen.getAllByText('465.0 km').length).toBeGreaterThan(0)
+
+    await user.click(screen.getByRole('tab', { name: 'Données' }))
+    await user.click(await screen.findByText('Trajets sauvegardés'))
+    await user.click(await screen.findByLabelText('Supprimer'))
+    await user.click(screen.getByRole('button', { name: 'Supprimer définitivement' }))
+
+    await waitFor(() => {
+      const storedTrips = JSON.parse(
+        localStorage.getItem(savedTripsStorageKey) ?? '[]',
+      ) as unknown[]
+      expect(storedTrips).toHaveLength(0)
+    })
+  }, 10_000)
 
   it('masque les POI paysages quand la catégorie est désélectionnée', async () => {
     const user = userEvent.setup()

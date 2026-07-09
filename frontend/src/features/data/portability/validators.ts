@@ -1,5 +1,11 @@
 import type { MapViewMode, PoiCategory, TripType } from '../../routing/domain'
-import { addressBookTagMaxLength } from './constants'
+import {
+  addressBookTagMaxLength,
+  savedTripMaxTags,
+  savedTripNameMaxLength,
+  savedTripNotesMaxLength,
+  savedTripTagMaxLength,
+} from './constants'
 import type { CloudProvider, SupportedLanguage, ThemeModePreference } from './types'
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -55,10 +61,53 @@ export const normalizeId = (value: unknown) => {
 
 export const normalizeTripName = (value: unknown, tripType: TripType) => {
   if (typeof value === 'string' && value.trim().length > 0) {
-    return value.trim()
+    return value.trim().slice(0, savedTripNameMaxLength)
   }
 
   return tripType === 'loop' ? 'Boucle' : 'Trajet'
+}
+
+export const normalizeSavedTripNotes = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') {
+    return undefined
+  }
+
+  const normalized = value.trim()
+  return normalized.length > 0 ? normalized.slice(0, savedTripNotesMaxLength) : undefined
+}
+
+export const normalizeSavedTripTag = (value: unknown): string | null => {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const normalized = value.trim().toLowerCase()
+  if (normalized.length === 0) {
+    return null
+  }
+
+  return normalized.slice(0, savedTripTagMaxLength)
+}
+
+export const normalizeSavedTripTags = (value: unknown): string[] => {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  const tags: string[] = []
+  for (const rawTag of value) {
+    const tag = normalizeSavedTripTag(rawTag)
+    if (!tag || tags.includes(tag)) {
+      continue
+    }
+
+    tags.push(tag)
+    if (tags.length >= savedTripMaxTags) {
+      break
+    }
+  }
+
+  return tags
 }
 
 export const normalizeCoordinate = (value: unknown, min: number, max: number) => {

@@ -136,6 +136,8 @@ export default function AppRoot() {
     mapViewMode: mapController.mapViewMode,
     mapHeaderTitle: mapController.mapHeaderTitle,
     startLabel: mapController.startLabel,
+    endLabel: mapController.endLabel,
+    onNavigate: handleNavigate,
     showSuccessToast,
     showErrorToast,
     requestRoute: routingController.requestRoute,

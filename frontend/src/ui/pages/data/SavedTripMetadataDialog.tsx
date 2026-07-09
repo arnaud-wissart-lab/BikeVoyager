@@ -196,7 +196,11 @@ export default function SavedTripMetadataDialog({
           <Button variant="outline" onClick={onClose}>
             {t('commonCancel')}
           </Button>
-          <Button onClick={submit} disabled={!canSubmit} leftSection={<IconDeviceFloppy size={16} />}>
+          <Button
+            onClick={submit}
+            disabled={!canSubmit}
+            leftSection={<IconDeviceFloppy size={16} />}
+          >
             {submitLabel}
           </Button>
         </Group>

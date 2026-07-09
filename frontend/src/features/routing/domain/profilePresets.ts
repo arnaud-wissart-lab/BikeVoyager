@@ -2,13 +2,7 @@ import { speedRanges } from './constants'
 import type { Mode, ProfileSettings } from './types'
 
 export type ProfilePresetKey =
-  | 'leisure'
-  | 'balanced'
-  | 'efficient'
-  | 'sport'
-  | 'ebikeEco'
-  | 'ebikeComfort'
-  | 'ebikePower'
+  'leisure' | 'balanced' | 'efficient' | 'sport' | 'ebikeEco' | 'ebikeComfort' | 'ebikePower'
 
 export type ProfilePreset = {
   key: ProfilePresetKey

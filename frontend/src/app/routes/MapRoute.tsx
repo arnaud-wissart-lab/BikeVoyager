@@ -135,6 +135,7 @@ export default function MapRoute({
   }
 
   const mapSummaryPanelProps = {
+    routeResult: store.routeResult,
     distanceLabel: mapController.distanceLabel,
     etaLabel: mapController.etaLabel,
     overlapLabel,

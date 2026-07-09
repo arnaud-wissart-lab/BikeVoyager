@@ -1,11 +1,24 @@
-import { Button, Group, Stack, Text } from '@mantine/core'
-import { IconDeviceFloppy, IconDownload, IconPlayerPlay, IconRefresh } from '@tabler/icons-react'
+import { Box, Button, Collapse, Group, Stack, Text } from '@mantine/core'
+import {
+  IconChevronDown,
+  IconChevronUp,
+  IconDeviceFloppy,
+  IconDownload,
+  IconPlayerPlay,
+  IconRefresh,
+} from '@tabler/icons-react'
+import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { RouteElevationPoint } from '../../features/routing/domain'
+import {
+  normalizeRouteSteps,
+  type RouteElevationPoint,
+  type TripResult,
+} from '../../features/routing/domain'
 import ElevationProfileChart from './ElevationProfileChart'
 
 type MapSummaryPanelProps = {
   isCompact: boolean
+  routeResult: TripResult | null
   distanceLabel: string
   etaLabel: string
   overlapLabel: string | null
@@ -33,6 +46,7 @@ type MapSummaryPanelProps = {
 
 export default function MapSummaryPanel({
   isCompact,
+  routeResult,
   distanceLabel,
   etaLabel,
   overlapLabel,
@@ -58,7 +72,17 @@ export default function MapSummaryPanel({
   onOpenSaveTripDialog,
 }: MapSummaryPanelProps) {
   const { t } = useTranslation()
+  const roadbookPanelId = useId()
+  const [isRoadbookOpen, setIsRoadbookOpen] = useState(() => !isCompact)
+  const roadbookSteps = useMemo(
+    () => (routeResult?.kind === 'route' ? normalizeRouteSteps(routeResult.turn_by_turn) : []),
+    [routeResult],
+  )
   const metricTextSize = isCompact ? 'xs' : 'sm'
+  const hasRouteInstructions =
+    routeResult?.kind === 'route' &&
+    Array.isArray(routeResult.turn_by_turn) &&
+    routeResult.turn_by_turn.length > 0
   const renderMetricRow = (label: string, value: string) => (
     <Group justify="space-between" align="baseline" gap="sm" wrap="nowrap">
       <Text size={metricTextSize} c="dimmed" style={{ minWidth: 0, flex: 1 }}>
@@ -116,6 +140,83 @@ export default function MapSummaryPanel({
           </Group>
         )}
       </Stack>
+      {hasRouteInstructions && (
+        <Box>
+          <Button
+            variant="subtle"
+            color="gray"
+            size={isCompact ? 'xs' : 'sm'}
+            fullWidth
+            justify="space-between"
+            onClick={() => setIsRoadbookOpen((current) => !current)}
+            aria-expanded={isRoadbookOpen}
+            aria-controls={roadbookPanelId}
+            rightSection={
+              isRoadbookOpen ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />
+            }
+          >
+            {t('roadbookTitle')}
+          </Button>
+          <Collapse in={isRoadbookOpen}>
+            <Stack id={roadbookPanelId} gap={isCompact ? 6 : 8} pt={isCompact ? 6 : 8}>
+              <Text size="xs" fw={600}>
+                {t('roadbookStepsTitle')}
+              </Text>
+              {roadbookSteps.length > 0 ? (
+                <Box
+                  component="ol"
+                  aria-label={t('roadbookStepsTitle')}
+                  style={{
+                    margin: 0,
+                    paddingLeft: isCompact ? 18 : 20,
+                    display: 'grid',
+                    gap: isCompact ? 6 : 8,
+                  }}
+                >
+                  {roadbookSteps.map((step, index) => {
+                    const distanceLabel = step.distanceLabel ?? t('placeholderValue')
+                    const durationLabel = step.durationLabel ?? t('placeholderValue')
+
+                    return (
+                      <Box component="li" key={`${index}-${step.instruction ?? 'step'}`}>
+                        <Stack gap={2}>
+                          <Text size={metricTextSize} fw={500}>
+                            {step.instruction ?? t('roadbookStepFallback', { index: index + 1 })}
+                          </Text>
+                          <Text size="xs" c="dimmed">
+                            <Box
+                              component="span"
+                              aria-label={`${t('roadbookDistanceLabel')}: ${distanceLabel}`}
+                            >
+                              {distanceLabel}
+                            </Box>
+                            {' · '}
+                            <Box
+                              component="span"
+                              aria-label={`${t('roadbookDurationLabel')}: ${durationLabel}`}
+                            >
+                              {durationLabel}
+                            </Box>
+                          </Text>
+                        </Stack>
+                      </Box>
+                    )
+                  })}
+                </Box>
+              ) : (
+                <Text size="xs" c="dimmed">
+                  {t('roadbookEmpty')}
+                </Text>
+              )}
+            </Stack>
+          </Collapse>
+        </Box>
+      )}
+      {routeResult?.kind === 'loop' && (
+        <Text size="xs" c="dimmed">
+          {t('roadbookLoopUnavailable')}
+        </Text>
+      )}
       <Button
         variant="default"
         onClick={onRecalculateAlternative}

@@ -15,6 +15,7 @@ import {
   normalizeNumericInput,
   type DetourPoint,
   type MapViewMode,
+  type RouteKey,
   type RouteRequestPayload,
 } from '../routing/domain'
 import type { ImportedDataApplyMode, ImportedDataApplyResult } from './types'
@@ -40,6 +41,8 @@ type UseDataControllerParams = {
   mapViewMode: MapViewMode
   mapHeaderTitle: string
   startLabel: string
+  endLabel: string
+  onNavigate: (next: RouteKey, force?: boolean) => void
   showSuccessToast: (message: string, options?: { title?: string; durationMs?: number }) => void
   showErrorToast: (message: string, options?: { title?: string; durationMs?: number }) => void
   requestRoute: (payload: RouteRequestPayload, nextDetours?: DetourPoint[]) => Promise<boolean>
@@ -54,6 +57,8 @@ export const useDataController = ({
   mapViewMode,
   mapHeaderTitle,
   startLabel,
+  endLabel,
+  onNavigate,
   showSuccessToast,
   showErrorToast,
   requestRoute,
@@ -275,7 +280,9 @@ export const useDataController = ({
     store,
     t,
     startLabel,
+    endLabel,
     mapHeaderTitle,
+    onNavigate,
     buildBackupPayload,
     importPayload,
     showSuccessToast,
@@ -345,10 +352,12 @@ export const useDataController = ({
     reorderDeliveryStops: addressBookActions.reorderDeliveryStops,
     handleClearDeliverySelection: addressBookActions.handleClearDeliverySelection,
     handleBuildDeliveryRoute: addressBookActions.handleBuildDeliveryRoute,
-    handleSaveCurrentLoop: routeDataActions.handleSaveCurrentLoop,
+    handleSaveCurrentTrip: routeDataActions.handleSaveCurrentTrip,
     handleOpenSavedTrip: routeDataActions.handleOpenSavedTrip,
     handleDeleteSavedTrip: routeDataActions.handleDeleteSavedTrip,
     handleExportSavedTrip: routeDataActions.handleExportSavedTrip,
+    handleUpdateSavedTrip: routeDataActions.handleUpdateSavedTrip,
+    handleDuplicateSavedTrip: routeDataActions.handleDuplicateSavedTrip,
     handleExportBackup: routeDataActions.handleExportBackup,
     handleImportData: routeDataActions.handleImportData,
     handleImportFileChange: routeDataActions.handleImportFileChange,

@@ -34,12 +34,16 @@ export type SavedTripRecord = {
   id: string
   name: string
   savedAt: string
+  updatedAt: string
   tripType: TripType
   mode: Mode | null
   startLabel: string | null
   endLabel: string | null
   targetDistanceKm: number | null
   trip: TripResult
+  notes?: string
+  tags: string[]
+  favorite: boolean
 }
 
 export type AddressBookEntry = {
@@ -110,6 +114,16 @@ export type CreateSavedTripRecordParams = {
   endLabel: string | null
   targetDistanceKm: number | ''
   name: string
+  notes?: string
+  tags?: string[]
+  favorite?: boolean
+}
+
+export type SavedTripMetadataInput = {
+  name: string
+  notes?: string
+  tags?: string[]
+  favorite?: boolean
 }
 
 export type CreateAddressBookEntryParams = {

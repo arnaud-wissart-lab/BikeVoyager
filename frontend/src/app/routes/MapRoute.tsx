@@ -15,6 +15,7 @@ import { useRoutingController } from '../../features/routing/useRoutingControlle
 import type { AppStore } from '../../state/appStore'
 import MapPage from '../../ui/pages/MapPage'
 import RouteAlternativeComparisonDialog from '../../ui/pages/RouteAlternativeComparisonDialog'
+import { useSaveTripDialog } from '../../ui/pages/map/useSaveTripDialog'
 import { useAppDetourHandlers } from '../useAppDetourHandlers'
 
 type MapRouteProps = {
@@ -22,6 +23,7 @@ type MapRouteProps = {
   theme: MantineTheme
   isDesktop: boolean
   isDarkTheme: boolean
+  isFrench: boolean
   surfaceColor: string
   borderColor: string
   availableViewportHeight: string
@@ -46,6 +48,7 @@ export default function MapRoute({
   theme,
   isDesktop,
   isDarkTheme,
+  isFrench,
   surfaceColor,
   borderColor,
   availableViewportHeight,
@@ -94,6 +97,14 @@ export default function MapRoute({
     store.mode === 'ebike' && routeDifficulty ? t('mapSummaryEbikeDifficultyHint') : null
   const elevationHint =
     store.routeResult && !elevationStats.isAvailable ? t('mapElevationUnavailable') : null
+  const saveTripDialog = useSaveTripDialog({
+    routeResult: store.routeResult,
+    startLabel: mapController.startLabel,
+    endLabel: mapController.endLabel,
+    isFrench,
+    t,
+    onSave: dataController.handleSaveCurrentTrip,
+  })
 
   const renderPoiLoadIndicator = (size: 'xs' | 'sm' = 'xs') => {
     if (store.isPoiLoading) {
@@ -150,8 +161,7 @@ export default function MapRoute({
     onExportGpx: () => {
       void routingController.handleExportGpx()
     },
-    canSaveCurrentLoop: store.routeResult?.kind === 'loop',
-    onSaveCurrentLoop: dataController.handleSaveCurrentLoop,
+    onOpenSaveTripDialog: saveTripDialog.open,
   }
 
   const poiPanelProps = {
@@ -260,6 +270,7 @@ export default function MapRoute({
 
   return (
     <>
+      {saveTripDialog.node}
       <MapPage
         availableViewportHeight={availableViewportHeight}
         mapBackgroundColor={isDarkTheme ? theme.colors.gray[9] : theme.colors.gray[1]}

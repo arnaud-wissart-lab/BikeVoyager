@@ -19,6 +19,7 @@ import type {
   CreateAddressBookEntryParams,
   CreateSavedTripRecordParams,
   ExportedPreferences,
+  SavedTripMetadataInput,
   SavedTripRecord,
 } from './types'
 import {
@@ -35,6 +36,8 @@ import {
   normalizeLanguage,
   normalizeOptionalDistance,
   normalizeOptionalLabel,
+  normalizeSavedTripNotes,
+  normalizeSavedTripTags,
   normalizeThemeMode,
   normalizeTripName,
 } from './validators'
@@ -109,18 +112,30 @@ export const normalizeSavedTripRecord = (value: unknown): SavedTripRecord | null
     id: normalizeId(value.id),
     name: normalizeTripName(value.name, parsedTripType),
     savedAt: normalizeIsoDate(value.savedAt),
+    updatedAt: normalizeIsoDate(value.updatedAt ?? value.savedAt),
     tripType: parsedTripType,
     mode: isMode(value.mode) ? value.mode : null,
     startLabel: normalizeOptionalLabel(value.startLabel),
     endLabel: normalizeOptionalLabel(value.endLabel),
     targetDistanceKm: normalizeOptionalDistance(value.targetDistanceKm),
     trip: parsedTrip,
+    notes: normalizeSavedTripNotes(value.notes),
+    tags: normalizeSavedTripTags(value.tags),
+    favorite: typeof value.favorite === 'boolean' ? value.favorite : false,
   }
 }
 
 export const sortAndLimitSavedTrips = (items: SavedTripRecord[], maxItems = savedTripsMaxItems) =>
   [...items]
-    .sort((left, right) => Date.parse(right.savedAt) - Date.parse(left.savedAt))
+    .sort((left, right) => {
+      if (left.favorite !== right.favorite) {
+        return left.favorite ? -1 : 1
+      }
+
+      return (
+        Date.parse(right.updatedAt ?? right.savedAt) - Date.parse(left.updatedAt ?? left.savedAt)
+      )
+    })
     .slice(0, Math.max(1, maxItems))
 
 export const normalizeSavedTrips = (value: unknown): SavedTripRecord[] => {
@@ -137,17 +152,22 @@ export const normalizeSavedTrips = (value: unknown): SavedTripRecord[] => {
 
 export const createSavedTripRecord = (params: CreateSavedTripRecordParams): SavedTripRecord => {
   const tripType: TripType = params.trip.kind === 'loop' ? 'loop' : 'oneway'
+  const now = new Date().toISOString()
 
   return {
     id: normalizeId(null),
     name: normalizeTripName(params.name, tripType),
-    savedAt: new Date().toISOString(),
+    savedAt: now,
+    updatedAt: now,
     tripType,
     mode: params.mode,
     startLabel: normalizeOptionalLabel(params.startLabel),
     endLabel: normalizeOptionalLabel(params.endLabel),
     targetDistanceKm: normalizeOptionalDistance(params.targetDistanceKm),
     trip: params.trip,
+    notes: normalizeSavedTripNotes(params.notes),
+    tags: normalizeSavedTripTags(params.tags),
+    favorite: params.favorite === true,
   }
 }
 
@@ -156,6 +176,48 @@ export const upsertSavedTrip = (
   next: SavedTripRecord,
 ): SavedTripRecord[] =>
   sortAndLimitSavedTrips([next, ...current.filter((item) => item.id !== next.id)])
+
+export const updateSavedTripMetadata = (
+  current: SavedTripRecord[],
+  tripId: string,
+  metadata: SavedTripMetadataInput,
+): SavedTripRecord[] => {
+  const now = new Date().toISOString()
+  return sortAndLimitSavedTrips(
+    current.map((trip) =>
+      trip.id === tripId
+        ? {
+            ...trip,
+            name: normalizeTripName(metadata.name, trip.tripType),
+            notes: normalizeSavedTripNotes(metadata.notes),
+            tags: normalizeSavedTripTags(metadata.tags),
+            favorite: metadata.favorite === true,
+            updatedAt: now,
+          }
+        : trip,
+    ),
+  )
+}
+
+export const duplicateSavedTrip = (
+  current: SavedTripRecord[],
+  source: SavedTripRecord,
+  name: string,
+): SavedTripRecord[] => {
+  const now = new Date().toISOString()
+  const copy: SavedTripRecord = {
+    ...source,
+    id: normalizeId(null),
+    name: normalizeTripName(name, source.tripType),
+    savedAt: now,
+    updatedAt: now,
+    tags: normalizeSavedTripTags(source.tags),
+    notes: normalizeSavedTripNotes(source.notes),
+    favorite: source.favorite === true,
+  }
+
+  return sortAndLimitSavedTrips([copy, ...current])
+}
 
 const normalizeAddressBookEntry = (value: unknown): AddressBookEntry | null => {
   if (!isRecord(value)) {

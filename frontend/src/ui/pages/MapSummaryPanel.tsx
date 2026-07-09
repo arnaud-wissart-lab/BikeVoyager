@@ -25,11 +25,10 @@ type MapSummaryPanelProps = {
   isExporting: boolean
   exportError: string | null
   routeErrorMessage: string | null
-  canSaveCurrentLoop: boolean
   onRecalculateAlternative: () => void
   onOpenNavigationSetup: () => void
   onExportGpx: () => void
-  onSaveCurrentLoop: () => void
+  onOpenSaveTripDialog: () => void
 }
 
 export default function MapSummaryPanel({
@@ -53,11 +52,10 @@ export default function MapSummaryPanel({
   isExporting,
   exportError,
   routeErrorMessage,
-  canSaveCurrentLoop,
   onRecalculateAlternative,
   onOpenNavigationSetup,
   onExportGpx,
-  onSaveCurrentLoop,
+  onOpenSaveTripDialog,
 }: MapSummaryPanelProps) {
   const { t } = useTranslation()
   const metricTextSize = isCompact ? 'xs' : 'sm'
@@ -146,17 +144,15 @@ export default function MapSummaryPanel({
       >
         {t('mapExportGpx')}
       </Button>
-      {canSaveCurrentLoop && (
-        <Button
-          variant="outline"
-          onClick={onSaveCurrentLoop}
-          fullWidth={isCompact}
-          disabled={!hasRoute || isRouteLoading}
-          leftSection={<IconDeviceFloppy size={16} />}
-        >
-          {t('dataSaveLoop')}
-        </Button>
-      )}
+      <Button
+        variant="outline"
+        onClick={onOpenSaveTripDialog}
+        fullWidth={isCompact}
+        disabled={!hasRoute || isRouteLoading}
+        leftSection={<IconDeviceFloppy size={16} />}
+      >
+        {t('dataSaveTrip')}
+      </Button>
       {exportError && (
         <Text size="xs" c="red.6">
           {exportError}

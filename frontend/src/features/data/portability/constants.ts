@@ -5,6 +5,10 @@ import type { AppPreferences } from './types'
 export const appPreferencesStorageKey = 'bv_app_preferences'
 export const savedTripsStorageKey = 'bv_saved_trips'
 export const savedTripsMaxItems = 60
+export const savedTripNameMaxLength = 120
+export const savedTripNotesMaxLength = 1000
+export const savedTripTagMaxLength = 32
+export const savedTripMaxTags = 10
 export const addressBookStorageKey = 'bv_address_book'
 export const addressBookMaxItems = 400
 export const addressBookTagMaxLength = 24

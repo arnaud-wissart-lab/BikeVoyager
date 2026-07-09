@@ -32,6 +32,7 @@ type DataPageProps = {
   formatDistance: (distanceMeters: number) => string
   onOpenSavedTrip: (trip: SavedTripRecord) => void
   onExportSavedTrip: (trip: SavedTripRecord) => void | Promise<void>
+  onExportSavedTripGpx: (trip: SavedTripRecord) => void | Promise<void>
   onDeleteSavedTrip: (tripId: string) => void
   onUpdateSavedTrip: (tripId: string, metadata: SavedTripMetadataInput) => void
   onDuplicateSavedTrip: (trip: SavedTripRecord) => void
@@ -75,6 +76,7 @@ export default function DataPage({
   formatDistance,
   onOpenSavedTrip,
   onExportSavedTrip,
+  onExportSavedTripGpx,
   onDeleteSavedTrip,
   onUpdateSavedTrip,
   onDuplicateSavedTrip,
@@ -235,6 +237,7 @@ export default function DataPage({
                 formatDistance={formatDistance}
                 onOpenSavedTrip={onOpenSavedTrip}
                 onExportSavedTrip={onExportSavedTrip}
+                onExportSavedTripGpx={onExportSavedTripGpx}
                 onEditSavedTripRequest={setEditTripCandidate}
                 onDuplicateSavedTrip={onDuplicateSavedTrip}
                 onDeleteSavedTripRequest={setDeleteTripCandidate}

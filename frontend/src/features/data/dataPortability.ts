@@ -30,7 +30,11 @@ export {
   buildPreferencesExport,
   buildTripExport,
 } from './portability/exporters/json'
-export { buildGpxFileName, downloadBlob } from './portability/exporters/gpx'
+export {
+  buildGpxFileName,
+  buildSavedTripGpxFileName,
+  downloadBlob,
+} from './portability/exporters/gpx'
 export type {
   AddressBookEntry,
   AppPreferences,

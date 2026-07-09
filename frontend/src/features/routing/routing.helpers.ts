@@ -172,6 +172,43 @@ type ExportRouteAsGpxActionParams = {
   downloadBlob: (blob: Blob, fileName: string) => void
 }
 
+type ExportTripResultAsGpxParams = {
+  routeResult: TripResult | null | undefined
+  name: string
+  fallbackFileName: string
+  exportRouteAsGpx: (payload: {
+    geometry: TripResult['geometry']
+    elevation_profile: TripResult['elevation_profile'] | null
+    name: string
+  }) => Promise<Response>
+  parseContentDispositionFileName: (headerValue: string | null) => string | null
+  downloadBlob: (blob: Blob, fileName: string) => void
+}
+
+export const exportTripResultAsGpx = async (params: ExportTripResultAsGpxParams) => {
+  if (!params.routeResult || params.routeResult.geometry.coordinates.length < 2) {
+    return false
+  }
+
+  const response = await params.exportRouteAsGpx({
+    geometry: params.routeResult.geometry,
+    elevation_profile:
+      params.routeResult.elevation_profile.length > 1 ? params.routeResult.elevation_profile : null,
+    name: params.name,
+  })
+
+  if (!response.ok) {
+    return false
+  }
+
+  const blob = await response.blob()
+  const headerFileName = params.parseContentDispositionFileName(
+    response.headers.get('content-disposition'),
+  )
+  params.downloadBlob(blob, headerFileName ?? params.fallbackFileName)
+  return true
+}
+
 export const exportRouteAsGpxAction = async (params: ExportRouteAsGpxActionParams) => {
   if (!params.routeResult || params.routeResult.geometry.coordinates.length < 2) {
     params.setExportError(params.t('exportGpxFailed'))
@@ -182,28 +219,19 @@ export const exportRouteAsGpxAction = async (params: ExportRouteAsGpxActionParam
   params.setExportError(null)
 
   try {
-    const response = await params.exportRouteAsGpx({
-      geometry: params.routeResult.geometry,
-      elevation_profile:
-        params.routeResult.elevation_profile.length > 1
-          ? params.routeResult.elevation_profile
-          : null,
-      name: params.mapHeaderTitle || params.t('exportGpxDefaultName'),
+    const routeName = params.mapHeaderTitle || params.t('exportGpxDefaultName')
+    const didExport = await exportTripResultAsGpx({
+      routeResult: params.routeResult,
+      name: routeName,
+      fallbackFileName: params.buildGpxFileName(routeName),
+      exportRouteAsGpx: params.exportRouteAsGpx,
+      parseContentDispositionFileName: params.parseContentDispositionFileName,
+      downloadBlob: params.downloadBlob,
     })
 
-    if (!response.ok) {
+    if (!didExport) {
       params.setExportError(params.t('exportGpxFailed'))
-      return
     }
-
-    const blob = await response.blob()
-    const headerFileName = params.parseContentDispositionFileName(
-      response.headers.get('content-disposition'),
-    )
-    const fallbackName = params.buildGpxFileName(
-      params.mapHeaderTitle || params.t('exportGpxDefaultName'),
-    )
-    params.downloadBlob(blob, headerFileName ?? fallbackName)
   } catch {
     params.setExportError(params.t('exportGpxFailed'))
   } finally {

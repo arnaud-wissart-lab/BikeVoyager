@@ -109,10 +109,16 @@ export const buildRouteSignature = (
     return null
   }
 
-  const first = coordinates[0]
-  const last = coordinates[coordinates.length - 1]
-  const altitudeKey = elevationProfile?.length ?? 0
-  return `${coordinates.length}:${first[0].toFixed(5)}:${first[1].toFixed(5)}:${last[0].toFixed(5)}:${last[1].toFixed(5)}:${altitudeKey}`
+  const coordinatesKey = coordinates
+    .map(([lon, lat]) => `${lon.toFixed(5)}:${lat.toFixed(5)}`)
+    .join('|')
+  const elevationKey =
+    elevationProfile
+      ?.filter((point) => Number.isFinite(point.distance_m) && Number.isFinite(point.elevation_m))
+      .map((point) => `${point.distance_m.toFixed(1)}:${point.elevation_m.toFixed(1)}`)
+      .join('|') ?? ''
+
+  return `${coordinates.length}:${coordinatesKey}:${elevationKey}`
 }
 
 export const normalizeHeadingDegrees = (heading: number) => {

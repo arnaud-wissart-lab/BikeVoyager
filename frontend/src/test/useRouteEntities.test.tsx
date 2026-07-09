@@ -20,6 +20,24 @@ const alternativeGeometry: RouteGeometry = {
   ],
 }
 
+const alternativeGeometryWithMiddlePoint: RouteGeometry = {
+  type: 'LineString',
+  coordinates: [
+    [2.3522, 48.8566],
+    [2.36, 48.86],
+    [2.37, 48.865],
+  ],
+}
+
+const alternativeGeometryWithDifferentMiddlePoint: RouteGeometry = {
+  type: 'LineString',
+  coordinates: [
+    [2.3522, 48.8566],
+    [2.365, 48.858],
+    [2.37, 48.865],
+  ],
+}
+
 type ViewerMock = {
   entities: {
     add: ReturnType<typeof vi.fn>
@@ -173,6 +191,38 @@ describe('useRouteEntities', () => {
 
     await waitFor(() => {
       expect(viewer.entities.add).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('remplace le tracé alternatif quand seul un point intermédiaire change', async () => {
+    const viewer = createViewerMock()
+    const cesium = createCesiumMock()
+    const { rerender } = render(
+      <RouteEntitiesHarness
+        viewer={viewer}
+        cesium={cesium}
+        alternativeGeometry={alternativeGeometryWithMiddlePoint}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(viewer.entities.add).toHaveBeenCalledTimes(2)
+    })
+    const firstAlternativeEntity = viewer.entities.add.mock.calls[1][0]
+
+    rerender(
+      <RouteEntitiesHarness
+        viewer={viewer}
+        cesium={cesium}
+        alternativeGeometry={alternativeGeometryWithDifferentMiddlePoint}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(viewer.entities.remove).toHaveBeenCalledWith(firstAlternativeEntity)
+    })
+    await waitFor(() => {
+      expect(viewer.entities.add).toHaveBeenCalledTimes(3)
     })
   })
 

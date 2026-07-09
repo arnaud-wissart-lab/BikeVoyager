@@ -1,4 +1,5 @@
 import {
+  buildSavedTripGpxFileName,
   createAddressBookEntry,
   createSavedTripRecord,
   duplicateSavedTrip,
@@ -31,6 +32,38 @@ const sampleRoute: TripResult = {
 }
 
 describe('dataPortability', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('construit le nom GPX d’un trajet sauvegardé', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-09T12:00:00.000Z'))
+
+    expect(buildSavedTripGpxFileName('Paris Lyon été')).toBe(
+      'bikevoyager-paris-lyon-ete-2026-07-09.gpx',
+    )
+  })
+
+  it('utilise un fallback pour le nom GPX d’un trajet sauvegardé sans nom exploitable', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-09T12:00:00.000Z'))
+
+    expect(buildSavedTripGpxFileName(' !!! ')).toBe('bikevoyager-trip-2026-07-09.gpx')
+    expect(buildSavedTripGpxFileName(null)).toBe('bikevoyager-trip-2026-07-09.gpx')
+  })
+
+  it('tronque le nom GPX d’un trajet sauvegardé trop long', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-09T12:00:00.000Z'))
+
+    const fileName = buildSavedTripGpxFileName('Trajet '.repeat(30))
+
+    expect(fileName).toMatch(/^bikevoyager-trajet-/)
+    expect(fileName.endsWith('-2026-07-09.gpx')).toBe(true)
+    expect(fileName.length).toBeLessThanOrEqual(110)
+  })
+
   it('normalise les preferences applicatives', () => {
     const normalized = normalizeAppPreferences({
       mapViewMode: '4d' as never,

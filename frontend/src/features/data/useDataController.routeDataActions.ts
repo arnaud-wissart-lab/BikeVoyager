@@ -1,8 +1,11 @@
 import type { ChangeEvent } from 'react'
 import type { TFunction } from 'i18next'
 import type { AppStore } from '../../state/appStore'
-import { downloadBlob } from '../routing/domain'
+import { exportRouteAsGpx } from '../routing/api'
+import { downloadBlob, parseContentDispositionFileName } from '../routing/domain'
+import { exportTripResultAsGpx } from '../routing/routing.helpers'
 import {
+  buildSavedTripGpxFileName,
   buildTripExport,
   createSavedTripRecord,
   duplicateSavedTrip,
@@ -60,6 +63,38 @@ type CreateDataRouteActionsParams = {
   ) => Promise<ImportedDataApplyResult>
   showSuccessToast: (message: string, options?: { title?: string; durationMs?: number }) => void
   showErrorToast: (message: string, options?: { title?: string; durationMs?: number }) => void
+}
+
+export const exportSavedTripAsGpxAction = async (params: {
+  trip: SavedTripRecord | null | undefined
+  t: TFunction
+  showSuccessToast: (message: string, options?: { title?: string; durationMs?: number }) => void
+  showErrorToast: (message: string, options?: { title?: string; durationMs?: number }) => void
+  exportRouteAsGpx: typeof exportRouteAsGpx
+  parseContentDispositionFileName: (headerValue: string | null) => string | null
+  downloadBlob: (blob: Blob, fileName: string) => void
+}) => {
+  const routeResult = params.trip?.trip
+
+  try {
+    const didExport = await exportTripResultAsGpx({
+      routeResult,
+      name: params.trip?.name?.trim() || params.t('exportGpxDefaultName'),
+      fallbackFileName: buildSavedTripGpxFileName(params.trip?.name),
+      exportRouteAsGpx: params.exportRouteAsGpx,
+      parseContentDispositionFileName: params.parseContentDispositionFileName,
+      downloadBlob: params.downloadBlob,
+    })
+
+    if (!didExport) {
+      params.showErrorToast(params.t('dataSavedTripGpxExportFailed'))
+      return
+    }
+
+    params.showSuccessToast(params.t('dataSavedTripGpxExportSuccess'))
+  } catch {
+    params.showErrorToast(params.t('dataSavedTripGpxExportFailed'))
+  }
 }
 
 export const createDataRouteActions = ({
@@ -183,6 +218,18 @@ export const createDataRouteActions = ({
     })
   }
 
+  const handleExportSavedTripGpx = async (trip: SavedTripRecord) => {
+    await exportSavedTripAsGpxAction({
+      trip,
+      t,
+      showSuccessToast,
+      showErrorToast,
+      exportRouteAsGpx,
+      parseContentDispositionFileName,
+      downloadBlob,
+    })
+  }
+
   const handleUpdateSavedTrip = (tripId: string, metadata: SavedTripMetadataInput) => {
     setSavedTrips((current) => updateSavedTripMetadata(current, tripId, metadata))
     showSuccessToast(t('dataSavedTripUpdated'))
@@ -249,6 +296,7 @@ export const createDataRouteActions = ({
     handleOpenSavedTrip,
     handleDeleteSavedTrip,
     handleExportSavedTrip,
+    handleExportSavedTripGpx,
     handleUpdateSavedTrip,
     handleDuplicateSavedTrip,
     handleExportBackup,

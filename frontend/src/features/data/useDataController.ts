@@ -356,6 +356,7 @@ export const useDataController = ({
     handleOpenSavedTrip: routeDataActions.handleOpenSavedTrip,
     handleDeleteSavedTrip: routeDataActions.handleDeleteSavedTrip,
     handleExportSavedTrip: routeDataActions.handleExportSavedTrip,
+    handleExportSavedTripGpx: routeDataActions.handleExportSavedTripGpx,
     handleUpdateSavedTrip: routeDataActions.handleUpdateSavedTrip,
     handleDuplicateSavedTrip: routeDataActions.handleDuplicateSavedTrip,
     handleExportBackup: routeDataActions.handleExportBackup,

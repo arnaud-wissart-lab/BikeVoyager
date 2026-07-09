@@ -46,6 +46,7 @@ export default function DataRoute({
       formatDistance={(distanceMeters: number) => mapController.formatDistance(distanceMeters)}
       onOpenSavedTrip={dataController.handleOpenSavedTrip}
       onExportSavedTrip={dataController.handleExportSavedTrip}
+      onExportSavedTripGpx={dataController.handleExportSavedTripGpx}
       onDeleteSavedTrip={dataController.handleDeleteSavedTrip}
       onUpdateSavedTrip={dataController.handleUpdateSavedTrip}
       onDuplicateSavedTrip={dataController.handleDuplicateSavedTrip}

@@ -14,6 +14,8 @@ import {
 import {
   IconCopy,
   IconEdit,
+  IconFileExport,
+  IconFileTypeXml,
   IconMap2,
   IconSearch,
   IconStar,
@@ -35,6 +37,7 @@ type SavedTripsSectionProps = {
   formatDistance: (distanceMeters: number) => string
   onOpenSavedTrip: (trip: SavedTripRecord) => void
   onExportSavedTrip: (trip: SavedTripRecord) => void | Promise<void>
+  onExportSavedTripGpx: (trip: SavedTripRecord) => void | Promise<void>
   onEditSavedTripRequest: (trip: SavedTripRecord) => void
   onDuplicateSavedTrip: (trip: SavedTripRecord) => void
   onDeleteSavedTripRequest: (trip: SavedTripRecord) => void
@@ -47,6 +50,7 @@ export default function SavedTripsSection({
   formatDistance,
   onOpenSavedTrip,
   onExportSavedTrip,
+  onExportSavedTripGpx,
   onEditSavedTripRequest,
   onDuplicateSavedTrip,
   onDeleteSavedTripRequest,
@@ -179,11 +183,22 @@ export default function SavedTripsSection({
                     <Button
                       size="xs"
                       variant="light"
+                      leftSection={<IconFileTypeXml size={14} />}
+                      onClick={() => {
+                        void onExportSavedTripGpx(trip)
+                      }}
+                    >
+                      {t('dataSavedTripExportGpx')}
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="subtle"
+                      leftSection={<IconFileExport size={14} />}
                       onClick={() => {
                         void onExportSavedTrip(trip)
                       }}
                     >
-                      {t('dataSavedTripExport')}
+                      {t('dataSavedTripExportBikeVoyager')}
                     </Button>
                     <Tooltip label={t('dataSavedTripEdit')}>
                       <ActionIcon

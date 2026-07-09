@@ -1,10 +1,10 @@
-export const sanitizeFileName = (value: string) => {
+export const sanitizeFileName = (value: string, fallback = 'bikevoyager') => {
   const normalized = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   const cleaned = normalized
     .replace(/[^a-zA-Z0-9 _.-]/g, '')
     .trim()
     .replace(/\s+/g, '-')
-  return cleaned || 'bikevoyager'
+  return cleaned || fallback
 }
 
 export const buildGpxFileName = (label: string) => {

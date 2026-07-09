@@ -5,6 +5,7 @@ import { appPreferencesStorageKey, savedTripsStorageKey } from '../features/data
 import { apiPaths } from '../features/routing/apiPaths'
 import {
   plannerDraftStorageKey,
+  routeStorageKey,
   routeOptionVariants,
   type LoopRequestPayload,
   type RouteRequestPayload,
@@ -109,6 +110,13 @@ const getJsonRequestBodies = <TBody,>(mockFetch: { mock: { calls: unknown[][] } 
       expect(typeof body).toBe('string')
       return JSON.parse(body as string) as TBody
     })
+
+const createGpxResponse = () =>
+  ({
+    ok: true,
+    headers: new Headers(),
+    blob: async () => new Blob(['<gpx />'], { type: 'application/gpx+xml' }),
+  }) as Response
 
 const setupRouteComparisonTest = (routeResponse: Response | (() => Response)) => {
   setDesktopMatchMedia()
@@ -280,6 +288,22 @@ describe('App routing', () => {
 
   it('sauvegarde, modifie, ouvre et supprime un trajet depuis le carnet', async () => {
     const user = userEvent.setup()
+    const mockFetch = createAppFetchMock((url) => {
+      if (url === apiPaths.exportGpx) {
+        return createGpxResponse()
+      }
+
+      return undefined
+    })
+    vi.stubGlobal('fetch', mockFetch)
+    Object.defineProperty(window.URL, 'createObjectURL', {
+      writable: true,
+      value: vi.fn(() => 'blob:bikevoyager-test'),
+    })
+    Object.defineProperty(window.URL, 'revokeObjectURL', {
+      writable: true,
+      value: vi.fn(),
+    })
 
     setDesktopMatchMedia()
     window.location.hash = '/carte'
@@ -334,6 +358,35 @@ describe('App routing', () => {
     await user.click(screen.getByPlaceholderText('Rechercher un trajet'))
     await user.type(screen.getByPlaceholderText('Rechercher un trajet'), 'week')
     expect(screen.getByText('Paris → Lyon')).toBeInTheDocument()
+    const routeBeforeSavedTripGpxExport = localStorage.getItem(routeStorageKey)
+
+    await user.click(screen.getByRole('button', { name: 'Exporter GPX' }))
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        apiPaths.exportGpx,
+        expect.objectContaining({ method: 'POST' }),
+      )
+    })
+    const gpxBodies = getJsonRequestBodies<{
+      geometry: TripResult['geometry']
+      elevation_profile: TripResult['elevation_profile'] | null
+      name: string
+    }>(mockFetch, apiPaths.exportGpx)
+    expect(gpxBodies).toHaveLength(1)
+    expect(gpxBodies[0]).toMatchObject({
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [2.3522, 48.8566],
+          [4.8357, 45.764],
+        ],
+      },
+      elevation_profile: null,
+      name: 'Paris → Lyon',
+    })
+    expect(localStorage.getItem(routeStorageKey)).toBe(routeBeforeSavedTripGpxExport)
+    expect(window.location.hash).toBe('#/donnees')
 
     await user.click(screen.getByLabelText('Modifier'))
     await user.clear(screen.getByLabelText('Nom du trajet'))

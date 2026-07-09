@@ -13,7 +13,6 @@ import {
   Title,
 } from '@mantine/core'
 import { IconCheck, IconRefresh } from '@tabler/icons-react'
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   getActiveProfilePresetKey,
@@ -22,7 +21,6 @@ import {
   speedRanges,
   type AssistLevel,
   type Mode,
-  type ProfilePreset,
   type ProfileSettings,
 } from '../../features/routing/domain'
 
@@ -46,13 +44,7 @@ export default function ProfilesPage({
   onReset,
 }: ProfilesPageProps) {
   const { t } = useTranslation()
-  const [appliedPresetKey, setAppliedPresetKey] = useState<string | null>(null)
   const activePresetKey = getActiveProfilePresetKey(profileSettings)
-
-  const handlePresetApply = (preset: ProfilePreset) => {
-    onPresetApply(preset.settings)
-    setAppliedPresetKey(preset.key)
-  }
 
   return (
     <Container size={contentSize} py="lg">
@@ -73,11 +65,6 @@ export default function ProfilesPage({
                   {t('profilePresetsSubtitle')}
                 </Text>
               </Stack>
-              {appliedPresetKey !== null ? (
-                <Text size="sm" c="teal" fw={600}>
-                  {t('profilePresetApplied')}
-                </Text>
-              ) : null}
             </Group>
 
             <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="sm" verticalSpacing="sm">
@@ -143,7 +130,7 @@ export default function ProfilesPage({
                         variant={isActive ? 'light' : 'outline'}
                         color={isActive ? 'teal' : undefined}
                         fullWidth
-                        onClick={() => handlePresetApply(preset)}
+                        onClick={() => onPresetApply(preset.settings)}
                       >
                         {t('profilePresetApply')}
                       </Button>

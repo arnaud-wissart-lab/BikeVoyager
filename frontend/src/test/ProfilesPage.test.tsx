@@ -113,5 +113,6 @@ describe('ProfilesPage', () => {
     await user.type(screen.getByLabelText('Vitesse VAE'), '21')
 
     expect(screen.queryByText('Préréglage actif')).not.toBeInTheDocument()
+    expect(screen.queryByText('Préréglage appliqué')).not.toBeInTheDocument()
   })
 })

@@ -290,13 +290,16 @@ export const createRoutingControllerActions = ({
       return
     }
 
-    clearRouteErrors(errorSetters)
-    setPendingAlternativeRoute(null)
-    setRouteComparison(null)
-    setIsAlternativeComparisonOpen(true)
-
     const resolvedMode = mode ?? 'bike'
     if (routeResult.kind === 'loop') {
+      const nextVariation =
+        (pendingAlternativeRoute?.loopAlternativeIndex ?? loopAlternativeIndex) + 1
+
+      clearRouteErrors(errorSetters)
+      setPendingAlternativeRoute(null)
+      setRouteComparison(null)
+      setIsAlternativeComparisonOpen(true)
+
       const startLocation = resolveLoopStartLocation({
         loopStartPlace,
         mapStartCoordinate: map.mapStartCoordinate,
@@ -311,7 +314,6 @@ export const createRoutingControllerActions = ({
         return
       }
 
-      const nextVariation = loopAlternativeIndex + 1
       const requestBody = buildLoopRequestPayload({
         start: startLocation,
         targetDistanceKm: loopDistance,
@@ -357,6 +359,14 @@ export const createRoutingControllerActions = ({
       return
     }
 
+    const nextVariant =
+      (pendingAlternativeRoute?.routeAlternativeIndex ?? routeAlternativeIndex) + 1
+
+    clearRouteErrors(errorSetters)
+    setPendingAlternativeRoute(null)
+    setRouteComparison(null)
+    setIsAlternativeComparisonOpen(true)
+
     const { fromLocation, toLocation } = resolveRouteLocations({
       onewayStartPlace,
       endPlace,
@@ -373,7 +383,6 @@ export const createRoutingControllerActions = ({
       return
     }
 
-    const nextVariant = routeAlternativeIndex + 1
     const requestBody = buildRouteRequestPayload({
       from: fromLocation,
       to: toLocation,

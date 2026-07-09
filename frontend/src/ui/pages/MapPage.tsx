@@ -30,6 +30,7 @@ type MapPageProps = {
   setupOverlayColor: string
   loadingSpinnerColor: string
   routeResult: TripResult | null
+  pendingAlternativeRoute: TripResult | null
   expandedRouteBounds: RouteBounds | null
   mapViewMode: MapViewMode
   mapCommand: MapCommand | null
@@ -103,6 +104,7 @@ export default function MapPage({
   setupOverlayColor,
   loadingSpinnerColor,
   routeResult,
+  pendingAlternativeRoute,
   expandedRouteBounds,
   mapViewMode,
   mapCommand,
@@ -210,8 +212,10 @@ export default function MapPage({
       >
         <LazyCesiumRouteMap
           geometry={routeResult?.geometry ?? null}
+          alternativeGeometry={pendingAlternativeRoute?.geometry ?? null}
           bounds={expandedRouteBounds}
           elevationProfile={routeResult?.elevation_profile ?? null}
+          alternativeElevationProfile={pendingAlternativeRoute?.elevation_profile ?? null}
           viewMode={mapViewMode}
           mapCommand={mapCommand}
           mapCommandSeq={mapCommandSeq}

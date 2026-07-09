@@ -39,8 +39,10 @@ export type StreetViewContextMenuRequest = {
 
 export type CesiumRouteMapProps = {
   geometry: RouteGeometry | null
+  alternativeGeometry?: RouteGeometry | null
   bounds: RouteBounds | null
   elevationProfile?: RouteElevationPoint[] | null
+  alternativeElevationProfile?: RouteElevationPoint[] | null
   viewMode: MapViewMode
   mapCommand?: MapCommand | null
   mapCommandSeq?: number

@@ -676,6 +676,9 @@ describe('App routing', () => {
     await user.click(await screen.findByRole('button', { name: 'Proposer un autre trajet' }))
 
     expect(await screen.findByText('Comparer les trajets')).toBeInTheDocument()
+    const map = await screen.findByTestId('cesium-route-map')
+    expect(map).toHaveAttribute('data-route-layer-count', '2')
+    expect(map).toHaveAttribute('data-alternative-route-visible', 'true')
     expect(screen.getByText('Trajet actuel')).toBeInTheDocument()
     expect(screen.getByText('Alternative')).toBeInTheDocument()
     expect(screen.getAllByText('1.2 km').length).toBeGreaterThan(0)
@@ -694,6 +697,12 @@ describe('App routing', () => {
 
     await waitFor(() => {
       expect(screen.queryByText('Comparer les trajets')).not.toBeInTheDocument()
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('cesium-route-map')).toHaveAttribute(
+        'data-alternative-route-visible',
+        'false',
+      )
     })
     expect(screen.getAllByText('1.2 km').length).toBeGreaterThan(0)
     expect(screen.queryByText('2.4 km')).not.toBeInTheDocument()
@@ -720,6 +729,12 @@ describe('App routing', () => {
 
     await waitFor(() => {
       expect(screen.queryByText('Comparer les trajets')).not.toBeInTheDocument()
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('cesium-route-map')).toHaveAttribute(
+        'data-alternative-route-visible',
+        'false',
+      )
     })
     await waitFor(() => {
       expect(screen.getAllByText('2.4 km').length).toBeGreaterThan(0)

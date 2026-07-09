@@ -8,10 +8,12 @@ type UseCesiumViewerParams = {
   containerRef: MutableRefObject<HTMLDivElement | null>
   viewerRef: MutableRefObject<import('cesium').Viewer | null>
   routeEntityRef: MutableRefObject<import('cesium').Entity | null>
+  alternativeRouteEntityRef: MutableRefObject<import('cesium').Entity | null>
   poiEntitiesRef: MutableRefObject<import('cesium').Entity[]>
   navigationEntityRef: MutableRefObject<import('cesium').Entity | null>
   smoothedHeadingRef: MutableRefObject<number | null>
   lastRouteSignatureRef: MutableRefObject<string | null>
+  lastAlternativeRouteSignatureRef: MutableRefObject<string | null>
   cesiumRef: MutableRefObject<CesiumModule | null>
   poiClickHandlerRef: MutableRefObject<import('cesium').ScreenSpaceEventHandler | null>
 }
@@ -20,10 +22,12 @@ export default function useCesiumViewer({
   containerRef,
   viewerRef,
   routeEntityRef,
+  alternativeRouteEntityRef,
   poiEntitiesRef,
   navigationEntityRef,
   smoothedHeadingRef,
   lastRouteSignatureRef,
+  lastAlternativeRouteSignatureRef,
   cesiumRef,
   poiClickHandlerRef,
 }: UseCesiumViewerParams): CesiumStatus {
@@ -131,15 +135,19 @@ export default function useCesiumViewer({
       poiClickHandlerRef.current = null
       viewerRef.current = null
       routeEntityRef.current = null
+      alternativeRouteEntityRef.current = null
       poiEntitiesRef.current = []
       navigationEntityRef.current = null
       smoothedHeadingRef.current = null
       lastRouteSignatureRef.current = null
+      lastAlternativeRouteSignatureRef.current = null
       cesiumRef.current = null
     }
   }, [
+    alternativeRouteEntityRef,
     cesiumRef,
     containerRef,
+    lastAlternativeRouteSignatureRef,
     lastRouteSignatureRef,
     navigationEntityRef,
     poiClickHandlerRef,

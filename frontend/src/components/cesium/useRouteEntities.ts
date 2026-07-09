@@ -11,8 +11,10 @@ import type { CesiumModule, CesiumStatus, NavigationProgress, PoiMarker } from '
 type UseRouteEntitiesParams = {
   status: CesiumStatus
   geometry: RouteGeometry | null
+  alternativeGeometry?: RouteGeometry | null
   bounds: RouteBounds | null
   elevationProfile?: RouteElevationPoint[] | null
+  alternativeElevationProfile?: RouteElevationPoint[] | null
   navigationActive: boolean
   navigationProgress: NavigationProgress | null
   viewMode: MapViewMode
@@ -21,16 +23,52 @@ type UseRouteEntitiesParams = {
   viewerRef: MutableRefObject<import('cesium').Viewer | null>
   cesiumRef: MutableRefObject<CesiumModule | null>
   routeEntityRef: MutableRefObject<import('cesium').Entity | null>
+  alternativeRouteEntityRef: MutableRefObject<import('cesium').Entity | null>
   poiEntitiesRef: MutableRefObject<import('cesium').Entity[]>
   navigationEntityRef: MutableRefObject<import('cesium').Entity | null>
   lastRouteSignatureRef: MutableRefObject<string | null>
+  lastAlternativeRouteSignatureRef: MutableRefObject<string | null>
+}
+
+const buildPolylinePositions = (
+  Cesium: CesiumModule,
+  geometry: RouteGeometry | null | undefined,
+  elevationProfile?: RouteElevationPoint[] | null,
+) => {
+  if (!geometry || geometry.type !== 'LineString' || geometry.coordinates.length < 2) {
+    return null
+  }
+
+  const coordinates = geometry.coordinates.filter(
+    (coordinate): coordinate is [number, number] =>
+      Array.isArray(coordinate) &&
+      coordinate.length >= 2 &&
+      Number.isFinite(coordinate[0]) &&
+      Number.isFinite(coordinate[1]),
+  )
+
+  if (coordinates.length < 2) {
+    return null
+  }
+
+  const heights = buildRouteHeights(coordinates, elevationProfile)
+  const positions = coordinates.map(([lon, lat], index) =>
+    Cesium.Cartesian3.fromDegrees(lon, lat, heights ? (heights[index] ?? 0) : 0),
+  )
+
+  return {
+    positions,
+    hasAltitude: Boolean(heights),
+  }
 }
 
 export default function useRouteEntities({
   status,
   geometry,
+  alternativeGeometry,
   bounds,
   elevationProfile,
+  alternativeElevationProfile,
   navigationActive,
   navigationProgress,
   viewMode,
@@ -39,9 +77,11 @@ export default function useRouteEntities({
   viewerRef,
   cesiumRef,
   routeEntityRef,
+  alternativeRouteEntityRef,
   poiEntitiesRef,
   navigationEntityRef,
   lastRouteSignatureRef,
+  lastAlternativeRouteSignatureRef,
 }: UseRouteEntitiesParams) {
   useEffect(() => {
     const viewer = viewerRef.current
@@ -62,22 +102,16 @@ export default function useRouteEntities({
       routeEntityRef.current = null
     }
 
-    if (!geometry || geometry.coordinates.length === 0) {
+    const routePolyline = buildPolylinePositions(Cesium, geometry, elevationProfile)
+    if (!routePolyline) {
       return
     }
 
-    const heights = buildRouteHeights(geometry.coordinates, elevationProfile)
-    const positions = geometry.coordinates.map(([lon, lat], index) =>
-      Cesium.Cartesian3.fromDegrees(lon, lat, heights ? (heights[index] ?? 0) : 0),
-    )
-
-    const hasAltitude = Boolean(heights)
-
     routeEntityRef.current = viewer.entities.add({
       polyline: {
-        positions,
+        positions: routePolyline.positions,
         width: 4,
-        clampToGround: !hasAltitude,
+        clampToGround: !routePolyline.hasAltitude,
         material: Cesium.Color.fromCssColorString('#2b8a3e'),
       },
     })
@@ -114,6 +148,61 @@ export default function useRouteEntities({
     lastRouteSignatureRef,
     navigationActive,
     routeEntityRef,
+    status,
+    viewerRef,
+  ])
+
+  useEffect(() => {
+    const viewer = viewerRef.current
+    const Cesium = cesiumRef.current
+    if (status !== 'ready' || !viewer || !Cesium) {
+      return
+    }
+
+    const nextSignature = buildRouteSignature(
+      alternativeGeometry ?? null,
+      alternativeElevationProfile,
+    )
+    if (
+      nextSignature === lastAlternativeRouteSignatureRef.current &&
+      alternativeRouteEntityRef.current
+    ) {
+      viewer.scene.requestRender()
+      return
+    }
+    lastAlternativeRouteSignatureRef.current = nextSignature
+
+    if (alternativeRouteEntityRef.current) {
+      viewer.entities.remove(alternativeRouteEntityRef.current)
+      alternativeRouteEntityRef.current = null
+    }
+
+    const alternativePolyline = buildPolylinePositions(
+      Cesium,
+      alternativeGeometry,
+      alternativeElevationProfile,
+    )
+    if (!alternativePolyline) {
+      viewer.scene.requestRender()
+      return
+    }
+
+    alternativeRouteEntityRef.current = viewer.entities.add({
+      polyline: {
+        positions: alternativePolyline.positions,
+        width: 3,
+        clampToGround: !alternativePolyline.hasAltitude,
+        material: Cesium.Color.fromCssColorString('#1971c2').withAlpha(0.58),
+      },
+    })
+
+    viewer.scene.requestRender()
+  }, [
+    alternativeElevationProfile,
+    alternativeGeometry,
+    alternativeRouteEntityRef,
+    cesiumRef,
+    lastAlternativeRouteSignatureRef,
     status,
     viewerRef,
   ])

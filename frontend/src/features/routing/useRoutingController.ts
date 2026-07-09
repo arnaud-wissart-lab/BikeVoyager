@@ -70,6 +70,9 @@ export const useRoutingController = ({
     setIsValhallaStatusLoading,
     setValhallaStatusError,
     setProfileSettings,
+    setPendingAlternativeRoute,
+    setRouteComparison,
+    setIsAlternativeComparisonOpen,
   } = store
   const [apiHealthStatus, setApiHealthStatus] = useState<ApiHealthStatus | null>(null)
 
@@ -106,6 +109,9 @@ export const useRoutingController = ({
     addDetourPointAndRecalculate,
     removeDetourPointAndRecalculate,
     handleRecalculateAlternative,
+    handleApplyAlternativeRoute,
+    handleKeepCurrentRoute,
+    handleCloseAlternativeComparison,
     handleModeChange,
     handleTypeChange,
     handleOnewayStartValueChange,
@@ -264,6 +270,12 @@ export const useRoutingController = ({
   }, [routeResult, setExportError, setIsExporting])
 
   useEffect(() => {
+    setPendingAlternativeRoute(null)
+    setRouteComparison(null)
+    setIsAlternativeComparisonOpen(false)
+  }, [routeResult, setIsAlternativeComparisonOpen, setPendingAlternativeRoute, setRouteComparison])
+
+  useEffect(() => {
     if (route !== 'planifier' && route !== 'carte' && route !== 'aide') {
       return
     }
@@ -409,6 +421,9 @@ export const useRoutingController = ({
     removeDetourPointAndRecalculate,
     recalculateWithDetours,
     handleRecalculateAlternative,
+    handleApplyAlternativeRoute,
+    handleKeepCurrentRoute,
+    handleCloseAlternativeComparison,
     handleSpeedChange,
     handleResetProfiles,
     routeErrorDisplayMessage,

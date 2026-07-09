@@ -1,7 +1,22 @@
 import type { TFunction } from 'i18next'
 import type { AppStore } from '../../state/appStore'
-import { buildLoopRequest, type DetourPoint, type RouteKey } from './domain'
-import { clearRouteErrors, setLoopFailedError, setRouteMissingPlaceError } from './actions.errors'
+import { fetchLoop, fetchRoute } from './api'
+import {
+  buildLoopRequest,
+  createRouteComparisonSummary,
+  type DetourPoint,
+  type RouteKey,
+  type RouteAlternativeCandidate,
+} from './domain'
+import {
+  clearRouteErrors,
+  normalizeLoopResponseError,
+  normalizeRouteResponseError,
+  setLoopFailedError,
+  setLoopUnexpectedError,
+  setRouteMissingPlaceError,
+  setRouteUnexpectedError,
+} from './actions.errors'
 import {
   buildLoopRequestPayload,
   createLoopRequestAction,
@@ -35,8 +50,11 @@ type RoutingControllerActionsStoreSlice = Pick<
   | 'detourPoints'
   | 'routeAlternativeIndex'
   | 'loopAlternativeIndex'
+  | 'pendingAlternativeRoute'
   | 'isRouteLoading'
+  | 'isAlternativeLoading'
   | 'setIsRouteLoading'
+  | 'setIsAlternativeLoading'
   | 'lastRouteRequestRef'
   | 'setRouteErrorMessage'
   | 'setRouteErrorKey'
@@ -46,6 +64,9 @@ type RoutingControllerActionsStoreSlice = Pick<
   | 'setDetourPoints'
   | 'setLoopAlternativeIndex'
   | 'setRouteAlternativeIndex'
+  | 'setPendingAlternativeRoute'
+  | 'setRouteComparison'
+  | 'setIsAlternativeComparisonOpen'
   | 'setMode'
   | 'setTripType'
   | 'setOnewayStartValue'
@@ -87,8 +108,11 @@ export const createRoutingControllerActions = ({
     detourPoints,
     routeAlternativeIndex,
     loopAlternativeIndex,
+    pendingAlternativeRoute,
     isRouteLoading,
+    isAlternativeLoading,
     setIsRouteLoading,
+    setIsAlternativeLoading,
     lastRouteRequestRef,
     setRouteErrorMessage,
     setRouteErrorKey,
@@ -98,6 +122,9 @@ export const createRoutingControllerActions = ({
     setDetourPoints,
     setLoopAlternativeIndex,
     setRouteAlternativeIndex,
+    setPendingAlternativeRoute,
+    setRouteComparison,
+    setIsAlternativeComparisonOpen,
   } = store
 
   const errorSetters = {
@@ -259,14 +286,20 @@ export const createRoutingControllerActions = ({
   }
 
   const handleRecalculateAlternative = async () => {
-    if (!routeResult || isRouteLoading) {
+    if (!routeResult || isRouteLoading || isAlternativeLoading) {
       return
     }
 
-    clearRouteErrors(errorSetters)
-
     const resolvedMode = mode ?? 'bike'
     if (routeResult.kind === 'loop') {
+      const nextVariation =
+        (pendingAlternativeRoute?.loopAlternativeIndex ?? loopAlternativeIndex) + 1
+
+      clearRouteErrors(errorSetters)
+      setPendingAlternativeRoute(null)
+      setRouteComparison(null)
+      setIsAlternativeComparisonOpen(true)
+
       const startLocation = resolveLoopStartLocation({
         loopStartPlace,
         mapStartCoordinate: map.mapStartCoordinate,
@@ -281,7 +314,6 @@ export const createRoutingControllerActions = ({
         return
       }
 
-      const nextVariation = loopAlternativeIndex + 1
       const requestBody = buildLoopRequestPayload({
         start: startLocation,
         targetDistanceKm: loopDistance,
@@ -292,12 +324,48 @@ export const createRoutingControllerActions = ({
         detourPoints,
       })
 
-      const success = await requestLoop(requestBody, detourPoints)
-      if (success) {
-        setLoopAlternativeIndex(nextVariation)
+      setIsAlternativeLoading(true)
+      lastRouteRequestRef.current = {
+        type: 'loop',
+        payload: requestBody,
+      }
+
+      try {
+        const result = await fetchLoop(requestBody)
+        if (!result.ok) {
+          await normalizeLoopResponseError(result.response, errorSetters)
+          return
+        }
+
+        const candidate: RouteAlternativeCandidate = {
+          route: result.result,
+          routeAlternativeIndex: null,
+          loopAlternativeIndex: nextVariation,
+        }
+        setPendingAlternativeRoute(candidate)
+        setRouteComparison(
+          createRouteComparisonSummary(
+            routeResult,
+            candidate.route,
+            resolvedMode,
+            profileSettings.ebikeAssist,
+          ),
+        )
+      } catch {
+        setLoopUnexpectedError(errorSetters)
+      } finally {
+        setIsAlternativeLoading(false)
       }
       return
     }
+
+    const nextVariant =
+      (pendingAlternativeRoute?.routeAlternativeIndex ?? routeAlternativeIndex) + 1
+
+    clearRouteErrors(errorSetters)
+    setPendingAlternativeRoute(null)
+    setRouteComparison(null)
+    setIsAlternativeComparisonOpen(true)
 
     const { fromLocation, toLocation } = resolveRouteLocations({
       onewayStartPlace,
@@ -315,7 +383,6 @@ export const createRoutingControllerActions = ({
       return
     }
 
-    const nextVariant = routeAlternativeIndex + 1
     const requestBody = buildRouteRequestPayload({
       from: fromLocation,
       to: toLocation,
@@ -326,10 +393,68 @@ export const createRoutingControllerActions = ({
       detourPoints,
     })
 
-    const success = await requestRoute(requestBody, detourPoints)
-    if (success) {
-      setRouteAlternativeIndex(nextVariant)
+    setIsAlternativeLoading(true)
+    lastRouteRequestRef.current = {
+      type: 'route',
+      payload: requestBody,
     }
+
+    try {
+      const result = await fetchRoute(requestBody)
+      if (!result.ok) {
+        await normalizeRouteResponseError(result.response, errorSetters)
+        return
+      }
+
+      const candidate: RouteAlternativeCandidate = {
+        route: result.result,
+        routeAlternativeIndex: nextVariant,
+        loopAlternativeIndex: null,
+      }
+      setPendingAlternativeRoute(candidate)
+      setRouteComparison(
+        createRouteComparisonSummary(
+          routeResult,
+          candidate.route,
+          resolvedMode,
+          profileSettings.ebikeAssist,
+        ),
+      )
+    } catch {
+      setRouteUnexpectedError(errorSetters)
+    } finally {
+      setIsAlternativeLoading(false)
+    }
+  }
+
+  const handleApplyAlternativeRoute = () => {
+    if (!pendingAlternativeRoute) {
+      return
+    }
+
+    setRouteResult(pendingAlternativeRoute.route)
+    setHasResult(true)
+    setIsDirty(false)
+    if (pendingAlternativeRoute.routeAlternativeIndex !== null) {
+      setRouteAlternativeIndex(pendingAlternativeRoute.routeAlternativeIndex)
+    }
+    if (pendingAlternativeRoute.loopAlternativeIndex !== null) {
+      setLoopAlternativeIndex(pendingAlternativeRoute.loopAlternativeIndex)
+    }
+    setPendingAlternativeRoute(null)
+    setRouteComparison(null)
+    setIsAlternativeComparisonOpen(false)
+    onNavigate('carte', true)
+  }
+
+  const handleKeepCurrentRoute = () => {
+    setPendingAlternativeRoute(null)
+    setRouteComparison(null)
+    setIsAlternativeComparisonOpen(false)
+  }
+
+  const handleCloseAlternativeComparison = () => {
+    setIsAlternativeComparisonOpen(false)
   }
 
   const {
@@ -356,6 +481,9 @@ export const createRoutingControllerActions = ({
     addDetourPointAndRecalculate,
     removeDetourPointAndRecalculate,
     handleRecalculateAlternative,
+    handleApplyAlternativeRoute,
+    handleKeepCurrentRoute,
+    handleCloseAlternativeComparison,
     handleModeChange,
     handleTypeChange,
     handleOnewayStartValueChange,

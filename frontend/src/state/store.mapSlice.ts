@@ -10,6 +10,8 @@ import {
   type PlaceCandidate,
   type PoiItem,
   type ProfileSettings,
+  type RouteAlternativeCandidate,
+  type RouteComparisonSummary,
   type RouteRequestPayload,
   type TripResult,
   type TripType,
@@ -94,6 +96,11 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
   const [customDetourLon, setCustomDetourLon] = useState<number | ''>('')
   const [routeAlternativeIndex, setRouteAlternativeIndex] = useState(0)
   const [loopAlternativeIndex, setLoopAlternativeIndex] = useState(0)
+  const [pendingAlternativeRoute, setPendingAlternativeRoute] =
+    useState<RouteAlternativeCandidate | null>(null)
+  const [routeComparison, setRouteComparison] = useState<RouteComparisonSummary | null>(null)
+  const [isAlternativeComparisonOpen, setIsAlternativeComparisonOpen] = useState(false)
+  const [isAlternativeLoading, setIsAlternativeLoading] = useState(false)
   const [profileSettings, setProfileSettings] = useState<ProfileSettings>(() =>
     loadProfileSettings(),
   )
@@ -210,6 +217,14 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
     setRouteAlternativeIndex,
     loopAlternativeIndex,
     setLoopAlternativeIndex,
+    pendingAlternativeRoute,
+    setPendingAlternativeRoute,
+    routeComparison,
+    setRouteComparison,
+    isAlternativeComparisonOpen,
+    setIsAlternativeComparisonOpen,
+    isAlternativeLoading,
+    setIsAlternativeLoading,
     profileSettings,
     setProfileSettings,
     alertSeenPoiIdsRef,

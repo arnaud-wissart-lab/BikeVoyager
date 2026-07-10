@@ -10,10 +10,12 @@ export type NavigationGuidance = {
 
 export type NavigationStepRange = {
   stepIndex: number
-  instruction: string
+  instruction: string | null
   startDistanceMeters: number
   endDistanceMeters: number
 }
+
+type NavigationInstructionStepRange = NavigationStepRange & { instruction: string }
 
 const navigationBoundaryToleranceMeters = 0.5
 
@@ -43,8 +45,7 @@ export const buildNavigationStepRanges = (steps: unknown): NavigationStepRange[]
     }
 
     const candidate = step as Partial<RouteStep>
-    const instruction = normalizeInstruction(candidate.instruction)
-    if (!instruction || !isNonNegativeFiniteNumber(candidate.distance_m)) {
+    if (!isNonNegativeFiniteNumber(candidate.distance_m)) {
       return
     }
 
@@ -55,7 +56,7 @@ export const buildNavigationStepRanges = (steps: unknown): NavigationStepRange[]
 
     ranges.push({
       stepIndex,
-      instruction,
+      instruction: normalizeInstruction(candidate.instruction),
       startDistanceMeters: cumulativeDistanceMeters,
       endDistanceMeters,
     })
@@ -63,6 +64,36 @@ export const buildNavigationStepRanges = (steps: unknown): NavigationStepRange[]
   })
 
   return ranges
+}
+
+const hasInstruction = (range: NavigationStepRange): range is NavigationInstructionStepRange =>
+  range.instruction !== null
+
+const findLastInstructionRange = (
+  ranges: NavigationStepRange[],
+): NavigationInstructionStepRange | null => {
+  for (let index = ranges.length - 1; index >= 0; index -= 1) {
+    const range = ranges[index]
+    if (hasInstruction(range)) {
+      return range
+    }
+  }
+
+  return null
+}
+
+const findNextInstruction = (
+  ranges: NavigationStepRange[],
+  activeRangeIndex: number,
+): string | null => {
+  for (let index = activeRangeIndex + 1; index < ranges.length; index += 1) {
+    const instruction = ranges[index].instruction
+    if (instruction) {
+      return instruction
+    }
+  }
+
+  return null
 }
 
 export const resolveNavigationGuidance = (
@@ -83,12 +114,15 @@ export const resolveNavigationGuidance = (
   const progressMeters = Number.isFinite(navigationDistanceMeters)
     ? Math.min(effectiveRouteDistanceMeters, Math.max(0, navigationDistanceMeters))
     : 0
-  const lastRange = ranges[ranges.length - 1]
+  const lastInstructionRange = findLastInstructionRange(ranges)
+  if (!lastInstructionRange) {
+    return null
+  }
 
   if (progressMeters >= effectiveRouteDistanceMeters) {
     return {
-      activeStepIndex: lastRange.stepIndex,
-      activeInstruction: lastRange.instruction,
+      activeStepIndex: lastInstructionRange.stepIndex,
+      activeInstruction: lastInstructionRange.instruction,
       distanceToManeuverMeters: 0,
       nextInstruction: null,
       isArrival: true,
@@ -104,6 +138,10 @@ export const resolveNavigationGuidance = (
       normalizedProgressMeters < Math.max(0, range.endDistanceMeters - normalizedToleranceMeters),
   )
   const activeRange = ranges[Math.max(0, activeRangeIndex)]
+  if (!hasInstruction(activeRange)) {
+    return null
+  }
+
   const progressWithinRangeMeters = Math.max(
     activeRange.startDistanceMeters,
     normalizedProgressMeters,
@@ -117,7 +155,7 @@ export const resolveNavigationGuidance = (
     activeStepIndex: activeRange.stepIndex,
     activeInstruction: activeRange.instruction,
     distanceToManeuverMeters: remainingStepDistanceMeters / routeToStepScale,
-    nextInstruction: ranges[activeRangeIndex + 1]?.instruction ?? null,
+    nextInstruction: findNextInstruction(ranges, activeRangeIndex),
     isArrival: false,
   }
 }

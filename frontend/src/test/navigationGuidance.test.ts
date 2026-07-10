@@ -100,7 +100,7 @@ describe('navigationGuidance', () => {
     })
   })
 
-  it('ignore les étapes vides ou invalides et conserve leur index d’origine', () => {
+  it('préserve les distances valides des étapes sans instruction', () => {
     const invalidSteps = [
       null,
       { instruction: '   ', distance_m: 100 },
@@ -108,7 +108,22 @@ describe('navigationGuidance', () => {
       { instruction: '  Étape   valide  ', distance_m: 100 },
     ]
 
-    expect(resolveNavigationGuidance(invalidSteps, 0, 100)).toEqual({
+    expect(buildNavigationStepRanges(invalidSteps)).toEqual([
+      {
+        stepIndex: 1,
+        instruction: null,
+        startDistanceMeters: 0,
+        endDistanceMeters: 100,
+      },
+      {
+        stepIndex: 3,
+        instruction: 'Étape valide',
+        startDistanceMeters: 100,
+        endDistanceMeters: 200,
+      },
+    ])
+    expect(resolveNavigationGuidance(invalidSteps, 0, 200)).toBeNull()
+    expect(resolveNavigationGuidance(invalidSteps, 100, 200)).toEqual({
       activeStepIndex: 3,
       activeInstruction: 'Étape valide',
       distanceToManeuverMeters: 100,
@@ -117,6 +132,60 @@ describe('navigationGuidance', () => {
     })
     expect(resolveNavigationGuidance(undefined, 0, 100)).toBeNull()
     expect(resolveNavigationGuidance([], 0, 100)).toBeNull()
+  })
+
+  it('conserve les positions des instructions autour d’un long segment vide', () => {
+    const stepsWithGap = [
+      { instruction: 'Étape A', distance_m: 100 },
+      { instruction: '   ', distance_m: 1000 },
+      { instruction: 'Étape C', distance_m: 100 },
+    ]
+
+    expect(buildNavigationStepRanges(stepsWithGap)).toEqual([
+      {
+        stepIndex: 0,
+        instruction: 'Étape A',
+        startDistanceMeters: 0,
+        endDistanceMeters: 100,
+      },
+      {
+        stepIndex: 1,
+        instruction: null,
+        startDistanceMeters: 100,
+        endDistanceMeters: 1100,
+      },
+      {
+        stepIndex: 2,
+        instruction: 'Étape C',
+        startDistanceMeters: 1100,
+        endDistanceMeters: 1200,
+      },
+    ])
+    expect(resolveNavigationGuidance(stepsWithGap, 50, 1200)).toMatchObject({
+      activeStepIndex: 0,
+      activeInstruction: 'Étape A',
+      distanceToManeuverMeters: 50,
+    })
+    expect(resolveNavigationGuidance(stepsWithGap, 500, 1200)).toBeNull()
+    expect(resolveNavigationGuidance(stepsWithGap, 1150, 1200)).toMatchObject({
+      activeStepIndex: 2,
+      activeInstruction: 'Étape C',
+      distanceToManeuverMeters: 50,
+    })
+  })
+
+  it('cherche l’instruction suivante au-delà de plusieurs segments vides', () => {
+    const stepsWithSeveralGaps = [
+      { instruction: 'Étape A', distance_m: 100 },
+      { instruction: '', distance_m: 200 },
+      { instruction: null, distance_m: 300 },
+      { instruction: 'Étape C', distance_m: 100 },
+    ]
+
+    expect(resolveNavigationGuidance(stepsWithSeveralGaps, 50, 700)).toMatchObject({
+      activeInstruction: 'Étape A',
+      nextInstruction: 'Étape C',
+    })
   })
 
   it('franchit les étapes de distance nulle sans produire de distance négative', () => {

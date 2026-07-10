@@ -3,9 +3,12 @@ import type { AppPreferences } from '../features/data/dataPortability'
 import {
   loadProfileSettings,
   loadStoredRoute,
+  createNavigationDeviationState,
   type DetourPoint,
   type LoopRequestPayload,
+  type NavigationDeviationState,
   type NavigationProgress,
+  type NavigationRecalculationStatus,
   type PlannerDraft,
   type PlaceCandidate,
   type PoiItem,
@@ -64,6 +67,10 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
   )
   const [navigationProgress, setNavigationProgress] = useState<NavigationProgress | null>(null)
   const [navigationError, setNavigationError] = useState<string | null>(null)
+  const [navigationDeviationState, setNavigationDeviationState] =
+    useState<NavigationDeviationState>(() => createNavigationDeviationState())
+  const [navigationRecalculationStatus, setNavigationRecalculationStatus] =
+    useState<NavigationRecalculationStatus>('idle')
   const [poiAlertEnabled, setPoiAlertEnabled] = useState(
     () => initialAppPreferences.poiAlertEnabled,
   )
@@ -107,6 +114,7 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
 
   const alertSeenPoiIdsRef = useRef(new Set<string>())
   const simulationDistanceRef = useRef(0)
+  const navigationRecalculationInFlightRef = useRef(false)
   const valhallaAutoUpdateRequestedRef = useRef(false)
   const lastRouteRequestRef = useRef<
     | {
@@ -173,6 +181,10 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
     setNavigationProgress,
     navigationError,
     setNavigationError,
+    navigationDeviationState,
+    setNavigationDeviationState,
+    navigationRecalculationStatus,
+    setNavigationRecalculationStatus,
     poiAlertEnabled,
     setPoiAlertEnabled,
     poiAlertDistanceMeters,
@@ -229,6 +241,7 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
     setProfileSettings,
     alertSeenPoiIdsRef,
     simulationDistanceRef,
+    navigationRecalculationInFlightRef,
     valhallaAutoUpdateRequestedRef,
     lastRouteRequestRef,
   }

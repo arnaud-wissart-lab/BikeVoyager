@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../App'
 import { appPreferencesStorageKey, savedTripsStorageKey } from '../features/data/dataPortability'
@@ -103,6 +103,7 @@ const alternativeComparisonLoop: TripResult = {
 }
 
 const originalWakeLockDescriptor = Object.getOwnPropertyDescriptor(navigator, 'wakeLock')
+const originalGeolocationDescriptor = Object.getOwnPropertyDescriptor(navigator, 'geolocation')
 
 const getJsonRequestBodies = <TBody,>(mockFetch: { mock: { calls: unknown[][] } }, path: string) =>
   mockFetch.mock.calls
@@ -168,6 +169,111 @@ const setupLoopComparisonTest = (loopResponse: Response | (() => Response)) => {
   return mockFetch
 }
 
+const installGeolocationMock = () => {
+  let onPosition: PositionCallback | null = null
+  let nextWatchId = 1
+  const watchPosition = vi
+    .fn<Geolocation['watchPosition']>()
+    .mockImplementation((successCallback) => {
+      onPosition = successCallback
+      return nextWatchId++
+    })
+  const clearWatch = vi.fn<Geolocation['clearWatch']>()
+
+  Object.defineProperty(navigator, 'geolocation', {
+    configurable: true,
+    value: { watchPosition, clearWatch },
+  })
+
+  return {
+    watchPosition,
+    clearWatch,
+    emitPosition: (params: { lat: number; lon: number; accuracy: number; timestamp: number }) => {
+      if (!onPosition) {
+        throw new Error('Le suivi GPS n’est pas démarré.')
+      }
+
+      onPosition({
+        coords: {
+          latitude: params.lat,
+          longitude: params.lon,
+          accuracy: params.accuracy,
+          altitude: null,
+          altitudeAccuracy: null,
+          heading: null,
+          speed: 4,
+        },
+        timestamp: params.timestamp,
+      })
+    },
+  }
+}
+
+const gpsNavigationRoute: Extract<TripResult, { kind: 'route' }> = {
+  kind: 'route',
+  geometry: {
+    type: 'LineString',
+    coordinates: [
+      [2.35, 48.85],
+      [2.35, 48.86],
+    ],
+  },
+  distance_m: 1112,
+  duration_s_engine: 180,
+  eta_s: 180,
+  turn_by_turn: [
+    { instruction: 'Continuer tout droit', distance_m: 1112, duration_s: 180, type: 1 },
+  ],
+  elevation_profile: [],
+}
+
+const setupStoredGpsNavigation = (routeResult: TripResult = gpsNavigationRoute) => {
+  setDesktopMatchMedia()
+  window.location.hash = '/carte'
+  localStorage.setItem(
+    plannerDraftStorageKey,
+    JSON.stringify({
+      mode: 'ebike',
+      tripType: routeResult.kind === 'loop' ? 'loop' : 'oneway',
+      onewayStartValue: 'Départ initial',
+      endValue: 'Destination initiale',
+      loopStartValue: 'Départ de boucle',
+    }),
+  )
+  saveRouteResultToStorage(routeResult)
+}
+
+const startGpsNavigation = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(await screen.findByTestId('nav-setup-open'))
+  await user.click(screen.getByTestId('nav-start'))
+}
+
+const emitConfirmedDeviation = (
+  geolocation: ReturnType<typeof installGeolocationMock>,
+  baseTimestamp: number,
+) => {
+  act(() => {
+    geolocation.emitPosition({
+      lat: 48.855,
+      lon: 2.352,
+      accuracy: 5,
+      timestamp: baseTimestamp + 2000,
+    })
+    geolocation.emitPosition({
+      lat: 48.855,
+      lon: 2.352,
+      accuracy: 5,
+      timestamp: baseTimestamp + 5000,
+    })
+    geolocation.emitPosition({
+      lat: 48.855,
+      lon: 2.352,
+      accuracy: 5,
+      timestamp: baseTimestamp + 8000,
+    })
+  })
+}
+
 describe('App routing', () => {
   beforeEach(() => {
     resetAppTestEnvironment()
@@ -175,12 +281,19 @@ describe('App routing', () => {
   })
 
   afterEach(() => {
+    cleanup()
+
     if (originalWakeLockDescriptor) {
       Object.defineProperty(navigator, 'wakeLock', originalWakeLockDescriptor)
-      return
+    } else {
+      Reflect.deleteProperty(navigator, 'wakeLock')
     }
 
-    Reflect.deleteProperty(navigator, 'wakeLock')
+    if (originalGeolocationDescriptor) {
+      Object.defineProperty(navigator, 'geolocation', originalGeolocationDescriptor)
+    } else {
+      Reflect.deleteProperty(navigator, 'geolocation')
+    }
   })
 
   it('isole le départ entre aller simple et boucle', async () => {
@@ -367,6 +480,295 @@ describe('App routing', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('détecte une sortie GPS et recalcule depuis la position réellement observée', async () => {
+    const user = userEvent.setup()
+    setupStoredGpsNavigation()
+    const geolocation = installGeolocationMock()
+    const recalculatedRoute: Extract<TripResult, { kind: 'route' }> = {
+      ...gpsNavigationRoute,
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [2.352, 48.855],
+          [2.35, 48.86],
+        ],
+      },
+      distance_m: 600,
+    }
+    const mockFetch = createAppFetchMock((url) => {
+      if (url === apiPaths.route) {
+        return createJsonResponse({
+          geometry: recalculatedRoute.geometry,
+          distance_m: recalculatedRoute.distance_m,
+          duration_s_engine: recalculatedRoute.duration_s_engine,
+          eta_s: recalculatedRoute.eta_s,
+          turn_by_turn: recalculatedRoute.turn_by_turn,
+          elevation_profile: recalculatedRoute.elevation_profile,
+        })
+      }
+
+      return undefined
+    })
+    vi.stubGlobal('fetch', mockFetch)
+
+    renderWithProviders(<App />)
+    await startGpsNavigation(user)
+    await waitFor(() => expect(geolocation.watchPosition).toHaveBeenCalledTimes(1))
+
+    const baseTimestamp = Date.now() - 20_000
+    act(() => {
+      geolocation.emitPosition({
+        lat: 48.855,
+        lon: 2.35002,
+        accuracy: 5,
+        timestamp: baseTimestamp,
+      })
+    })
+    expect(screen.queryByTestId('navigation-off-route-alert')).not.toBeInTheDocument()
+    emitConfirmedDeviation(geolocation, baseTimestamp)
+
+    expect(await screen.findByTestId('navigation-off-route-alert')).toBeVisible()
+    expect(screen.getByTestId('navigation-off-route-distance')).toHaveTextContent(
+      'Écart estimé : environ',
+    )
+
+    await user.click(screen.getByTestId('navigation-recalculate-from-position'))
+
+    await waitFor(() => {
+      expect(getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)).toHaveLength(1)
+    })
+    const [payload] = getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)
+    expect(payload.from).toEqual({
+      lat: 48.855,
+      lon: 2.352,
+      label: 'Position GPS actuelle',
+    })
+    expect(payload.from.lon).not.toBe(2.35)
+    expect(payload.to).toEqual({
+      lat: 48.86,
+      lon: 2.35,
+      label: 'Destination initiale',
+    })
+    expect(payload.mode).toBe('ebike')
+    expect(payload.options).toEqual(routeOptionVariants[0])
+    expect(payload.speedKmh).toBe(25)
+    expect(payload.ebikeAssist).toBe('medium')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('navigation-recalculation-success')).toHaveTextContent(
+        'Itinéraire recalculé',
+      )
+      expect(screen.getByTestId('nav-exit')).toBeInTheDocument()
+      expect(screen.getByText('Mode GPS réel')).toBeInTheDocument()
+      expect(screen.queryByTestId('navigation-off-route-alert')).not.toBeInTheDocument()
+      expect(geolocation.watchPosition).toHaveBeenCalledTimes(2)
+    })
+    const storedRoute = JSON.parse(localStorage.getItem(routeStorageKey) ?? 'null') as TripResult
+    expect(storedRoute.geometry).toEqual(recalculatedRoute.geometry)
+  })
+
+  it('continue sans recalcul puis réarme l’avertissement après retour sur le trajet', async () => {
+    const user = userEvent.setup()
+    setupStoredGpsNavigation()
+    const geolocation = installGeolocationMock()
+
+    renderWithProviders(<App />)
+    await startGpsNavigation(user)
+    await waitFor(() => expect(geolocation.watchPosition).toHaveBeenCalledTimes(1))
+
+    const baseTimestamp = Date.now() - 20_000
+    emitConfirmedDeviation(geolocation, baseTimestamp)
+    await user.click(await screen.findByTestId('navigation-dismiss-off-route'))
+
+    expect(screen.queryByTestId('navigation-off-route-alert')).not.toBeInTheDocument()
+    act(() => {
+      geolocation.emitPosition({
+        lat: 48.855,
+        lon: 2.352,
+        accuracy: 5,
+        timestamp: baseTimestamp + 9000,
+      })
+    })
+    expect(screen.queryByTestId('navigation-off-route-alert')).not.toBeInTheDocument()
+
+    act(() => {
+      geolocation.emitPosition({
+        lat: 48.855,
+        lon: 2.35002,
+        accuracy: 5,
+        timestamp: baseTimestamp + 10_000,
+      })
+      geolocation.emitPosition({
+        lat: 48.855,
+        lon: 2.35002,
+        accuracy: 5,
+        timestamp: baseTimestamp + 11_000,
+      })
+      geolocation.emitPosition({
+        lat: 48.855,
+        lon: 2.352,
+        accuracy: 5,
+        timestamp: baseTimestamp + 12_000,
+      })
+      geolocation.emitPosition({
+        lat: 48.855,
+        lon: 2.352,
+        accuracy: 5,
+        timestamp: baseTimestamp + 15_000,
+      })
+      geolocation.emitPosition({
+        lat: 48.855,
+        lon: 2.352,
+        accuracy: 5,
+        timestamp: baseTimestamp + 18_000,
+      })
+    })
+
+    expect(await screen.findByTestId('navigation-off-route-alert')).toBeVisible()
+  })
+
+  it('conserve l’ancien trajet et autorise une nouvelle tentative après un échec', async () => {
+    const user = userEvent.setup()
+    setupStoredGpsNavigation()
+    const geolocation = installGeolocationMock()
+    const mockFetch = createAppFetchMock((url) =>
+      url === apiPaths.route ? createJsonResponse({ message: 'Échec du test' }, 500) : undefined,
+    )
+    vi.stubGlobal('fetch', mockFetch)
+
+    renderWithProviders(<App />)
+    await startGpsNavigation(user)
+    await waitFor(() => expect(geolocation.watchPosition).toHaveBeenCalledTimes(1))
+    emitConfirmedDeviation(geolocation, Date.now() - 20_000)
+
+    await user.click(await screen.findByTestId('navigation-recalculate-from-position'))
+
+    expect(await screen.findByText('Impossible de recalculer l’itinéraire')).toBeVisible()
+    expect(screen.getByTestId('navigation-recalculate-from-position')).toBeEnabled()
+    expect(screen.getByTestId('nav-exit')).toBeInTheDocument()
+    const storedRoute = JSON.parse(localStorage.getItem(routeStorageKey) ?? 'null') as TripResult
+    expect(storedRoute.geometry).toEqual(gpsNavigationRoute.geometry)
+  })
+
+  it('empêche un double appel pendant le recalcul', async () => {
+    const user = userEvent.setup()
+    setupStoredGpsNavigation()
+    const geolocation = installGeolocationMock()
+    let resolveRouteResponse: ((response: Response) => void) | null = null
+    const routeResponse = new Promise<Response>((resolve) => {
+      resolveRouteResponse = resolve
+    })
+    const mockFetch = createAppFetchMock((url) =>
+      url === apiPaths.route ? routeResponse : undefined,
+    )
+    vi.stubGlobal('fetch', mockFetch)
+
+    renderWithProviders(<App />)
+    await startGpsNavigation(user)
+    await waitFor(() => expect(geolocation.watchPosition).toHaveBeenCalledTimes(1))
+    emitConfirmedDeviation(geolocation, Date.now() - 20_000)
+
+    const recalculateButton = await screen.findByTestId('navigation-recalculate-from-position')
+    await user.click(recalculateButton)
+
+    expect(recalculateButton).toBeDisabled()
+    expect(recalculateButton).toHaveTextContent('Recalcul en cours…')
+    fireEvent.click(recalculateButton)
+    expect(getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)).toHaveLength(1)
+
+    act(() => {
+      resolveRouteResponse?.(
+        createJsonResponse({
+          geometry: gpsNavigationRoute.geometry,
+          distance_m: gpsNavigationRoute.distance_m,
+          duration_s_engine: gpsNavigationRoute.duration_s_engine,
+          eta_s: gpsNavigationRoute.eta_s,
+          turn_by_turn: gpsNavigationRoute.turn_by_turn,
+          elevation_profile: gpsNavigationRoute.elevation_profile,
+        }),
+      )
+    })
+    expect(await screen.findByTestId('navigation-recalculation-success')).toBeVisible()
+  })
+
+  it('bloque le recalcul quand la dernière position devient trop imprécise', async () => {
+    const user = userEvent.setup()
+    setupStoredGpsNavigation()
+    const geolocation = installGeolocationMock()
+    const mockFetch = createAppFetchMock()
+    vi.stubGlobal('fetch', mockFetch)
+
+    renderWithProviders(<App />)
+    await startGpsNavigation(user)
+    await waitFor(() => expect(geolocation.watchPosition).toHaveBeenCalledTimes(1))
+    const baseTimestamp = Date.now() - 20_000
+    emitConfirmedDeviation(geolocation, baseTimestamp)
+
+    act(() => {
+      geolocation.emitPosition({
+        lat: 48.855,
+        lon: 2.352,
+        accuracy: 60,
+        timestamp: baseTimestamp + 9000,
+      })
+    })
+
+    expect(await screen.findByText('Position GPS trop imprécise')).toBeVisible()
+    expect(screen.getByTestId('navigation-recalculate-from-position')).toBeDisabled()
+    fireEvent.click(screen.getByTestId('navigation-recalculate-from-position'))
+    expect(getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)).toHaveLength(0)
+  })
+
+  it('détecte la sortie d’une boucle sans proposer de recalcul', async () => {
+    const user = userEvent.setup()
+    const loopRoute: TripResult = {
+      kind: 'loop',
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [2.35, 48.85],
+          [2.35, 48.86],
+          [2.36, 48.86],
+          [2.35, 48.85],
+        ],
+      },
+      distance_m: 3000,
+      eta_s: 600,
+      overlapScore: 'faible',
+      segmentsCount: 3,
+      elevation_profile: [],
+    }
+    setupStoredGpsNavigation(loopRoute)
+    const geolocation = installGeolocationMock()
+    const mockFetch = createAppFetchMock()
+    vi.stubGlobal('fetch', mockFetch)
+
+    renderWithProviders(<App />)
+    await startGpsNavigation(user)
+    await waitFor(() => expect(geolocation.watchPosition).toHaveBeenCalledTimes(1))
+    const baseTimestamp = Date.now() - 20_000
+    act(() => {
+      geolocation.emitPosition({ lat: 48.855, lon: 2.34, accuracy: 5, timestamp: baseTimestamp })
+      geolocation.emitPosition({
+        lat: 48.855,
+        lon: 2.34,
+        accuracy: 5,
+        timestamp: baseTimestamp + 3000,
+      })
+      geolocation.emitPosition({
+        lat: 48.855,
+        lon: 2.34,
+        accuracy: 5,
+        timestamp: baseTimestamp + 6000,
+      })
+    })
+
+    expect(await screen.findByTestId('navigation-off-route-alert')).toBeVisible()
+    expect(screen.getByText('Le recalcul des boucles n’est pas encore disponible')).toBeVisible()
+    expect(screen.queryByTestId('navigation-recalculate-from-position')).not.toBeInTheDocument()
+    expect(getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)).toHaveLength(0)
   })
 
   it('sauvegarde, modifie, ouvre et supprime un trajet depuis le carnet', async () => {

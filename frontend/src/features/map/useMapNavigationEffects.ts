@@ -2,16 +2,19 @@ import { useEffect, type Dispatch, type MutableRefObject, type SetStateAction } 
 import type { TFunction } from 'i18next'
 import {
   haversineDistanceMeters,
+  createNavigationDeviationState,
   kmhToMps,
-  projectCoordinateOnRoute,
   sampleRouteAtDistance,
   simulationTickMs,
+  type NavigationDeviationState,
   type NavigationMode,
   type NavigationProgress,
+  type NavigationRecalculationStatus,
   type PoiCategory,
   type PoiItem,
   type RouteKey,
 } from '../routing/domain'
+import { useGpsNavigationTracking } from './useGpsNavigationTracking'
 
 type UseMapNavigationEffectsParams = {
   route: RouteKey
@@ -42,6 +45,8 @@ type UseMapNavigationEffectsParams = {
   setIsMobilePoiDetailsExpanded: (value: boolean) => void
   setNavigationProgress: Dispatch<SetStateAction<NavigationProgress | null>>
   setNavigationError: (value: string | null) => void
+  setNavigationDeviationState: Dispatch<SetStateAction<NavigationDeviationState>>
+  setNavigationRecalculationStatus: Dispatch<SetStateAction<NavigationRecalculationStatus>>
   setActivePoiAlertId: (value: string | null) => void
   t: TFunction
 }
@@ -75,6 +80,8 @@ export const useMapNavigationEffects = ({
   setIsMobilePoiDetailsExpanded,
   setNavigationProgress,
   setNavigationError,
+  setNavigationDeviationState,
+  setNavigationRecalculationStatus,
   setActivePoiAlertId,
   t,
 }: UseMapNavigationEffectsParams) => {
@@ -127,13 +134,17 @@ export const useMapNavigationEffects = ({
     alertSeenPoiIdsRef.current.clear()
     setNavigationProgress(null)
     setNavigationError(null)
+    setNavigationDeviationState(createNavigationDeviationState())
+    setNavigationRecalculationStatus('idle')
     setActivePoiAlertId(null)
   }, [
     alertSeenPoiIdsRef,
     isNavigationActive,
     setActivePoiAlertId,
     setNavigationError,
+    setNavigationDeviationState,
     setNavigationProgress,
+    setNavigationRecalculationStatus,
     simulationDistanceRef,
   ])
 
@@ -157,6 +168,7 @@ export const useMapNavigationEffects = ({
     }
 
     simulationDistanceRef.current = 0
+    setNavigationDeviationState(createNavigationDeviationState())
     setNavigationProgress({
       ...initialPoint,
       source: navigationMode,
@@ -170,6 +182,7 @@ export const useMapNavigationEffects = ({
     routeCumulativeDistances,
     setActivePoiAlertId,
     setNavigationError,
+    setNavigationDeviationState,
     setNavigationProgress,
     simulationDistanceRef,
     simulationSpeedKmh,
@@ -234,79 +247,17 @@ export const useMapNavigationEffects = ({
     simulationSpeedKmh,
   ])
 
-  useEffect(() => {
-    if (
-      !isNavigationActive ||
-      navigationMode !== 'gps' ||
-      routeCoordinates.length < 2 ||
-      routeCumulativeDistances.length < 2
-    ) {
-      return
-    }
-
-    if (!('geolocation' in navigator)) {
-      setNavigationError(t('navigationGpsUnsupported'))
-      return
-    }
-
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        const projection = projectCoordinateOnRoute(
-          [position.coords.longitude, position.coords.latitude],
-          routeCoordinates,
-          routeCumulativeDistances,
-        )
-        if (!projection) {
-          return
-        }
-
-        simulationDistanceRef.current = projection.distance_m
-        setNavigationError(null)
-        setNavigationProgress({
-          ...projection,
-          source: 'gps',
-          speed_mps:
-            typeof position.coords.speed === 'number' && position.coords.speed > 0
-              ? position.coords.speed
-              : null,
-        })
-      },
-      (error) => {
-        if (error.code === error.PERMISSION_DENIED) {
-          setNavigationError(t('navigationGpsPermissionDenied'))
-          return
-        }
-        if (error.code === error.TIMEOUT) {
-          setNavigationError(t('navigationGpsTimeout'))
-          return
-        }
-        if (error.code === error.POSITION_UNAVAILABLE) {
-          setNavigationError(t('navigationGpsUnavailable'))
-          return
-        }
-
-        setNavigationError(t('navigationGpsFailed'))
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 1000,
-      },
-    )
-
-    return () => {
-      navigator.geolocation.clearWatch(watchId)
-    }
-  }, [
+  useGpsNavigationTracking({
     isNavigationActive,
     navigationMode,
     routeCoordinates,
     routeCumulativeDistances,
-    setNavigationError,
-    setNavigationProgress,
     simulationDistanceRef,
+    setNavigationProgress,
+    setNavigationError,
+    setNavigationDeviationState,
     t,
-  ])
+  })
 
   useEffect(() => {
     if (

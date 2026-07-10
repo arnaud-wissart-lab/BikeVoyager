@@ -23,6 +23,10 @@ export type NavigationProgress = {
   source: NavigationMode
   speed_mps: number | null
   distance_to_route_m?: number
+  observed_lat?: number
+  observed_lon?: number
+  accuracy_m?: number
+  observed_at_ms?: number
 }
 
 export type ProfileSettings = {

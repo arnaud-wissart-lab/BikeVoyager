@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import type { ComponentProps } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import MapNavigationOverlay from '../ui/pages/map/MapNavigationOverlay'
@@ -29,6 +30,10 @@ const baseProps: MapNavigationOverlayProps = {
   navigationCameraMode: 'follow_3d',
   onNavigationCameraModeChange: vi.fn(),
   navigationError: null,
+  navigationOffRouteAlert: null,
+  navigationRecalculationSuccessMessage: null,
+  onRecalculateFromCurrentPosition: vi.fn(),
+  onDismissNavigationDeviation: vi.fn(),
   activePoiAlert: null,
   getPoiDisplayName: () => '',
   poiCategoryLabels: {
@@ -140,5 +145,138 @@ describe('MapNavigationOverlay', () => {
     renderOverlay({ wakeLockStatus: 'idle' })
 
     expect(screen.queryByTestId('navigation-wake-lock-status')).not.toBeInTheDocument()
+  })
+
+  it('affiche un avertissement compact sans masquer le guidage et les contrôles', () => {
+    renderOverlay({
+      navigationMode: 'gps',
+      navigationOffRouteAlert: {
+        distanceLabel: '75 m',
+        showRecalculateAction: true,
+        isRecalculateDisabled: false,
+        isRecalculating: false,
+        unavailableMessage: null,
+        errorMessage: null,
+      },
+    })
+
+    expect(screen.getByTestId('navigation-off-route-alert')).toBeInTheDocument()
+    expect(screen.getByTestId('navigation-off-route-distance')).toHaveTextContent(
+      'Écart estimé : environ 75 m',
+    )
+    expect(screen.getByTestId('navigation-active-instruction')).toBeInTheDocument()
+    expect(screen.getByTestId('nav-exit')).toBeInTheDocument()
+    expect(screen.getByText('Suivi 3D')).toBeInTheDocument()
+  })
+
+  it('déclenche le recalcul et permet de continuer sans recalcul', async () => {
+    const user = userEvent.setup()
+    const onRecalculateFromCurrentPosition = vi.fn()
+    const onDismissNavigationDeviation = vi.fn()
+    renderOverlay({
+      navigationOffRouteAlert: {
+        distanceLabel: '75 m',
+        showRecalculateAction: true,
+        isRecalculateDisabled: false,
+        isRecalculating: false,
+        unavailableMessage: null,
+        errorMessage: null,
+      },
+      onRecalculateFromCurrentPosition,
+      onDismissNavigationDeviation,
+    })
+
+    await user.click(screen.getByTestId('navigation-recalculate-from-position'))
+    await user.click(screen.getByTestId('navigation-dismiss-off-route'))
+
+    expect(onRecalculateFromCurrentPosition).toHaveBeenCalledTimes(1)
+    expect(onDismissNavigationDeviation).toHaveBeenCalledTimes(1)
+  })
+
+  it('désactive le recalcul et affiche son état de chargement', () => {
+    renderOverlay({
+      navigationOffRouteAlert: {
+        distanceLabel: '75 m',
+        showRecalculateAction: true,
+        isRecalculateDisabled: true,
+        isRecalculating: true,
+        unavailableMessage: null,
+        errorMessage: null,
+      },
+    })
+
+    expect(screen.getByTestId('navigation-recalculate-from-position')).toBeDisabled()
+    expect(screen.getByTestId('navigation-recalculate-from-position')).toHaveTextContent(
+      'Recalcul en cours…',
+    )
+  })
+
+  it('affiche une erreur de recalcul non bloquante', () => {
+    renderOverlay({
+      navigationOffRouteAlert: {
+        distanceLabel: '75 m',
+        showRecalculateAction: true,
+        isRecalculateDisabled: false,
+        isRecalculating: false,
+        unavailableMessage: null,
+        errorMessage: 'Impossible de recalculer l’itinéraire',
+      },
+    })
+
+    expect(screen.getByText('Impossible de recalculer l’itinéraire')).toBeInTheDocument()
+    expect(screen.getByTestId('navigation-recalculate-from-position')).toBeEnabled()
+    expect(screen.getByTestId('nav-exit')).toBeEnabled()
+  })
+
+  it('masque le recalcul de boucle tout en permettant de continuer', () => {
+    renderOverlay({
+      navigationOffRouteAlert: {
+        distanceLabel: '75 m',
+        showRecalculateAction: false,
+        isRecalculateDisabled: true,
+        isRecalculating: false,
+        unavailableMessage: 'Le recalcul des boucles n’est pas encore disponible',
+        errorMessage: null,
+      },
+    })
+
+    expect(screen.queryByTestId('navigation-recalculate-from-position')).not.toBeInTheDocument()
+    expect(screen.getByText('Le recalcul des boucles n’est pas encore disponible')).toBeVisible()
+    expect(screen.getByTestId('navigation-dismiss-off-route')).toBeEnabled()
+  })
+
+  it('désactive le recalcul avec étapes sans les abandonner silencieusement', () => {
+    renderOverlay({
+      navigationOffRouteAlert: {
+        distanceLabel: '75 m',
+        showRecalculateAction: true,
+        isRecalculateDisabled: true,
+        isRecalculating: false,
+        unavailableMessage: 'Le recalcul avec des étapes intermédiaires n’est pas disponible',
+        errorMessage: null,
+      },
+    })
+
+    expect(screen.getByTestId('navigation-recalculate-from-position')).toBeDisabled()
+    expect(
+      screen.getByText('Le recalcul avec des étapes intermédiaires n’est pas disponible'),
+    ).toBeVisible()
+    expect(screen.getByTestId('navigation-dismiss-off-route')).toBeEnabled()
+  })
+
+  it('n’affiche aucun avertissement lorsque la navigation est inactive', () => {
+    renderOverlay({
+      isNavigationActive: false,
+      navigationOffRouteAlert: {
+        distanceLabel: '75 m',
+        showRecalculateAction: true,
+        isRecalculateDisabled: false,
+        isRecalculating: false,
+        unavailableMessage: null,
+        errorMessage: null,
+      },
+    })
+
+    expect(screen.queryByTestId('navigation-off-route-alert')).not.toBeInTheDocument()
   })
 })

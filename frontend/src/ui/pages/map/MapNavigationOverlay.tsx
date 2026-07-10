@@ -26,6 +26,17 @@ type MapNavigationOverlayProps = {
   navigationCameraMode: NavigationCameraMode
   onNavigationCameraModeChange: (value: string) => void
   navigationError: string | null
+  navigationOffRouteAlert: {
+    distanceLabel: string
+    showRecalculateAction: boolean
+    isRecalculateDisabled: boolean
+    isRecalculating: boolean
+    unavailableMessage: string | null
+    errorMessage: string | null
+  } | null
+  navigationRecalculationSuccessMessage: string | null
+  onRecalculateFromCurrentPosition: () => void
+  onDismissNavigationDeviation: () => void
   activePoiAlert: PoiItem | null
   getPoiDisplayName: (poi: PoiItem | null) => string
   poiCategoryLabels: Record<PoiCategory, string>
@@ -50,6 +61,10 @@ export default function MapNavigationOverlay({
   navigationCameraMode,
   onNavigationCameraModeChange,
   navigationError,
+  navigationOffRouteAlert,
+  navigationRecalculationSuccessMessage,
+  onRecalculateFromCurrentPosition,
+  onDismissNavigationDeviation,
   activePoiAlert,
   getPoiDisplayName,
   poiCategoryLabels,
@@ -73,18 +88,27 @@ export default function MapNavigationOverlay({
         style={{
           position: 'absolute',
           top: mapOverlayPadding,
+          bottom: mapOverlayPadding,
           left: mapOverlayPadding,
           right: mapOverlayPadding,
           display: 'flex',
+          alignItems: 'flex-start',
           justifyContent: 'center',
-          pointerEvents: 'auto',
+          pointerEvents: 'none',
         }}
       >
         <Paper
           withBorder
           radius="md"
           p="sm"
-          style={{ backgroundColor: surfaceColor, width: '100%', maxWidth: 520 }}
+          style={{
+            backgroundColor: surfaceColor,
+            width: '100%',
+            maxWidth: 520,
+            maxHeight: '100%',
+            overflowY: 'auto',
+            pointerEvents: 'auto',
+          }}
         >
           <Stack gap={6}>
             <Group justify="space-between" align="center" wrap="nowrap">
@@ -135,6 +159,77 @@ export default function MapNavigationOverlay({
                 )}
               </Stack>
             )}
+            <SegmentedControl
+              size="xs"
+              radius="xl"
+              value={navigationCameraMode}
+              onChange={onNavigationCameraModeChange}
+              data={[
+                { label: t('navigationViewFollow3d'), value: 'follow_3d' },
+                { label: t('navigationViewPanoramic3d'), value: 'panoramic_3d' },
+                { label: t('navigationViewOverview2d'), value: 'overview_2d' },
+              ]}
+              fullWidth
+            />
+            {navigationOffRouteAlert && (
+              <Paper
+                withBorder
+                radius="md"
+                p="xs"
+                bg="var(--mantine-color-orange-light)"
+                data-testid="navigation-off-route-alert"
+                role="status"
+                aria-live="polite"
+              >
+                <Stack gap={6}>
+                  <Text size="sm" fw={700} c="orange.8">
+                    {t('navigationOffRouteTitle')}
+                  </Text>
+                  <Text size="xs" data-testid="navigation-off-route-distance">
+                    {t('navigationOffRouteDistance', {
+                      distance: navigationOffRouteAlert.distanceLabel,
+                    })}
+                  </Text>
+                  {navigationOffRouteAlert.unavailableMessage && (
+                    <Text size="xs" c="dimmed">
+                      {navigationOffRouteAlert.unavailableMessage}
+                    </Text>
+                  )}
+                  {navigationOffRouteAlert.errorMessage && (
+                    <Text size="xs" c="red.7">
+                      {navigationOffRouteAlert.errorMessage}
+                    </Text>
+                  )}
+                  <Group gap="xs" grow wrap="wrap" align="stretch">
+                    {navigationOffRouteAlert.showRecalculateAction && (
+                      <Button
+                        size="xs"
+                        variant="filled"
+                        color="orange"
+                        onClick={onRecalculateFromCurrentPosition}
+                        disabled={navigationOffRouteAlert.isRecalculateDisabled}
+                        data-testid="navigation-recalculate-from-position"
+                        style={{ flex: '1 1 210px' }}
+                      >
+                        {navigationOffRouteAlert.isRecalculating
+                          ? t('navigationRecalculating')
+                          : t('navigationRecalculateFromPosition')}
+                      </Button>
+                    )}
+                    <Button
+                      size="xs"
+                      variant="subtle"
+                      color="gray"
+                      onClick={onDismissNavigationDeviation}
+                      data-testid="navigation-dismiss-off-route"
+                      style={{ flex: '1 1 180px' }}
+                    >
+                      {t('navigationContinueWithoutRecalculation')}
+                    </Button>
+                  </Group>
+                </Stack>
+              </Paper>
+            )}
             <Group gap="lg" justify="center" wrap="nowrap">
               <Stack gap={2} align="center">
                 <Text size="xs" c="dimmed">
@@ -165,21 +260,14 @@ export default function MapNavigationOverlay({
                     : t('navigationWakeLockError')}
               </Text>
             )}
-            <SegmentedControl
-              size="xs"
-              radius="xl"
-              value={navigationCameraMode}
-              onChange={onNavigationCameraModeChange}
-              data={[
-                { label: t('navigationViewFollow3d'), value: 'follow_3d' },
-                { label: t('navigationViewPanoramic3d'), value: 'panoramic_3d' },
-                { label: t('navigationViewOverview2d'), value: 'overview_2d' },
-              ]}
-              fullWidth
-            />
             {navigationError && (
               <Text size="xs" c="red.6">
                 {navigationError}
+              </Text>
+            )}
+            {navigationRecalculationSuccessMessage && (
+              <Text size="xs" c="teal.7" data-testid="navigation-recalculation-success">
+                {navigationRecalculationSuccessMessage}
               </Text>
             )}
           </Stack>

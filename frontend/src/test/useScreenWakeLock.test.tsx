@@ -57,11 +57,13 @@ const installWakeLock = (request: WakeLock['request']) => {
 
 const createDeferred = <T,>() => {
   let resolve!: (value: T) => void
-  const promise = new Promise<T>((resolvePromise) => {
+  let reject!: (reason?: unknown) => void
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
     resolve = resolvePromise
+    reject = rejectPromise
   })
 
-  return { promise, resolve }
+  return { promise, reject, resolve }
 }
 
 afterEach(() => {
@@ -287,5 +289,105 @@ describe('useScreenWakeLock', () => {
 
     expect(result.current.status).toBe('idle')
     expect(request).toHaveBeenCalledTimes(2)
+  })
+
+  it('rejoue la demande après un retour visible pendant une demande qui échoue', async () => {
+    const firstRequest = createDeferred<WakeLockSentinel>()
+    const secondSentinel = new FakeWakeLockSentinel()
+    const request = vi
+      .fn<WakeLock['request']>()
+      .mockReturnValueOnce(firstRequest.promise)
+      .mockResolvedValueOnce(secondSentinel)
+    installWakeLock(request)
+    const { result } = renderHook(() => useScreenWakeLock(true))
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(1))
+
+    act(() => {
+      setVisibilityState('hidden')
+      document.dispatchEvent(new Event('visibilitychange'))
+      setVisibilityState('visible')
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
+    await act(async () => {
+      firstRequest.reject(new DOMException('Autorisation refusée', 'NotAllowedError'))
+      await Promise.resolve()
+    })
+
+    await waitFor(() => {
+      expect(request).toHaveBeenCalledTimes(2)
+      expect(result.current.status).toBe('active')
+    })
+  })
+
+  it('rejoue une seule fois la demande quand le sentinel reçu est déjà libéré', async () => {
+    const releasedSentinel = new FakeWakeLockSentinel()
+    releasedSentinel.released = true
+    const activeSentinel = new FakeWakeLockSentinel()
+    const request = vi
+      .fn<WakeLock['request']>()
+      .mockResolvedValueOnce(releasedSentinel)
+      .mockResolvedValueOnce(activeSentinel)
+    installWakeLock(request)
+
+    const { result } = renderHook(() => useScreenWakeLock(true))
+
+    await waitFor(() => {
+      expect(request).toHaveBeenCalledTimes(2)
+      expect(result.current.status).toBe('active')
+    })
+    expect(releasedSentinel.release).not.toHaveBeenCalled()
+  })
+
+  it('ne duplique pas la demande si la première réussit après un retour visible', async () => {
+    const firstRequest = createDeferred<WakeLockSentinel>()
+    const activeSentinel = new FakeWakeLockSentinel()
+    const request = vi.fn<WakeLock['request']>().mockReturnValue(firstRequest.promise)
+    installWakeLock(request)
+    const { result } = renderHook(() => useScreenWakeLock(true))
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(1))
+
+    act(() => {
+      setVisibilityState('hidden')
+      document.dispatchEvent(new Event('visibilitychange'))
+      setVisibilityState('visible')
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
+    await act(async () => {
+      firstRequest.resolve(activeSentinel)
+      await firstRequest.promise
+    })
+
+    await waitFor(() => expect(result.current.status).toBe('active'))
+    expect(request).toHaveBeenCalledTimes(1)
+  })
+
+  it('annule la reprise en attente si la navigation s’arrête pendant la demande', async () => {
+    const firstRequest = createDeferred<WakeLockSentinel>()
+    const lateSentinel = new FakeWakeLockSentinel()
+    const request = vi.fn<WakeLock['request']>().mockReturnValue(firstRequest.promise)
+    installWakeLock(request)
+    const { result, rerender } = renderHook(
+      ({ enabled }: { enabled: boolean }) => useScreenWakeLock(enabled),
+      { initialProps: { enabled: true } },
+    )
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(1))
+
+    act(() => {
+      setVisibilityState('hidden')
+      document.dispatchEvent(new Event('visibilitychange'))
+      setVisibilityState('visible')
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
+    rerender({ enabled: false })
+    await act(async () => {
+      firstRequest.resolve(lateSentinel)
+      await firstRequest.promise
+    })
+
+    await waitFor(() => {
+      expect(lateSentinel.release).toHaveBeenCalledTimes(1)
+      expect(result.current.status).toBe('idle')
+    })
+    expect(request).toHaveBeenCalledTimes(1)
   })
 })

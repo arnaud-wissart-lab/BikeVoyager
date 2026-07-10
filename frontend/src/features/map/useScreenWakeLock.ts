@@ -171,18 +171,19 @@ export const useScreenWakeLock = (enabled: boolean): UseScreenWakeLockResult => 
         requestInFlightRef.current = null
       }
 
-      const pendingGeneration = pendingGenerationRef.current
-      pendingGenerationRef.current = null
-      if (
-        pendingGeneration !== null &&
-        pendingGeneration !== generation &&
-        pendingGeneration === generationRef.current &&
-        mountedRef.current &&
-        enabledRef.current &&
-        !sentinelRef.current &&
-        isDocumentVisible()
-      ) {
-        requestWakeLockRef.current()
+      if (requestInFlightRef.current === null) {
+        const pendingGeneration = pendingGenerationRef.current
+        pendingGenerationRef.current = null
+        if (
+          pendingGeneration !== null &&
+          pendingGeneration === generationRef.current &&
+          mountedRef.current &&
+          enabledRef.current &&
+          !sentinelRef.current &&
+          isDocumentVisible()
+        ) {
+          requestWakeLockRef.current()
+        }
       }
     }
   }, [clearSentinel, updateResult])

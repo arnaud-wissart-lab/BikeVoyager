@@ -418,6 +418,7 @@ describe('App routing', () => {
       expect(window.location.hash).toBe('#/carte')
     })
     expect(screen.getAllByText('465.0 km').length).toBeGreaterThan(0)
+    await user.click(screen.getByRole('button', { name: 'Feuille de route' }))
     expect(screen.getByText('Quitter Paris par Rue Test')).toBeInTheDocument()
     expect(screen.getByText('Continuer vers Lyon')).toBeInTheDocument()
 

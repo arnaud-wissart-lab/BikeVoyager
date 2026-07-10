@@ -1,4 +1,4 @@
-import { Box, Button, Collapse, Group, Stack, Text } from '@mantine/core'
+import { Box, Button, Group, Stack, Text } from '@mantine/core'
 import {
   IconChevronDown,
   IconChevronUp,
@@ -73,7 +73,7 @@ export default function MapSummaryPanel({
 }: MapSummaryPanelProps) {
   const { t } = useTranslation()
   const roadbookPanelId = useId()
-  const [isRoadbookOpen, setIsRoadbookOpen] = useState(() => !isCompact)
+  const [isRoadbookOpen, setIsRoadbookOpen] = useState(false)
   const roadbookSteps = useMemo(
     () => (routeResult?.kind === 'route' ? normalizeRouteSteps(routeResult.turn_by_turn) : []),
     [routeResult],
@@ -157,51 +157,61 @@ export default function MapSummaryPanel({
           >
             {t('roadbookTitle')}
           </Button>
-          <Collapse in={isRoadbookOpen}>
+          {isRoadbookOpen && (
             <Stack id={roadbookPanelId} gap={isCompact ? 6 : 8} pt={isCompact ? 6 : 8}>
               <Text size="xs" fw={600}>
                 {t('roadbookStepsTitle')}
               </Text>
               {roadbookSteps.length > 0 ? (
                 <Box
-                  component="ol"
-                  aria-label={t('roadbookStepsTitle')}
+                  data-testid="roadbook-steps-scroll"
                   style={{
-                    margin: 0,
-                    paddingLeft: isCompact ? 18 : 20,
-                    display: 'grid',
-                    gap: isCompact ? 6 : 8,
+                    maxHeight: isCompact ? 220 : 'min(32dvh, 280px)',
+                    overflowY: 'auto',
+                    overscrollBehavior: 'contain',
+                    paddingRight: 4,
                   }}
                 >
-                  {roadbookSteps.map((step, index) => {
-                    const distanceLabel = step.distanceLabel ?? t('placeholderValue')
-                    const durationLabel = step.durationLabel ?? t('placeholderValue')
+                  <Box
+                    component="ol"
+                    aria-label={t('roadbookStepsTitle')}
+                    style={{
+                      margin: 0,
+                      paddingLeft: isCompact ? 18 : 20,
+                      display: 'grid',
+                      gap: isCompact ? 6 : 8,
+                    }}
+                  >
+                    {roadbookSteps.map((step, index) => {
+                      const distanceLabel = step.distanceLabel ?? t('placeholderValue')
+                      const durationLabel = step.durationLabel ?? t('placeholderValue')
 
-                    return (
-                      <Box component="li" key={`${index}-${step.instruction ?? 'step'}`}>
-                        <Stack gap={2}>
-                          <Text size={metricTextSize} fw={500}>
-                            {step.instruction ?? t('roadbookStepFallback', { index: index + 1 })}
-                          </Text>
-                          <Text size="xs" c="dimmed">
-                            <Box
-                              component="span"
-                              aria-label={`${t('roadbookDistanceLabel')}: ${distanceLabel}`}
-                            >
-                              {distanceLabel}
-                            </Box>
-                            {' · '}
-                            <Box
-                              component="span"
-                              aria-label={`${t('roadbookDurationLabel')}: ${durationLabel}`}
-                            >
-                              {durationLabel}
-                            </Box>
-                          </Text>
-                        </Stack>
-                      </Box>
-                    )
-                  })}
+                      return (
+                        <Box component="li" key={`${index}-${step.instruction ?? 'step'}`}>
+                          <Stack gap={2}>
+                            <Text size={metricTextSize} fw={500}>
+                              {step.instruction ?? t('roadbookStepFallback', { index: index + 1 })}
+                            </Text>
+                            <Text size="xs" c="dimmed">
+                              <Box
+                                component="span"
+                                aria-label={`${t('roadbookDistanceLabel')}: ${distanceLabel}`}
+                              >
+                                {distanceLabel}
+                              </Box>
+                              {' · '}
+                              <Box
+                                component="span"
+                                aria-label={`${t('roadbookDurationLabel')}: ${durationLabel}`}
+                              >
+                                {durationLabel}
+                              </Box>
+                            </Text>
+                          </Stack>
+                        </Box>
+                      )
+                    })}
+                  </Box>
                 </Box>
               ) : (
                 <Text size="xs" c="dimmed">
@@ -209,7 +219,7 @@ export default function MapSummaryPanel({
                 </Text>
               )}
             </Stack>
-          </Collapse>
+          )}
         </Box>
       )}
       {routeResult?.kind === 'loop' && (

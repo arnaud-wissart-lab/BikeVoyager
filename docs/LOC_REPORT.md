@@ -1,7 +1,7 @@
 # LOC Report
 
-- Date: 2026-07-09 16:11:22 +02:00
-- Commit: `fe35976`
+- Date: 2026-07-10 12:48:34 +02:00
+- Commit: `72ed488`
 - Methode: comptage des LF (`\n`) ; lignes = LF + (0 si fin de fichier sur LF, sinon +1), 0 si fichier vide.
 - Scope: `backend, frontend, docs`
 - Threshold: `400`

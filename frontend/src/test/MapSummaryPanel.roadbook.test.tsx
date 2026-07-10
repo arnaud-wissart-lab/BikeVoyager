@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { ComponentProps } from 'react'
 import MapSummaryPanel from '../ui/pages/MapSummaryPanel'
@@ -54,7 +55,9 @@ const renderPanel = (props: Partial<MapSummaryPanelProps> = {}) =>
   renderWithProviders(<MapSummaryPanel {...baseProps} {...props} />)
 
 describe('MapSummaryPanel roadbook', () => {
-  it('affiche les instructions dans le bon ordre avec distance et durée', () => {
+  it('affiche les instructions dans le bon ordre avec distance et durée', async () => {
+    const user = userEvent.setup()
+
     renderPanel({
       routeResult: {
         ...baseRoute,
@@ -75,7 +78,11 @@ describe('MapSummaryPanel roadbook', () => {
       },
     })
 
-    expect(screen.getByRole('button', { name: 'Feuille de route' })).toBeInTheDocument()
+    const roadbookButton = screen.getByRole('button', { name: 'Feuille de route' })
+    expect(roadbookButton).toBeInTheDocument()
+    expect(roadbookButton).toHaveAttribute('aria-expanded', 'false')
+
+    await user.click(roadbookButton)
 
     const items = screen.getAllByRole('listitem')
     expect(items).toHaveLength(2)
@@ -94,7 +101,9 @@ describe('MapSummaryPanel roadbook', () => {
     expect(screen.queryByText('Étapes du trajet')).not.toBeInTheDocument()
   })
 
-  it('affiche un fallback si les instructions présentes ne sont pas exploitables', () => {
+  it('affiche un fallback si les instructions présentes ne sont pas exploitables', async () => {
+    const user = userEvent.setup()
+
     renderPanel({
       routeResult: {
         ...baseRoute,
@@ -102,8 +111,53 @@ describe('MapSummaryPanel roadbook', () => {
       },
     })
 
-    expect(screen.getByRole('button', { name: 'Feuille de route' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Feuille de route' }))
+
     expect(screen.getByText('Aucune instruction disponible.')).toBeInTheDocument()
+  })
+
+  it('borne une longue feuille de route et garde les actions accessibles', async () => {
+    const user = userEvent.setup()
+    const steps = Array.from({ length: 40 }, (_, index) => ({
+      instruction: `Instruction longue ${index + 1}`,
+      distance_m: 100 + index,
+      duration_s: 60 + index,
+      type: 8,
+    }))
+
+    renderPanel({
+      routeResult: {
+        ...baseRoute,
+        turn_by_turn: steps,
+      },
+    })
+
+    const roadbookButton = screen.getByRole('button', { name: 'Feuille de route' })
+    expect(roadbookButton).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: 'Proposer un autre trajet' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Suivi / Simu GPS' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Exporter GPX' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sauvegarder ce trajet' })).toBeInTheDocument()
+
+    await user.click(roadbookButton)
+
+    expect(roadbookButton).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByText('Instruction longue 1')).toBeInTheDocument()
+    expect(screen.getByText('Instruction longue 40')).toBeInTheDocument()
+    expect(screen.getAllByRole('listitem')).toHaveLength(40)
+    expect(screen.getByTestId('roadbook-steps-scroll')).toHaveStyle({
+      maxHeight: 'min(32dvh, 280px)',
+      overflowY: 'auto',
+      overscrollBehavior: 'contain',
+    })
+    expect(screen.getByRole('button', { name: 'Proposer un autre trajet' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Suivi / Simu GPS' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Exporter GPX' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sauvegarder ce trajet' })).toBeInTheDocument()
+
+    await user.click(roadbookButton)
+
+    expect(roadbookButton).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('ne crée pas d’étapes pour une boucle', () => {

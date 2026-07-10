@@ -328,7 +328,20 @@ describe('App routing', () => {
       distance_m: 465000,
       duration_s_engine: 10000,
       eta_s: 10000,
-      turn_by_turn: [],
+      turn_by_turn: [
+        {
+          instruction: 'Quitter Paris par Rue Test',
+          distance_m: 120,
+          duration_s: 60,
+          type: 10,
+        },
+        {
+          instruction: 'Continuer vers Lyon',
+          distance_m: 850,
+          duration_s: 240,
+          type: 8,
+        },
+      ],
       elevation_profile: [],
     })
 
@@ -405,6 +418,9 @@ describe('App routing', () => {
       expect(window.location.hash).toBe('#/carte')
     })
     expect(screen.getAllByText('465.0 km').length).toBeGreaterThan(0)
+    await user.click(screen.getByRole('button', { name: 'Feuille de route' }))
+    expect(screen.getByText('Quitter Paris par Rue Test')).toBeInTheDocument()
+    expect(screen.getByText('Continuer vers Lyon')).toBeInTheDocument()
 
     await user.click(screen.getByRole('tab', { name: 'Données' }))
     await user.click(await screen.findByText('Trajets sauvegardés'))

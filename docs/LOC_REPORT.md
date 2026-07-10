@@ -10,7 +10,7 @@
 
 | Fichier | LOC |
 |---|---:|
-| `frontend/src/test/App.routing.test.tsx` | 883 |
+| `frontend/src/test/App.routing.test.tsx` | 884 |
 | `frontend/src/features/routing/useRoutingController.actions.ts` | 498 |
 | `frontend/src/features/routing/useRoutingController.ts` | 438 |
 | `frontend/src/features/map/useMapController.ts` | 400 |

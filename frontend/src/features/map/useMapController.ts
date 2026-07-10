@@ -8,12 +8,14 @@ import {
   isNavigationCameraMode,
   isNavigationMode,
   resolveNavigationGuidance,
+  shouldSuspendNavigationVoiceGuidance,
 } from '../routing/domain'
 import { useMapPoiFormatting } from './useMapPoiFormatting'
 import { useMapNavigationEffects } from './useMapNavigationEffects'
 import { useMapRouteSummary } from './useMapRouteSummary'
 import { useScreenWakeLock } from './useScreenWakeLock'
 import { useNavigationDeviationState } from './useNavigationDeviationState'
+import { useNavigationVoiceGuidance } from './useNavigationVoiceGuidance'
 
 type UseMapControllerParams = {
   store: AppStore
@@ -52,7 +54,9 @@ export const useMapController = ({
     navigationProgress,
     navigationDeviationState,
     navigationRecalculationStatus,
+    navigationVoiceSessionKey,
     isNavigationActive,
+    voiceGuidanceEnabled,
     poiAlertEnabled,
     poiAlertCategories,
     poiAlertDistanceMeters,
@@ -184,6 +188,19 @@ export const useMapController = ({
     routeDistanceMeters,
     routeResult,
   ])
+  const voiceRouteSessionKey = isNavigationActive && routeResult ? navigationVoiceSessionKey : null
+  const voiceGuidanceSuspended = shouldSuspendNavigationVoiceGuidance(
+    navigationDeviationState.status,
+    navigationRecalculationStatus,
+  )
+  const voiceGuidance = useNavigationVoiceGuidance({
+    enabled: voiceGuidanceEnabled,
+    isNavigationActive,
+    guidance: navigationGuidance,
+    routeSessionKey: voiceRouteSessionKey,
+    language: isFrench ? 'fr' : 'en',
+    suspended: voiceGuidanceSuspended,
+  })
   const poiDetourIds = useMemo(() => {
     const ids = new Set<string>()
     for (const point of detourPoints) {
@@ -408,6 +425,7 @@ export const useMapController = ({
     etaLabel,
     navigationProgressPct,
     navigationGuidance,
+    voiceGuidance,
     wakeLockStatus: screenWakeLock.status,
     expandedRouteBounds,
     mapStartCoordinate,

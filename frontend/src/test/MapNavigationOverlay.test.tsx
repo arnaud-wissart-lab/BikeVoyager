@@ -26,6 +26,8 @@ const baseProps: MapNavigationOverlayProps = {
   etaLabel: '5 min',
   navigationProgressPct: 20,
   navigationGuidance: guidance,
+  voiceGuidanceEnabled: false,
+  voiceGuidanceSupportStatus: 'supported',
   wakeLockStatus: 'idle',
   navigationCameraMode: 'follow_3d',
   onNavigationCameraModeChange: vi.fn(),
@@ -145,6 +147,31 @@ describe('MapNavigationOverlay', () => {
     renderOverlay({ wakeLockStatus: 'idle' })
 
     expect(screen.queryByTestId('navigation-wake-lock-status')).not.toBeInTheDocument()
+  })
+
+  it('affiche discrètement le guidage vocal actif sans masquer l’instruction', () => {
+    renderOverlay({ voiceGuidanceEnabled: true, voiceGuidanceSupportStatus: 'supported' })
+
+    expect(screen.getByTestId('navigation-voice-status')).toHaveTextContent('Guidage vocal actif')
+    expect(screen.getByTestId('navigation-active-instruction')).toBeInTheDocument()
+  })
+
+  it('affiche une erreur vocale non bloquante', () => {
+    renderOverlay({ voiceGuidanceEnabled: true, voiceGuidanceSupportStatus: 'error' })
+
+    expect(screen.getByTestId('navigation-voice-status')).toHaveTextContent(
+      'Guidage vocal indisponible',
+    )
+    expect(screen.getByRole('button', { name: 'Quitter' })).toBeEnabled()
+  })
+
+  it('masque le statut vocal si l’option est coupée ou non supportée', () => {
+    const firstRender = renderOverlay()
+    expect(screen.queryByTestId('navigation-voice-status')).not.toBeInTheDocument()
+
+    firstRender.unmount()
+    renderOverlay({ voiceGuidanceEnabled: true, voiceGuidanceSupportStatus: 'unsupported' })
+    expect(screen.queryByTestId('navigation-voice-status')).not.toBeInTheDocument()
   })
 
   it('affiche un avertissement compact sans masquer le guidage et les contrôles', () => {

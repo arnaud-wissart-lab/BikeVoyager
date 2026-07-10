@@ -10,6 +10,7 @@ import type {
 } from '../../../features/routing/domain'
 import { formatRouteStepDistance } from '../../../features/routing/domain'
 import type { ScreenWakeLockStatus } from '../../../features/map/useScreenWakeLock'
+import type { VoiceGuidanceSupportStatus } from '../../../features/map/useNavigationVoiceGuidance'
 
 type MapNavigationOverlayProps = {
   isNavigationActive: boolean
@@ -22,6 +23,8 @@ type MapNavigationOverlayProps = {
   etaLabel: string
   navigationProgressPct: number | null
   navigationGuidance: NavigationGuidance | null
+  voiceGuidanceEnabled: boolean
+  voiceGuidanceSupportStatus: VoiceGuidanceSupportStatus
   wakeLockStatus: ScreenWakeLockStatus
   navigationCameraMode: NavigationCameraMode
   onNavigationCameraModeChange: (value: string) => void
@@ -58,6 +61,8 @@ export default function MapNavigationOverlay({
   etaLabel,
   navigationProgressPct,
   navigationGuidance,
+  voiceGuidanceEnabled,
+  voiceGuidanceSupportStatus,
   wakeLockStatus,
   navigationCameraMode,
   onNavigationCameraModeChange,
@@ -260,6 +265,13 @@ export default function MapNavigationOverlay({
                   : wakeLockStatus === 'unsupported'
                     ? t('navigationWakeLockUnsupported')
                     : t('navigationWakeLockError')}
+              </Text>
+            )}
+            {voiceGuidanceEnabled && voiceGuidanceSupportStatus !== 'unsupported' && (
+              <Text size="xs" c="dimmed" data-testid="navigation-voice-status">
+                {voiceGuidanceSupportStatus === 'supported'
+                  ? t('navigationVoiceActive')
+                  : t('navigationVoiceUnavailable')}
               </Text>
             )}
             {navigationError && (

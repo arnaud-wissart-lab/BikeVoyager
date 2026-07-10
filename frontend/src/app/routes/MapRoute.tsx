@@ -253,6 +253,8 @@ export default function MapRoute({
     navigationMode: store.navigationMode,
     navigationCameraMode: store.navigationCameraMode,
     simulationSpeedKmh: mapController.simulationSpeedKmh,
+    voiceGuidanceEnabled: store.voiceGuidanceEnabled,
+    voiceGuidanceSupportStatus: mapController.voiceGuidance.supportStatus,
     poiAlertEnabled: store.poiAlertEnabled,
     poiAlertCategories: store.poiAlertCategories,
     poiAlertDistanceMeters: store.poiAlertDistanceMeters,
@@ -263,6 +265,7 @@ export default function MapRoute({
     poiAlertDistanceRange,
     onNavigationModeChange: mapController.handleNavigationModeChange,
     onNavigationCameraModeChange: mapController.handleNavigationCameraModeChange,
+    onVoiceGuidanceEnabledChange: store.setVoiceGuidanceEnabled,
     onPoiAlertEnabledChange: store.setPoiAlertEnabled,
     onPoiAlertCategoryChange: poisController.handlePoiAlertCategoryChange,
     onPoiAlertDistanceMetersChange: store.setPoiAlertDistanceMeters,
@@ -357,6 +360,8 @@ export default function MapRoute({
         etaLabel={mapController.etaLabel}
         navigationProgressPct={mapController.navigationProgressPct}
         navigationGuidance={mapController.navigationGuidance}
+        voiceGuidanceEnabled={store.voiceGuidanceEnabled}
+        voiceGuidanceSupportStatus={mapController.voiceGuidance.supportStatus}
         wakeLockStatus={mapController.wakeLockStatus}
         onNavigationCameraModeChange={mapController.handleNavigationCameraModeChange}
         navigationError={mapController.navigationError}

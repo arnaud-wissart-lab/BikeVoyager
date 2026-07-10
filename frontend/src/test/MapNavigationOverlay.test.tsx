@@ -155,6 +155,7 @@ describe('MapNavigationOverlay', () => {
         showRecalculateAction: true,
         isRecalculateDisabled: false,
         isRecalculating: false,
+        isDismissDisabled: false,
         unavailableMessage: null,
         errorMessage: null,
       },
@@ -179,6 +180,7 @@ describe('MapNavigationOverlay', () => {
         showRecalculateAction: true,
         isRecalculateDisabled: false,
         isRecalculating: false,
+        isDismissDisabled: false,
         unavailableMessage: null,
         errorMessage: null,
       },
@@ -200,6 +202,7 @@ describe('MapNavigationOverlay', () => {
         showRecalculateAction: true,
         isRecalculateDisabled: true,
         isRecalculating: true,
+        isDismissDisabled: true,
         unavailableMessage: null,
         errorMessage: null,
       },
@@ -209,6 +212,7 @@ describe('MapNavigationOverlay', () => {
     expect(screen.getByTestId('navigation-recalculate-from-position')).toHaveTextContent(
       'Recalcul en cours…',
     )
+    expect(screen.getByTestId('navigation-dismiss-off-route')).toBeDisabled()
   })
 
   it('affiche une erreur de recalcul non bloquante', () => {
@@ -218,6 +222,7 @@ describe('MapNavigationOverlay', () => {
         showRecalculateAction: true,
         isRecalculateDisabled: false,
         isRecalculating: false,
+        isDismissDisabled: false,
         unavailableMessage: null,
         errorMessage: 'Impossible de recalculer l’itinéraire',
       },
@@ -235,6 +240,7 @@ describe('MapNavigationOverlay', () => {
         showRecalculateAction: false,
         isRecalculateDisabled: true,
         isRecalculating: false,
+        isDismissDisabled: false,
         unavailableMessage: 'Le recalcul des boucles n’est pas encore disponible',
         errorMessage: null,
       },
@@ -252,6 +258,7 @@ describe('MapNavigationOverlay', () => {
         showRecalculateAction: true,
         isRecalculateDisabled: true,
         isRecalculating: false,
+        isDismissDisabled: false,
         unavailableMessage: 'Le recalcul avec des étapes intermédiaires n’est pas disponible',
         errorMessage: null,
       },
@@ -272,6 +279,7 @@ describe('MapNavigationOverlay', () => {
         showRecalculateAction: true,
         isRecalculateDisabled: false,
         isRecalculating: false,
+        isDismissDisabled: false,
         unavailableMessage: null,
         errorMessage: null,
       },

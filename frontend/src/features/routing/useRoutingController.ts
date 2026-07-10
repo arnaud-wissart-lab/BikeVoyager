@@ -51,6 +51,7 @@ export const useRoutingController = ({
     routeResult,
     navigationDeviationState,
     navigationRecalculationStatus,
+    setNavigationRecalculationStatus,
     routeErrorKey,
     routeErrorMessage,
     feedbackSubject,
@@ -141,6 +142,7 @@ export const useRoutingController = ({
       deviationState: navigationDeviationState,
       recalculationStatus: navigationRecalculationStatus,
       getRecalculationPlan: getNavigationRecalculationPlan,
+      setRecalculationStatus: setNavigationRecalculationStatus,
       t,
     })
 

@@ -11,6 +11,7 @@ type UseNavigationDeviationStateParams = {
   recalculationStatus: NavigationRecalculationStatus
   setDeviationState: Dispatch<SetStateAction<NavigationDeviationState>>
   setRecalculationStatus: Dispatch<SetStateAction<NavigationRecalculationStatus>>
+  invalidateRecalculation: () => void
 }
 
 export const useNavigationDeviationState = ({
@@ -18,15 +19,21 @@ export const useNavigationDeviationState = ({
   recalculationStatus,
   setDeviationState,
   setRecalculationStatus,
+  invalidateRecalculation,
 }: UseNavigationDeviationStateParams) => {
   const resetNavigationDeviation = useCallback(() => {
+    invalidateRecalculation()
     setDeviationState(createNavigationDeviationState())
     setRecalculationStatus('idle')
-  }, [setDeviationState, setRecalculationStatus])
+  }, [invalidateRecalculation, setDeviationState, setRecalculationStatus])
 
   const handleDismissNavigationDeviation = useCallback(() => {
+    if (recalculationStatus === 'loading') {
+      return
+    }
+
     setDeviationState((current) => dismissNavigationDeviation(current))
-  }, [setDeviationState])
+  }, [recalculationStatus, setDeviationState])
 
   useEffect(() => {
     if (deviationState.status === 'suspected' && recalculationStatus !== 'loading') {

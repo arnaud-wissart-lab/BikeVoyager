@@ -31,6 +31,7 @@ type MapNavigationOverlayProps = {
     showRecalculateAction: boolean
     isRecalculateDisabled: boolean
     isRecalculating: boolean
+    isDismissDisabled: boolean
     unavailableMessage: string | null
     errorMessage: string | null
   } | null
@@ -221,6 +222,7 @@ export default function MapNavigationOverlay({
                       variant="subtle"
                       color="gray"
                       onClick={onDismissNavigationDeviation}
+                      disabled={navigationOffRouteAlert.isDismissDisabled}
                       data-testid="navigation-dismiss-off-route"
                       style={{ flex: '1 1 180px' }}
                     >

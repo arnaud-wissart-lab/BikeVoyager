@@ -67,6 +67,7 @@ export const useMapController = ({
     setNavigationError,
     setNavigationDeviationState,
     setNavigationRecalculationStatus,
+    invalidateNavigationRecalculation,
     navigationError,
     setActivePoiAlertId,
     alertSeenPoiIdsRef,
@@ -122,6 +123,7 @@ export const useMapController = ({
       recalculationStatus: navigationRecalculationStatus,
       setDeviationState: setNavigationDeviationState,
       setRecalculationStatus: setNavigationRecalculationStatus,
+      invalidateRecalculation: invalidateNavigationRecalculation,
     })
 
   const resetPoiSelectionUi = useCallback(() => {

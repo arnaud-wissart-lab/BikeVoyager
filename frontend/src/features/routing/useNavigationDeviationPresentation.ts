@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
 import type { TFunction } from 'i18next'
 import {
   formatRouteStepDistance,
@@ -11,13 +11,17 @@ type UseNavigationDeviationPresentationParams = {
   deviationState: NavigationDeviationState
   recalculationStatus: NavigationRecalculationStatus
   getRecalculationPlan: (evaluatedAtMs: number) => NavigationRecalculationPlan
+  setRecalculationStatus: Dispatch<SetStateAction<NavigationRecalculationStatus>>
   t: TFunction
 }
+
+export const navigationRecalculationSuccessDurationMs = 4000
 
 export const useNavigationDeviationPresentation = ({
   deviationState,
   recalculationStatus,
   getRecalculationPlan,
+  setRecalculationStatus,
   t,
 }: UseNavigationDeviationPresentationParams) => {
   const [evaluatedAtMs, setEvaluatedAtMs] = useState(() => Date.now())
@@ -36,6 +40,20 @@ export const useNavigationDeviationPresentation = ({
       window.clearInterval(intervalId)
     }
   }, [deviationState.status])
+
+  useEffect(() => {
+    if (recalculationStatus !== 'success') {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setRecalculationStatus((current) => (current === 'success' ? 'idle' : current))
+    }, navigationRecalculationSuccessDurationMs)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [recalculationStatus, setRecalculationStatus])
 
   const recalculationPlan = getRecalculationPlan(evaluatedAtMs)
   const unavailableMessage = recalculationPlan.available
@@ -59,6 +77,7 @@ export const useNavigationDeviationPresentation = ({
           showRecalculateAction: recalculationPlan.available || recalculationPlan.reason !== 'loop',
           isRecalculateDisabled: !recalculationPlan.available || recalculationStatus === 'loading',
           isRecalculating: recalculationStatus === 'loading',
+          isDismissDisabled: recalculationStatus === 'loading',
           unavailableMessage,
           errorMessage: recalculationStatus === 'error' ? t('navigationRecalculationFailed') : null,
         }

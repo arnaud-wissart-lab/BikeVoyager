@@ -675,6 +675,7 @@ describe('App routing', () => {
 
     expect(recalculateButton).toBeDisabled()
     expect(recalculateButton).toHaveTextContent('Recalcul en cours…')
+    expect(screen.getByTestId('navigation-dismiss-off-route')).toBeDisabled()
     fireEvent.click(recalculateButton)
     expect(getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)).toHaveLength(1)
 
@@ -691,6 +692,92 @@ describe('App routing', () => {
       )
     })
     expect(await screen.findByTestId('navigation-recalculation-success')).toBeVisible()
+  })
+
+  it('ignore le résultat tardif lorsque l’utilisateur quitte la navigation', async () => {
+    const user = userEvent.setup()
+    setupStoredGpsNavigation()
+    const geolocation = installGeolocationMock()
+    let resolveRouteResponse: ((response: Response) => void) | null = null
+    const routeResponse = new Promise<Response>((resolve) => {
+      resolveRouteResponse = resolve
+    })
+    const mockFetch = createAppFetchMock((url) =>
+      url === apiPaths.route ? routeResponse : undefined,
+    )
+    vi.stubGlobal('fetch', mockFetch)
+
+    renderWithProviders(<App />)
+    await startGpsNavigation(user)
+    await waitFor(() => expect(geolocation.watchPosition).toHaveBeenCalledTimes(1))
+    emitConfirmedDeviation(geolocation, Date.now() - 20_000)
+    await user.click(await screen.findByTestId('navigation-recalculate-from-position'))
+
+    await user.click(screen.getByTestId('nav-exit'))
+    expect(screen.queryByTestId('nav-exit')).not.toBeInTheDocument()
+
+    await act(async () => {
+      resolveRouteResponse?.(
+        createJsonResponse({
+          geometry: alternativeComparisonRoute.geometry,
+          distance_m: alternativeComparisonRoute.distance_m,
+          duration_s_engine: alternativeComparisonRoute.duration_s_engine,
+          eta_s: alternativeComparisonRoute.eta_s,
+          turn_by_turn: alternativeComparisonRoute.turn_by_turn,
+          elevation_profile: alternativeComparisonRoute.elevation_profile,
+        }),
+      )
+      await Promise.resolve()
+    })
+
+    const storedRoute = JSON.parse(localStorage.getItem(routeStorageKey) ?? 'null') as TripResult
+    expect(storedRoute.geometry).toEqual(gpsNavigationRoute.geometry)
+    expect(screen.queryByTestId('nav-exit')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('navigation-recalculation-success')).not.toBeInTheDocument()
+  })
+
+  it('ignore le résultat d’une ancienne session après un redémarrage de la navigation', async () => {
+    const user = userEvent.setup()
+    setupStoredGpsNavigation()
+    const geolocation = installGeolocationMock()
+    let resolveRouteResponse: ((response: Response) => void) | null = null
+    const routeResponse = new Promise<Response>((resolve) => {
+      resolveRouteResponse = resolve
+    })
+    const mockFetch = createAppFetchMock((url) =>
+      url === apiPaths.route ? routeResponse : undefined,
+    )
+    vi.stubGlobal('fetch', mockFetch)
+
+    renderWithProviders(<App />)
+    await startGpsNavigation(user)
+    await waitFor(() => expect(geolocation.watchPosition).toHaveBeenCalledTimes(1))
+    emitConfirmedDeviation(geolocation, Date.now() - 20_000)
+    await user.click(await screen.findByTestId('navigation-recalculate-from-position'))
+
+    await user.click(screen.getByTestId('nav-exit'))
+    await startGpsNavigation(user)
+    await waitFor(() => expect(geolocation.watchPosition).toHaveBeenCalledTimes(2))
+
+    await act(async () => {
+      resolveRouteResponse?.(
+        createJsonResponse({
+          geometry: alternativeComparisonRoute.geometry,
+          distance_m: alternativeComparisonRoute.distance_m,
+          duration_s_engine: alternativeComparisonRoute.duration_s_engine,
+          eta_s: alternativeComparisonRoute.eta_s,
+          turn_by_turn: alternativeComparisonRoute.turn_by_turn,
+          elevation_profile: alternativeComparisonRoute.elevation_profile,
+        }),
+      )
+      await Promise.resolve()
+    })
+
+    const storedRoute = JSON.parse(localStorage.getItem(routeStorageKey) ?? 'null') as TripResult
+    expect(storedRoute.geometry).toEqual(gpsNavigationRoute.geometry)
+    expect(screen.getByTestId('nav-exit')).toBeInTheDocument()
+    expect(screen.getByText('Mode GPS réel')).toBeInTheDocument()
+    expect(screen.queryByTestId('navigation-recalculation-success')).not.toBeInTheDocument()
   })
 
   it('bloque le recalcul quand la dernière position devient trop imprécise', async () => {

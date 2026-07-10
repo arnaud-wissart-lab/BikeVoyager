@@ -1,10 +1,6 @@
 import type { TFunction } from 'i18next'
 import type { AppStore } from '../../state/appStore'
-import {
-  clearRouteErrors,
-  normalizeRouteResponseError,
-  setRouteUnexpectedError,
-} from './actions.errors'
+import { clearRouteErrors, setRouteUnexpectedError } from './actions.errors'
 import { buildRouteOptionsVariant } from './actions.route'
 import { fetchRoute } from './api'
 import {
@@ -18,17 +14,19 @@ type NavigationRecalculationStoreSlice = Pick<
   AppStore,
   | 'mode'
   | 'profileSettings'
-  | 'routeResult'
   | 'detourPoints'
-  | 'isNavigationActive'
-  | 'navigationMode'
   | 'navigationProgress'
   | 'navigationRecalculationInFlightRef'
+  | 'navigationRecalculationGenerationRef'
+  | 'navigationRecalculationRequestIdRef'
+  | 'navigationIsActiveRef'
+  | 'navigationModeRef'
+  | 'navigationRouteResultRef'
   | 'routeAlternativeIndex'
   | 'lastRouteRequestRef'
   | 'setRouteErrorMessage'
   | 'setRouteErrorKey'
-  | 'setRouteResult'
+  | 'setRouteResultFromNavigationRecalculation'
   | 'setHasResult'
   | 'setIsDirty'
   | 'setDetourPoints'
@@ -56,10 +54,10 @@ export const createNavigationRecalculationActions = ({
         : null
 
     return createNavigationRecalculationPlan({
-      isNavigationActive: store.isNavigationActive,
-      navigationMode: store.navigationMode,
+      isNavigationActive: store.navigationIsActiveRef.current,
+      navigationMode: store.navigationModeRef.current,
       navigationProgress: store.navigationProgress,
-      routeResult: store.routeResult,
+      routeResult: store.navigationRouteResultRef.current,
       detourPointCount: store.detourPoints.length,
       lastRoutePayload,
       mapEndCoordinate: map.mapEndCoordinate,
@@ -90,23 +88,39 @@ export const createNavigationRecalculationActions = ({
       return false
     }
 
+    const routeAtRequestStart = store.navigationRouteResultRef.current
+    const requestId = store.navigationRecalculationGenerationRef.current + 1
+    store.navigationRecalculationGenerationRef.current = requestId
+    store.navigationRecalculationRequestIdRef.current = requestId
     store.navigationRecalculationInFlightRef.current = true
     store.setNavigationRecalculationStatus('loading')
     clearRouteErrors(store)
-    store.lastRouteRequestRef.current = {
-      type: 'route',
-      payload: plan.payload,
-    }
+
+    const isRequestCurrent = () =>
+      store.navigationRecalculationRequestIdRef.current === requestId &&
+      store.navigationRecalculationGenerationRef.current === requestId &&
+      store.navigationIsActiveRef.current &&
+      store.navigationModeRef.current === 'gps' &&
+      store.navigationRouteResultRef.current === routeAtRequestStart
 
     try {
       const result = await fetchRoute(plan.payload)
+      if (!isRequestCurrent()) {
+        return false
+      }
+
       if (!result.ok) {
-        await normalizeRouteResponseError(result.response, store)
         store.setNavigationRecalculationStatus('error')
         return false
       }
 
-      store.setRouteResult(result.result)
+      store.lastRouteRequestRef.current = {
+        type: 'route',
+        payload: plan.payload,
+      }
+      store.navigationRecalculationRequestIdRef.current = null
+      store.navigationRecalculationInFlightRef.current = false
+      store.setRouteResultFromNavigationRecalculation(result.result)
       store.setHasResult(true)
       store.setIsDirty(false)
       store.setDetourPoints([])
@@ -115,11 +129,18 @@ export const createNavigationRecalculationActions = ({
       store.setNavigationRecalculationStatus('success')
       return true
     } catch {
+      if (!isRequestCurrent()) {
+        return false
+      }
+
       setRouteUnexpectedError(store)
       store.setNavigationRecalculationStatus('error')
       return false
     } finally {
-      store.navigationRecalculationInFlightRef.current = false
+      if (store.navigationRecalculationRequestIdRef.current === requestId) {
+        store.navigationRecalculationRequestIdRef.current = null
+        store.navigationRecalculationInFlightRef.current = false
+      }
     }
   }
 

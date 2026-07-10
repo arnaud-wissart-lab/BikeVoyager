@@ -9,6 +9,7 @@ import type {
   PoiItem,
 } from '../../../features/routing/domain'
 import { formatRouteStepDistance } from '../../../features/routing/domain'
+import type { ScreenWakeLockStatus } from '../../../features/map/useScreenWakeLock'
 
 type MapNavigationOverlayProps = {
   isNavigationActive: boolean
@@ -21,6 +22,7 @@ type MapNavigationOverlayProps = {
   etaLabel: string
   navigationProgressPct: number | null
   navigationGuidance: NavigationGuidance | null
+  wakeLockStatus: ScreenWakeLockStatus
   navigationCameraMode: NavigationCameraMode
   onNavigationCameraModeChange: (value: string) => void
   navigationError: string | null
@@ -44,6 +46,7 @@ export default function MapNavigationOverlay({
   etaLabel,
   navigationProgressPct,
   navigationGuidance,
+  wakeLockStatus,
   navigationCameraMode,
   onNavigationCameraModeChange,
   navigationError,
@@ -151,6 +154,15 @@ export default function MapNavigationOverlay({
                 {t('navigationProgressLabel', {
                   progress: Math.round(navigationProgressPct),
                 })}
+              </Text>
+            )}
+            {wakeLockStatus !== 'idle' && wakeLockStatus !== 'requesting' && (
+              <Text size="xs" c="dimmed" data-testid="navigation-wake-lock-status">
+                {wakeLockStatus === 'active'
+                  ? t('navigationWakeLockActive')
+                  : wakeLockStatus === 'unsupported'
+                    ? t('navigationWakeLockUnsupported')
+                    : t('navigationWakeLockError')}
               </Text>
             )}
             <SegmentedControl

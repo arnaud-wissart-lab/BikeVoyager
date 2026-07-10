@@ -3,10 +3,12 @@ import { IconMapPinPlus, IconX } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
 import type {
   NavigationCameraMode,
+  NavigationGuidance,
   NavigationMode,
   PoiCategory,
   PoiItem,
 } from '../../../features/routing/domain'
+import { formatRouteStepDistance } from '../../../features/routing/domain'
 
 type MapNavigationOverlayProps = {
   isNavigationActive: boolean
@@ -18,6 +20,7 @@ type MapNavigationOverlayProps = {
   distanceLabel: string
   etaLabel: string
   navigationProgressPct: number | null
+  navigationGuidance: NavigationGuidance | null
   navigationCameraMode: NavigationCameraMode
   onNavigationCameraModeChange: (value: string) => void
   navigationError: string | null
@@ -40,6 +43,7 @@ export default function MapNavigationOverlay({
   distanceLabel,
   etaLabel,
   navigationProgressPct,
+  navigationGuidance,
   navigationCameraMode,
   onNavigationCameraModeChange,
   navigationError,
@@ -56,6 +60,9 @@ export default function MapNavigationOverlay({
   if (!isNavigationActive || !hasRoute) {
     return null
   }
+
+  const maneuverDistanceLabel =
+    formatRouteStepDistance(navigationGuidance?.distanceToManeuverMeters) ?? t('placeholderValue')
 
   return (
     <Box style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
@@ -74,7 +81,7 @@ export default function MapNavigationOverlay({
           withBorder
           radius="md"
           p="sm"
-          style={{ backgroundColor: surfaceColor, minWidth: 260, maxWidth: 520 }}
+          style={{ backgroundColor: surfaceColor, width: '100%', maxWidth: 520 }}
         >
           <Stack gap={6}>
             <Group justify="space-between" align="center" wrap="nowrap">
@@ -98,6 +105,33 @@ export default function MapNavigationOverlay({
                 ? t('navigationModeSimulationLabel')
                 : t('navigationModeGpsLabel')}
             </Text>
+            {navigationGuidance && (
+              <Stack gap={2} aria-live="polite" aria-atomic="true">
+                <Text size="xs" c="dimmed">
+                  {t('navigationInstructionLabel')}
+                </Text>
+                <Text size="xs" fw={600} data-testid="navigation-distance-to-maneuver">
+                  {t('navigationDistanceToManeuver', { distance: maneuverDistanceLabel })}
+                </Text>
+                <Text fw={700} lineClamp={2} data-testid="navigation-active-instruction">
+                  {navigationGuidance.isArrival
+                    ? t('navigationArrival')
+                    : navigationGuidance.activeInstruction}
+                </Text>
+                {!navigationGuidance.isArrival && navigationGuidance.nextInstruction && (
+                  <Text
+                    size="xs"
+                    c="dimmed"
+                    lineClamp={2}
+                    data-testid="navigation-next-instruction"
+                  >
+                    {t('navigationNextInstruction', {
+                      instruction: navigationGuidance.nextInstruction,
+                    })}
+                  </Text>
+                )}
+              </Stack>
+            )}
             <Group gap="lg" justify="center" wrap="nowrap">
               <Stack gap={2} align="center">
                 <Text size="xs" c="dimmed">

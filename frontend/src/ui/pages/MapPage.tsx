@@ -5,6 +5,7 @@ import type {
   MapCommand,
   MapViewMode,
   NavigationCameraMode,
+  NavigationGuidance,
   NavigationMode,
   NavigationProgress,
   PoiCategory,
@@ -88,6 +89,7 @@ type MapPageProps = {
   distanceLabel: string
   etaLabel: string
   navigationProgressPct: number | null
+  navigationGuidance: NavigationGuidance | null
   onNavigationCameraModeChange: (value: string) => void
   navigationError: string | null
   activePoiAlert: PoiItem | null
@@ -162,6 +164,7 @@ export default function MapPage({
   distanceLabel,
   etaLabel,
   navigationProgressPct,
+  navigationGuidance,
   onNavigationCameraModeChange,
   navigationError,
   activePoiAlert,
@@ -344,6 +347,7 @@ export default function MapPage({
         distanceLabel={distanceLabel}
         etaLabel={etaLabel}
         navigationProgressPct={navigationProgressPct}
+        navigationGuidance={navigationGuidance}
         navigationCameraMode={navigationCameraMode}
         onNavigationCameraModeChange={onNavigationCameraModeChange}
         navigationError={navigationError}

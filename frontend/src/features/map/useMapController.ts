@@ -4,7 +4,11 @@ import { useMapFeatureSlice } from './useMapFeatureSlice'
 import { usePoisFeatureSlice } from '../pois/usePoisFeatureSlice'
 import type { AppStore } from '../../state/appStore'
 import type { MapViewMode, RouteKey } from '../routing/domain'
-import { isNavigationCameraMode, isNavigationMode } from '../routing/domain'
+import {
+  isNavigationCameraMode,
+  isNavigationMode,
+  resolveNavigationGuidance,
+} from '../routing/domain'
 import { useMapPoiFormatting } from './useMapPoiFormatting'
 import { useMapNavigationEffects } from './useMapNavigationEffects'
 import { useMapRouteSummary } from './useMapRouteSummary'
@@ -147,6 +151,23 @@ export const useMapController = ({
     t,
     isFrench,
   })
+  const navigationGuidance = useMemo(() => {
+    if (!isNavigationActive || !navigationProgress || routeResult?.kind !== 'route') {
+      return null
+    }
+
+    return resolveNavigationGuidance(
+      routeResult.turn_by_turn,
+      navigationProgress.distance_m,
+      routeDistanceFromGeometry > 0 ? routeDistanceFromGeometry : routeDistanceMeters,
+    )
+  }, [
+    isNavigationActive,
+    navigationProgress,
+    routeDistanceFromGeometry,
+    routeDistanceMeters,
+    routeResult,
+  ])
   const poiDetourIds = useMemo(() => {
     const ids = new Set<string>()
     for (const point of detourPoints) {
@@ -367,6 +388,7 @@ export const useMapController = ({
     distanceLabel,
     etaLabel,
     navigationProgressPct,
+    navigationGuidance,
     expandedRouteBounds,
     mapStartCoordinate,
     mapEndCoordinate,

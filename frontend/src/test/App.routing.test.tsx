@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../App'
 import { appPreferencesStorageKey, savedTripsStorageKey } from '../features/data/dataPortability'
@@ -284,6 +284,60 @@ describe('App routing', () => {
     await waitFor(() => {
       expect(screen.getByTestId('nav-setup-open')).toBeInTheDocument()
     })
+  })
+
+  it('actualise l’instruction active pendant une navigation simulée', async () => {
+    const user = userEvent.setup()
+
+    setDesktopMatchMedia()
+    window.location.hash = '/carte'
+    saveRouteResultToStorage({
+      kind: 'route',
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [2.3522, 48.8566],
+          [2.3522, 48.862],
+        ],
+      },
+      distance_m: 600,
+      duration_s_engine: 144,
+      eta_s: 144,
+      turn_by_turn: [
+        { instruction: 'Prendre la rue A', distance_m: 100, duration_s: 24, type: 1 },
+        { instruction: 'Continuer sur la rue B', distance_m: 200, duration_s: 48, type: 2 },
+        { instruction: 'Rejoindre la rue C', distance_m: 300, duration_s: 72, type: 3 },
+      ],
+      elevation_profile: [],
+    })
+    vi.stubGlobal('fetch', createAppFetchMock())
+
+    renderWithProviders(<App />)
+
+    await user.click(await screen.findByTestId('nav-setup-open'))
+    await user.click(screen.getByText('Simulation'))
+
+    vi.useFakeTimers()
+    try {
+      fireEvent.click(screen.getByTestId('nav-start'))
+
+      expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent(
+        'Prendre la rue A',
+      )
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_000)
+      })
+
+      expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent(
+        'Continuer sur la rue B',
+      )
+      expect(screen.getByTestId('navigation-active-instruction')).not.toHaveTextContent(
+        'Prendre la rue A',
+      )
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('sauvegarde, modifie, ouvre et supprime un trajet depuis le carnet', async () => {

@@ -25,6 +25,7 @@ const baseProps: MapNavigationOverlayProps = {
   etaLabel: '5 min',
   navigationProgressPct: 20,
   navigationGuidance: guidance,
+  wakeLockStatus: 'idle',
   navigationCameraMode: 'follow_3d',
   onNavigationCameraModeChange: vi.fn(),
   navigationError: null,
@@ -107,5 +108,37 @@ describe('MapNavigationOverlay', () => {
     expect(screen.getByText('Suivi 3D')).toBeInTheDocument()
     expect(screen.getByText('Panoramique 3D')).toBeInTheDocument()
     expect(screen.getByText('Plan 2D')).toBeInTheDocument()
+  })
+
+  it('affiche discrètement le maintien actif de l’écran', () => {
+    renderOverlay({ wakeLockStatus: 'active' })
+
+    expect(screen.getByTestId('navigation-wake-lock-status')).toHaveTextContent(
+      'Écran maintenu allumé',
+    )
+    expect(screen.getByTestId('navigation-active-instruction')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Quitter' })).toBeInTheDocument()
+  })
+
+  it('affiche le fallback lorsque le maintien de l’écran est indisponible', () => {
+    renderOverlay({ wakeLockStatus: 'unsupported' })
+
+    expect(screen.getByTestId('navigation-wake-lock-status')).toHaveTextContent(
+      'Maintien de l’écran indisponible',
+    )
+  })
+
+  it('affiche le fallback lorsque le maintien de l’écran échoue', () => {
+    renderOverlay({ wakeLockStatus: 'error' })
+
+    expect(screen.getByTestId('navigation-wake-lock-status')).toHaveTextContent(
+      'Impossible de maintenir l’écran allumé',
+    )
+  })
+
+  it('ne montre aucun statut lorsque le maintien de l’écran est inactif', () => {
+    renderOverlay({ wakeLockStatus: 'idle' })
+
+    expect(screen.queryByTestId('navigation-wake-lock-status')).not.toBeInTheDocument()
   })
 })

@@ -102,6 +102,8 @@ const alternativeComparisonLoop: TripResult = {
   ],
 }
 
+const originalWakeLockDescriptor = Object.getOwnPropertyDescriptor(navigator, 'wakeLock')
+
 const getJsonRequestBodies = <TBody,>(mockFetch: { mock: { calls: unknown[][] } }, path: string) =>
   mockFetch.mock.calls
     .filter(([input]) => input === path)
@@ -172,6 +174,15 @@ describe('App routing', () => {
     vi.stubGlobal('fetch', createAppFetchMock())
   })
 
+  afterEach(() => {
+    if (originalWakeLockDescriptor) {
+      Object.defineProperty(navigator, 'wakeLock', originalWakeLockDescriptor)
+      return
+    }
+
+    Reflect.deleteProperty(navigator, 'wakeLock')
+  })
+
   it('isole le départ entre aller simple et boucle', async () => {
     const user = userEvent.setup()
 
@@ -202,6 +213,18 @@ describe('App routing', () => {
 
   it('enchaîne planifier, carte, navigation et sortie', async () => {
     const user = userEvent.setup()
+    const wakeLockRelease = vi.fn(() => Promise.resolve())
+    const wakeLockSentinel: WakeLockSentinel = Object.assign(new EventTarget(), {
+      onrelease: null,
+      released: false,
+      type: 'screen' as const,
+      release: wakeLockRelease,
+    })
+    const wakeLockRequest = vi.fn<WakeLock['request']>().mockResolvedValue(wakeLockSentinel)
+    Object.defineProperty(navigator, 'wakeLock', {
+      configurable: true,
+      value: { request: wakeLockRequest } satisfies WakeLock,
+    })
 
     const mockFetch = createAppFetchMock((url) => {
       if (url.startsWith(apiPaths.placesSearch)) {
@@ -277,11 +300,17 @@ describe('App routing', () => {
     const navigationStart = await screen.findByTestId('nav-start')
     await user.click(navigationStart)
 
+    await waitFor(() => {
+      expect(wakeLockRequest).toHaveBeenCalledTimes(1)
+      expect(wakeLockRequest).toHaveBeenCalledWith('screen')
+    })
+
     const navigationExit = await screen.findByTestId('nav-exit')
     expect(navigationExit).toBeInTheDocument()
     await user.click(navigationExit)
 
     await waitFor(() => {
+      expect(wakeLockRelease).toHaveBeenCalledTimes(1)
       expect(screen.getByTestId('nav-setup-open')).toBeInTheDocument()
     })
   })

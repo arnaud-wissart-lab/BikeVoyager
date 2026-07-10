@@ -12,6 +12,7 @@ import {
 import { useMapPoiFormatting } from './useMapPoiFormatting'
 import { useMapNavigationEffects } from './useMapNavigationEffects'
 import { useMapRouteSummary } from './useMapRouteSummary'
+import { useScreenWakeLock } from './useScreenWakeLock'
 
 type UseMapControllerParams = {
   store: AppStore
@@ -109,6 +110,7 @@ export const useMapController = ({
   const hasRoute = Boolean(routeResult)
   const isMapRoute = route === 'carte'
   const poiEnabled = hasRoute
+  const screenWakeLock = useScreenWakeLock(isNavigationActive && hasRoute)
 
   const resetPoiSelectionUi = useCallback(() => {
     setSelectedPoiId(null)
@@ -389,6 +391,7 @@ export const useMapController = ({
     etaLabel,
     navigationProgressPct,
     navigationGuidance,
+    wakeLockStatus: screenWakeLock.status,
     expandedRouteBounds,
     mapStartCoordinate,
     mapEndCoordinate,

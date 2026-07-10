@@ -357,6 +357,7 @@ export default function MapRoute({
         etaLabel={mapController.etaLabel}
         navigationProgressPct={mapController.navigationProgressPct}
         navigationGuidance={mapController.navigationGuidance}
+        wakeLockStatus={mapController.wakeLockStatus}
         onNavigationCameraModeChange={mapController.handleNavigationCameraModeChange}
         navigationError={mapController.navigationError}
         activePoiAlert={mapController.activePoiAlert}

@@ -27,6 +27,7 @@ import {
 import { createRoutingControllerActions } from './useRoutingController.actions'
 import { useRoutingFeatureSlice } from './useRoutingFeatureSlice'
 import type { UseRoutingControllerParams } from './useRoutingController.types'
+import { useNavigationDeviationPresentation } from './useNavigationDeviationPresentation'
 
 export const useRoutingController = ({
   store,
@@ -48,6 +49,9 @@ export const useRoutingController = ({
     hasResult,
     isDirty,
     routeResult,
+    navigationDeviationState,
+    navigationRecalculationStatus,
+    setNavigationRecalculationStatus,
     routeErrorKey,
     routeErrorMessage,
     feedbackSubject,
@@ -104,6 +108,8 @@ export const useRoutingController = ({
   const {
     requestRoute,
     requestLoop,
+    getNavigationRecalculationPlan,
+    handleRecalculateFromCurrentPosition,
     handleCalculate,
     recalculateWithDetours,
     addDetourPointAndRecalculate,
@@ -130,6 +136,15 @@ export const useRoutingController = ({
     onNavigate,
     markDirty,
   })
+
+  const { navigationOffRouteAlert, navigationRecalculationSuccessMessage } =
+    useNavigationDeviationPresentation({
+      deviationState: navigationDeviationState,
+      recalculationStatus: navigationRecalculationStatus,
+      getRecalculationPlan: getNavigationRecalculationPlan,
+      setRecalculationStatus: setNavigationRecalculationStatus,
+      t,
+    })
 
   const handleResetProfiles = () => {
     setProfileSettings(defaultProfileSettings)
@@ -417,6 +432,9 @@ export const useRoutingController = ({
     handleCalculate,
     requestRoute,
     requestLoop,
+    handleRecalculateFromCurrentPosition,
+    navigationOffRouteAlert,
+    navigationRecalculationSuccessMessage,
     addDetourPointAndRecalculate,
     removeDetourPointAndRecalculate,
     recalculateWithDetours,

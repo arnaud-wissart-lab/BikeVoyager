@@ -94,6 +94,10 @@ type MapPageProps = {
   wakeLockStatus: ScreenWakeLockStatus
   onNavigationCameraModeChange: (value: string) => void
   navigationError: string | null
+  navigationOffRouteAlert: ComponentProps<typeof MapNavigationOverlay>['navigationOffRouteAlert']
+  navigationRecalculationSuccessMessage: string | null
+  onRecalculateFromCurrentPosition: () => void
+  onDismissNavigationDeviation: () => void
   activePoiAlert: PoiItem | null
   getPoiDisplayName: (poi: PoiItem | null) => string
   poiCategoryLabels: Record<PoiCategory, string>
@@ -170,6 +174,10 @@ export default function MapPage({
   wakeLockStatus,
   onNavigationCameraModeChange,
   navigationError,
+  navigationOffRouteAlert,
+  navigationRecalculationSuccessMessage,
+  onRecalculateFromCurrentPosition,
+  onDismissNavigationDeviation,
   activePoiAlert,
   getPoiDisplayName,
   poiCategoryLabels,
@@ -355,6 +363,10 @@ export default function MapPage({
         navigationCameraMode={navigationCameraMode}
         onNavigationCameraModeChange={onNavigationCameraModeChange}
         navigationError={navigationError}
+        navigationOffRouteAlert={navigationOffRouteAlert}
+        navigationRecalculationSuccessMessage={navigationRecalculationSuccessMessage}
+        onRecalculateFromCurrentPosition={onRecalculateFromCurrentPosition}
+        onDismissNavigationDeviation={onDismissNavigationDeviation}
         activePoiAlert={activePoiAlert}
         getPoiDisplayName={getPoiDisplayName}
         poiCategoryLabels={poiCategoryLabels}

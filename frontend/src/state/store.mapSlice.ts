@@ -1,11 +1,14 @@
-import { useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import type { AppPreferences } from '../features/data/dataPortability'
 import {
   loadProfileSettings,
   loadStoredRoute,
+  createNavigationDeviationState,
   type DetourPoint,
   type LoopRequestPayload,
+  type NavigationDeviationState,
   type NavigationProgress,
+  type NavigationRecalculationStatus,
   type PlannerDraft,
   type PlaceCandidate,
   type PoiItem,
@@ -26,7 +29,7 @@ type UseMapSliceParams = {
 }
 
 export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseMapSliceParams) => {
-  const [routeResult, setRouteResult] = useState<TripResult | null>(() => loadStoredRoute())
+  const [routeResult, setRouteResultState] = useState<TripResult | null>(() => loadStoredRoute())
   const [hasResult, setHasResult] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [mode, setMode] = useState<Mode | null>(() => initialPlannerDraft.mode)
@@ -56,14 +59,20 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
   const [valhallaStatus, setValhallaStatus] = useState<ValhallaStatus | null>(null)
   const [isValhallaStatusLoading, setIsValhallaStatusLoading] = useState(false)
   const [valhallaStatusError, setValhallaStatusError] = useState(false)
-  const [isNavigationActive, setIsNavigationActive] = useState(false)
+  const [isNavigationActive, setIsNavigationActiveState] = useState(false)
   const [isNavigationSetupOpen, setIsNavigationSetupOpen] = useState(false)
-  const [navigationMode, setNavigationMode] = useState(() => initialAppPreferences.navigationMode)
+  const [navigationMode, setNavigationModeState] = useState(
+    () => initialAppPreferences.navigationMode,
+  )
   const [navigationCameraMode, setNavigationCameraMode] = useState(
     () => initialAppPreferences.navigationCameraMode,
   )
   const [navigationProgress, setNavigationProgress] = useState<NavigationProgress | null>(null)
   const [navigationError, setNavigationError] = useState<string | null>(null)
+  const [navigationDeviationState, setNavigationDeviationState] =
+    useState<NavigationDeviationState>(() => createNavigationDeviationState())
+  const [navigationRecalculationStatus, setNavigationRecalculationStatus] =
+    useState<NavigationRecalculationStatus>('idle')
   const [poiAlertEnabled, setPoiAlertEnabled] = useState(
     () => initialAppPreferences.poiAlertEnabled,
   )
@@ -107,6 +116,12 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
 
   const alertSeenPoiIdsRef = useRef(new Set<string>())
   const simulationDistanceRef = useRef(0)
+  const navigationRecalculationInFlightRef = useRef(false)
+  const navigationRecalculationGenerationRef = useRef(0)
+  const navigationRecalculationRequestIdRef = useRef<number | null>(null)
+  const navigationIsActiveRef = useRef(isNavigationActive)
+  const navigationModeRef = useRef(navigationMode)
+  const navigationRouteResultRef = useRef(routeResult)
   const valhallaAutoUpdateRequestedRef = useRef(false)
   const lastRouteRequestRef = useRef<
     | {
@@ -120,9 +135,65 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
     | null
   >(null)
 
+  const invalidateNavigationRecalculation = useCallback(() => {
+    navigationRecalculationGenerationRef.current += 1
+    navigationRecalculationRequestIdRef.current = null
+    navigationRecalculationInFlightRef.current = false
+    setNavigationRecalculationStatus('idle')
+  }, [])
+
+  const setRouteResult = useCallback<Dispatch<SetStateAction<TripResult | null>>>(
+    (value) => {
+      invalidateNavigationRecalculation()
+      const next = typeof value === 'function' ? value(navigationRouteResultRef.current) : value
+      navigationRouteResultRef.current = next
+      setRouteResultState(next)
+    },
+    [invalidateNavigationRecalculation],
+  )
+
+  const setRouteResultFromNavigationRecalculation = useCallback((value: TripResult) => {
+    navigationRouteResultRef.current = value
+    setRouteResultState(value)
+  }, [])
+
+  const setIsNavigationActive = useCallback<Dispatch<SetStateAction<boolean>>>(
+    (value) => {
+      const next = typeof value === 'function' ? value(navigationIsActiveRef.current) : value
+      if (next !== navigationIsActiveRef.current) {
+        invalidateNavigationRecalculation()
+      }
+      navigationIsActiveRef.current = next
+      setIsNavigationActiveState(next)
+    },
+    [invalidateNavigationRecalculation],
+  )
+
+  const setNavigationMode = useCallback<Dispatch<SetStateAction<typeof navigationMode>>>(
+    (value) => {
+      const next = typeof value === 'function' ? value(navigationModeRef.current) : value
+      if (next !== navigationModeRef.current) {
+        invalidateNavigationRecalculation()
+      }
+      navigationModeRef.current = next
+      setNavigationModeState(next)
+    },
+    [invalidateNavigationRecalculation],
+  )
+
+  useEffect(
+    () => () => {
+      navigationRecalculationGenerationRef.current += 1
+      navigationRecalculationRequestIdRef.current = null
+      navigationRecalculationInFlightRef.current = false
+    },
+    [],
+  )
+
   return {
     routeResult,
     setRouteResult,
+    setRouteResultFromNavigationRecalculation,
     hasResult,
     setHasResult,
     isDirty,
@@ -173,6 +244,10 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
     setNavigationProgress,
     navigationError,
     setNavigationError,
+    navigationDeviationState,
+    setNavigationDeviationState,
+    navigationRecalculationStatus,
+    setNavigationRecalculationStatus,
     poiAlertEnabled,
     setPoiAlertEnabled,
     poiAlertDistanceMeters,
@@ -229,6 +304,13 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
     setProfileSettings,
     alertSeenPoiIdsRef,
     simulationDistanceRef,
+    navigationRecalculationInFlightRef,
+    navigationRecalculationGenerationRef,
+    navigationRecalculationRequestIdRef,
+    navigationIsActiveRef,
+    navigationModeRef,
+    navigationRouteResultRef,
+    invalidateNavigationRecalculation,
     valhallaAutoUpdateRequestedRef,
     lastRouteRequestRef,
   }

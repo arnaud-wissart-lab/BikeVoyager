@@ -36,6 +36,7 @@ import {
 } from './routing.helpers'
 import { createRoutingControllerFormActions } from './useRoutingController.formActions'
 import type { MapContext } from './useRoutingController.types'
+import { createNavigationRecalculationActions } from './actions.navigation'
 
 type RoutingControllerActionsStoreSlice = Pick<
   AppStore,
@@ -48,6 +49,15 @@ type RoutingControllerActionsStoreSlice = Pick<
   | 'endPlace'
   | 'routeResult'
   | 'detourPoints'
+  | 'isNavigationActive'
+  | 'navigationMode'
+  | 'navigationProgress'
+  | 'navigationRecalculationInFlightRef'
+  | 'navigationRecalculationGenerationRef'
+  | 'navigationRecalculationRequestIdRef'
+  | 'navigationIsActiveRef'
+  | 'navigationModeRef'
+  | 'navigationRouteResultRef'
   | 'routeAlternativeIndex'
   | 'loopAlternativeIndex'
   | 'pendingAlternativeRoute'
@@ -59,9 +69,13 @@ type RoutingControllerActionsStoreSlice = Pick<
   | 'setRouteErrorMessage'
   | 'setRouteErrorKey'
   | 'setRouteResult'
+  | 'setRouteResultFromNavigationRecalculation'
   | 'setHasResult'
   | 'setIsDirty'
   | 'setDetourPoints'
+  | 'setNavigationProgress'
+  | 'setNavigationDeviationState'
+  | 'setNavigationRecalculationStatus'
   | 'setLoopAlternativeIndex'
   | 'setRouteAlternativeIndex'
   | 'setPendingAlternativeRoute'
@@ -155,6 +169,9 @@ export const createRoutingControllerActions = ({
     setDetourPoints,
     onNavigate,
   })
+
+  const { getNavigationRecalculationPlan, handleRecalculateFromCurrentPosition } =
+    createNavigationRecalculationActions({ store, map, t })
 
   const handleCalculate = async () => {
     if (!isFormReady || !mode || !tripType) {
@@ -476,6 +493,8 @@ export const createRoutingControllerActions = ({
   return {
     requestRoute,
     requestLoop,
+    getNavigationRecalculationPlan,
+    handleRecalculateFromCurrentPosition,
     handleCalculate,
     recalculateWithDetours,
     addDetourPointAndRecalculate,

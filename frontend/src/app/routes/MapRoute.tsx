@@ -360,6 +360,14 @@ export default function MapRoute({
         wakeLockStatus={mapController.wakeLockStatus}
         onNavigationCameraModeChange={mapController.handleNavigationCameraModeChange}
         navigationError={mapController.navigationError}
+        navigationOffRouteAlert={routingController.navigationOffRouteAlert}
+        navigationRecalculationSuccessMessage={
+          routingController.navigationRecalculationSuccessMessage
+        }
+        onRecalculateFromCurrentPosition={() => {
+          void routingController.handleRecalculateFromCurrentPosition()
+        }}
+        onDismissNavigationDeviation={mapController.handleDismissNavigationDeviation}
         activePoiAlert={mapController.activePoiAlert}
         getPoiDisplayName={mapController.getPoiDisplayName}
         poiCategoryLabels={mapController.poiCategoryLabels}

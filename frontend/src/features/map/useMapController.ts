@@ -13,6 +13,7 @@ import { useMapPoiFormatting } from './useMapPoiFormatting'
 import { useMapNavigationEffects } from './useMapNavigationEffects'
 import { useMapRouteSummary } from './useMapRouteSummary'
 import { useScreenWakeLock } from './useScreenWakeLock'
+import { useNavigationDeviationState } from './useNavigationDeviationState'
 
 type UseMapControllerParams = {
   store: AppStore
@@ -49,6 +50,8 @@ export const useMapController = ({
     isRouteLoading,
     navigationMode,
     navigationProgress,
+    navigationDeviationState,
+    navigationRecalculationStatus,
     isNavigationActive,
     poiAlertEnabled,
     poiAlertCategories,
@@ -62,6 +65,9 @@ export const useMapController = ({
     setSystemNotificationsEnabled,
     setNavigationProgress,
     setNavigationError,
+    setNavigationDeviationState,
+    setNavigationRecalculationStatus,
+    invalidateNavigationRecalculation,
     navigationError,
     setActivePoiAlertId,
     alertSeenPoiIdsRef,
@@ -111,6 +117,14 @@ export const useMapController = ({
   const isMapRoute = route === 'carte'
   const poiEnabled = hasRoute
   const screenWakeLock = useScreenWakeLock(isNavigationActive && hasRoute)
+  const { resetNavigationDeviation, handleDismissNavigationDeviation } =
+    useNavigationDeviationState({
+      deviationState: navigationDeviationState,
+      recalculationStatus: navigationRecalculationStatus,
+      setDeviationState: setNavigationDeviationState,
+      setRecalculationStatus: setNavigationRecalculationStatus,
+      invalidateRecalculation: invalidateNavigationRecalculation,
+    })
 
   const resetPoiSelectionUi = useCallback(() => {
     setSelectedPoiId(null)
@@ -293,6 +307,7 @@ export const useMapController = ({
     setRouteErrorKey(null)
     setRouteErrorMessage(null)
     setNavigationError(null)
+    resetNavigationDeviation()
     setActivePoiAlertId(null)
     setIsNavigationSetupOpen(false)
     setIsNavigationActive(true)
@@ -343,6 +358,8 @@ export const useMapController = ({
     setIsMobilePoiDetailsExpanded,
     setNavigationProgress,
     setNavigationError,
+    setNavigationDeviationState,
+    setNavigationRecalculationStatus,
     setActivePoiAlertId,
     t,
   })
@@ -419,6 +436,7 @@ export const useMapController = ({
     handleStartNavigation,
     handleExitNavigation,
     handleDismissPoiAlert,
+    handleDismissNavigationDeviation,
     navigationError,
     isNavigationSetupOpen,
   }

@@ -23,6 +23,7 @@ type DataImportStoreSlice = Pick<
   | 'routeResult'
   | 'setProfileSettings'
   | 'setPoiAlertEnabled'
+  | 'setAutomaticNavigationRecalculationEnabled'
   | 'setVoiceGuidanceEnabled'
   | 'setPoiAlertDistanceMeters'
   | 'setPoiAlertCategories'
@@ -60,6 +61,9 @@ const applyImportedPreferences = (
   preferences: ExportedPreferences,
 ) => {
   store.setProfileSettings(preferences.profileSettings)
+  store.setAutomaticNavigationRecalculationEnabled(
+    preferences.appPreferences.automaticNavigationRecalculationEnabled,
+  )
   store.setVoiceGuidanceEnabled(preferences.appPreferences.voiceGuidanceEnabled)
   store.setPoiAlertEnabled(preferences.appPreferences.poiAlertEnabled)
   store.setPoiAlertDistanceMeters(preferences.appPreferences.poiAlertDistanceMeters)

@@ -99,6 +99,7 @@ type MapPageProps = {
   navigationError: string | null
   navigationOffRouteAlert: ComponentProps<typeof MapNavigationOverlay>['navigationOffRouteAlert']
   navigationRecalculationSuccessMessage: string | null
+  navigationAutoRecalculationCancellationMessage: string | null
   onRecalculateFromCurrentPosition: () => void
   onDismissNavigationDeviation: () => void
   activePoiAlert: PoiItem | null
@@ -181,6 +182,7 @@ export default function MapPage({
   navigationError,
   navigationOffRouteAlert,
   navigationRecalculationSuccessMessage,
+  navigationAutoRecalculationCancellationMessage,
   onRecalculateFromCurrentPosition,
   onDismissNavigationDeviation,
   activePoiAlert,
@@ -372,6 +374,9 @@ export default function MapPage({
         navigationError={navigationError}
         navigationOffRouteAlert={navigationOffRouteAlert}
         navigationRecalculationSuccessMessage={navigationRecalculationSuccessMessage}
+        navigationAutoRecalculationCancellationMessage={
+          navigationAutoRecalculationCancellationMessage
+        }
         onRecalculateFromCurrentPosition={onRecalculateFromCurrentPosition}
         onDismissNavigationDeviation={onDismissNavigationDeviation}
         activePoiAlert={activePoiAlert}

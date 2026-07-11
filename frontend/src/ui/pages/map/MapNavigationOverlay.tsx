@@ -5,6 +5,7 @@ import type {
   NavigationCameraMode,
   NavigationGuidance,
   NavigationMode,
+  NavigationAutoRecalculationStatus,
   PoiCategory,
   PoiItem,
 } from '../../../features/routing/domain'
@@ -37,8 +38,11 @@ type MapNavigationOverlayProps = {
     isDismissDisabled: boolean
     unavailableMessage: string | null
     errorMessage: string | null
+    autoRecalculationStatus: NavigationAutoRecalculationStatus
+    autoRecalculationRemainingSeconds: number | null
   } | null
   navigationRecalculationSuccessMessage: string | null
+  navigationAutoRecalculationCancellationMessage: string | null
   onRecalculateFromCurrentPosition: () => void
   onDismissNavigationDeviation: () => void
   activePoiAlert: PoiItem | null
@@ -69,6 +73,7 @@ export default function MapNavigationOverlay({
   navigationError,
   navigationOffRouteAlert,
   navigationRecalculationSuccessMessage,
+  navigationAutoRecalculationCancellationMessage,
   onRecalculateFromCurrentPosition,
   onDismissNavigationDeviation,
   activePoiAlert,
@@ -177,8 +182,6 @@ export default function MapNavigationOverlay({
                 p="xs"
                 bg="var(--mantine-color-orange-light)"
                 data-testid="navigation-off-route-alert"
-                role="status"
-                aria-live="polite"
               >
                 <Stack gap={6}>
                   <Text size="sm" fw={700} c="orange.8">
@@ -199,6 +202,20 @@ export default function MapNavigationOverlay({
                       {navigationOffRouteAlert.errorMessage}
                     </Text>
                   )}
+                  {navigationOffRouteAlert.autoRecalculationStatus === 'countdown' &&
+                    navigationOffRouteAlert.autoRecalculationRemainingSeconds !== null && (
+                      <Text
+                        size="xs"
+                        fw={600}
+                        aria-live="polite"
+                        aria-atomic="true"
+                        data-testid="navigation-auto-recalculation-countdown"
+                      >
+                        {t('navigationAutoRecalculationCountdown', {
+                          seconds: navigationOffRouteAlert.autoRecalculationRemainingSeconds,
+                        })}
+                      </Text>
+                    )}
                   <Group gap="xs" grow wrap="wrap" align="stretch">
                     {navigationOffRouteAlert.showRecalculateAction && (
                       <Button
@@ -207,12 +224,18 @@ export default function MapNavigationOverlay({
                         color="orange"
                         onClick={onRecalculateFromCurrentPosition}
                         disabled={navigationOffRouteAlert.isRecalculateDisabled}
-                        data-testid="navigation-recalculate-from-position"
+                        data-testid={
+                          navigationOffRouteAlert.autoRecalculationStatus === 'countdown'
+                            ? 'navigation-auto-recalculate-now'
+                            : 'navigation-recalculate-from-position'
+                        }
                         style={{ flex: '1 1 210px' }}
                       >
                         {navigationOffRouteAlert.isRecalculating
                           ? t('navigationRecalculating')
-                          : t('navigationRecalculateFromPosition')}
+                          : navigationOffRouteAlert.autoRecalculationStatus === 'countdown'
+                            ? t('navigationAutoRecalculateNow')
+                            : t('navigationRecalculateFromPosition')}
                       </Button>
                     )}
                     <Button
@@ -224,7 +247,9 @@ export default function MapNavigationOverlay({
                       data-testid="navigation-dismiss-off-route"
                       style={{ flex: '1 1 180px' }}
                     >
-                      {t('navigationContinueWithoutRecalculation')}
+                      {navigationOffRouteAlert.autoRecalculationStatus === 'countdown'
+                        ? t('navigationAutoContinueWithoutRecalculation')
+                        : t('navigationContinueWithoutRecalculation')}
                     </Button>
                   </Group>
                 </Stack>
@@ -275,6 +300,11 @@ export default function MapNavigationOverlay({
             {navigationRecalculationSuccessMessage && (
               <Text size="xs" c="teal.7" data-testid="navigation-recalculation-success">
                 {navigationRecalculationSuccessMessage}
+              </Text>
+            )}
+            {navigationAutoRecalculationCancellationMessage && (
+              <Text size="xs" c="dimmed" data-testid="navigation-auto-recalculation-cancelled">
+                {navigationAutoRecalculationCancellationMessage}
               </Text>
             )}
           </Stack>

@@ -227,7 +227,10 @@ const gpsNavigationRoute: Extract<TripResult, { kind: 'route' }> = {
   elevation_profile: [],
 }
 
-const setupStoredGpsNavigation = (routeResult: TripResult = gpsNavigationRoute) => {
+const setupStoredGpsNavigation = (
+  routeResult: TripResult = gpsNavigationRoute,
+  automaticNavigationRecalculationEnabled = false,
+) => {
   setDesktopMatchMedia()
   window.location.hash = '/carte'
   localStorage.setItem(
@@ -240,6 +243,12 @@ const setupStoredGpsNavigation = (routeResult: TripResult = gpsNavigationRoute) 
       loopStartValue: 'Départ de boucle',
     }),
   )
+  if (automaticNavigationRecalculationEnabled) {
+    localStorage.setItem(
+      appPreferencesStorageKey,
+      JSON.stringify({ automaticNavigationRecalculationEnabled: true }),
+    )
+  }
   saveRouteResultToStorage(routeResult)
 }
 
@@ -571,7 +580,7 @@ describe('App routing', () => {
 
   it('continue sans recalcul puis réarme l’avertissement après retour sur le trajet', async () => {
     const user = userEvent.setup()
-    setupStoredGpsNavigation()
+    setupStoredGpsNavigation(gpsNavigationRoute, true)
     const geolocation = installGeolocationMock()
 
     renderWithProviders(<App />)
@@ -583,6 +592,9 @@ describe('App routing', () => {
     await user.click(await screen.findByTestId('navigation-dismiss-off-route'))
 
     expect(screen.queryByTestId('navigation-off-route-alert')).not.toBeInTheDocument()
+    expect(screen.getByTestId('navigation-auto-recalculation-cancelled')).toHaveTextContent(
+      'Recalcul automatique annulé pour cette sortie',
+    )
     act(() => {
       geolocation.emitPosition({
         lat: 48.855,
@@ -627,6 +639,42 @@ describe('App routing', () => {
     })
 
     expect(await screen.findByTestId('navigation-off-route-alert')).toBeVisible()
+  })
+
+  it('affiche le compte à rebours optionnel et réutilise le recalcul existant immédiatement', async () => {
+    const user = userEvent.setup()
+    setupStoredGpsNavigation(gpsNavigationRoute, true)
+    const geolocation = installGeolocationMock()
+    const mockFetch = createAppFetchMock((url) =>
+      url === apiPaths.route
+        ? createJsonResponse({
+            geometry: gpsNavigationRoute.geometry,
+            distance_m: gpsNavigationRoute.distance_m,
+            duration_s_engine: gpsNavigationRoute.duration_s_engine,
+            eta_s: gpsNavigationRoute.eta_s,
+            turn_by_turn: gpsNavigationRoute.turn_by_turn,
+            elevation_profile: gpsNavigationRoute.elevation_profile,
+          })
+        : undefined,
+    )
+    vi.stubGlobal('fetch', mockFetch)
+
+    renderWithProviders(<App />)
+    await startGpsNavigation(user)
+    await waitFor(() => expect(geolocation.watchPosition).toHaveBeenCalledTimes(1))
+    emitConfirmedDeviation(geolocation, Date.now() - 20_000)
+
+    expect(await screen.findByTestId('navigation-auto-recalculation-countdown')).toHaveTextContent(
+      'Recalcul automatique dans 8 s',
+    )
+    await user.click(screen.getByTestId('navigation-auto-recalculate-now'))
+
+    await waitFor(() => {
+      expect(getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)).toHaveLength(1)
+      expect(screen.getByTestId('navigation-recalculation-success')).toBeVisible()
+    })
+    expect(screen.getByTestId('nav-exit')).toBeEnabled()
+    expect(screen.getByText('Mode GPS réel')).toBeVisible()
   })
 
   it('conserve l’ancien trajet et autorise une nouvelle tentative après un échec', async () => {
@@ -827,7 +875,7 @@ describe('App routing', () => {
       segmentsCount: 3,
       elevation_profile: [],
     }
-    setupStoredGpsNavigation(loopRoute)
+    setupStoredGpsNavigation(loopRoute, true)
     const geolocation = installGeolocationMock()
     const mockFetch = createAppFetchMock()
     vi.stubGlobal('fetch', mockFetch)
@@ -854,6 +902,7 @@ describe('App routing', () => {
 
     expect(await screen.findByTestId('navigation-off-route-alert')).toBeVisible()
     expect(screen.getByText('Le recalcul des boucles n’est pas encore disponible')).toBeVisible()
+    expect(screen.queryByTestId('navigation-auto-recalculation-countdown')).not.toBeInTheDocument()
     expect(screen.queryByTestId('navigation-recalculate-from-position')).not.toBeInTheDocument()
     expect(getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)).toHaveLength(0)
   })

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildNavigationDeviationEpisodeKey,
   createNavigationDeviationState,
   dismissNavigationDeviation,
   updateNavigationDeviationState,
@@ -83,11 +84,13 @@ describe('navigationDeviation', () => {
 
   it('réarme la détection après deux mesures de retour sous vingt mètres', () => {
     let state = confirmOffRoute()
+    const firstOffRouteAtMs = state.firstOffRouteAtMs
     state = updateNavigationDeviationState(
       state,
       createSample(baseTimeMs + 7000, { distanceToRouteMeters: 10, accuracyMeters: 2 }),
     )
     expect(state.status).toBe('off_route')
+    expect(state.firstOffRouteAtMs).toBe(firstOffRouteAtMs)
 
     state = updateNavigationDeviationState(
       state,
@@ -96,21 +99,43 @@ describe('navigationDeviation', () => {
 
     expect(state.status).toBe('on_route')
     expect(state.consecutiveOnRouteSamples).toBe(0)
+    expect(state.firstOffRouteAtMs).toBeNull()
+    expect(
+      buildNavigationDeviationEpisodeKey({ deviationState: state, routeSessionKey: 1 }),
+    ).toBeNull()
   })
 
-  it('conserve le statut dans la zone d’hystérésis', () => {
-    const offRoute = confirmOffRoute()
-    const state = updateNavigationDeviationState(
-      offRoute,
+  it('conserve l’identité de l’épisode dans la zone d’hystérésis et à la mesure suivante', () => {
+    let state = confirmOffRoute()
+    const firstOffRouteAtMs = state.firstOffRouteAtMs
+    const episodeKey = buildNavigationDeviationEpisodeKey({
+      deviationState: state,
+      routeSessionKey: 1,
+    })
+
+    state = updateNavigationDeviationState(
+      state,
       createSample(baseTimeMs + 7000, {
-        distanceToRouteMeters: 50,
-        accuracyMeters: 20,
+        distanceToRouteMeters: 35,
+        accuracyMeters: 5,
       }),
     )
 
     expect(state.status).toBe('off_route')
     expect(state.consecutiveOffRouteSamples).toBe(0)
     expect(state.consecutiveOnRouteSamples).toBe(0)
+    expect(state.firstOffRouteAtMs).toBe(firstOffRouteAtMs)
+    expect(buildNavigationDeviationEpisodeKey({ deviationState: state, routeSessionKey: 1 })).toBe(
+      episodeKey,
+    )
+
+    state = updateNavigationDeviationState(state, createSample(baseTimeMs + 8000))
+
+    expect(state.status).toBe('off_route')
+    expect(state.firstOffRouteAtMs).toBe(firstOffRouteAtMs)
+    expect(buildNavigationDeviationEpisodeKey({ deviationState: state, routeSessionKey: 1 })).toBe(
+      episodeKey,
+    )
   })
 
   it('exige un retour réel sous vingt mètres malgré la marge de précision', () => {
@@ -155,7 +180,18 @@ describe('navigationDeviation', () => {
   })
 
   it('confirme une nouvelle sortie après réarmement', () => {
-    let state = dismissNavigationDeviation(confirmOffRoute())
+    const initialOffRoute = confirmOffRoute()
+    const initialEpisodeKey = buildNavigationDeviationEpisodeKey({
+      deviationState: initialOffRoute,
+      routeSessionKey: 1,
+    })
+    const dismissed = dismissNavigationDeviation(initialOffRoute)
+    expect(dismissed.firstOffRouteAtMs).toBeNull()
+    expect(
+      buildNavigationDeviationEpisodeKey({ deviationState: dismissed, routeSessionKey: 1 }),
+    ).toBeNull()
+
+    let state = dismissed
     state = updateNavigationDeviationState(
       state,
       createSample(baseTimeMs + 7000, { distanceToRouteMeters: 8, accuracyMeters: 2 }),
@@ -167,6 +203,30 @@ describe('navigationDeviation', () => {
     state = confirmOffRoute(state, baseTimeMs + 9000)
 
     expect(state.status).toBe('off_route')
+    expect(state.firstOffRouteAtMs).toBe(baseTimeMs + 9000)
+    expect(
+      buildNavigationDeviationEpisodeKey({ deviationState: state, routeSessionKey: 1 }),
+    ).not.toBe(initialEpisodeKey)
+  })
+
+  it('ne fabrique pas d’identité pour un ancien état hors itinéraire incohérent', () => {
+    const inconsistentState = {
+      ...confirmOffRoute(),
+      firstOffRouteAtMs: null,
+    }
+    const state = updateNavigationDeviationState(
+      inconsistentState,
+      createSample(baseTimeMs + 7000, {
+        distanceToRouteMeters: 35,
+        accuracyMeters: 5,
+      }),
+    )
+
+    expect(state.status).toBe('off_route')
+    expect(state.firstOffRouteAtMs).toBeNull()
+    expect(
+      buildNavigationDeviationEpisodeKey({ deviationState: state, routeSessionKey: 1 }),
+    ).toBeNull()
   })
 
   it('ignore les timestamps non croissants ou trop anciens', () => {

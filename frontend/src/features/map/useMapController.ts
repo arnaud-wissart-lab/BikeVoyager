@@ -54,7 +54,7 @@ export const useMapController = ({
     navigationProgress,
     navigationDeviationState,
     navigationRecalculationStatus,
-    navigationVoiceSessionKey,
+    navigationSessionKey,
     isNavigationActive,
     voiceGuidanceEnabled,
     poiAlertEnabled,
@@ -188,7 +188,7 @@ export const useMapController = ({
     routeDistanceMeters,
     routeResult,
   ])
-  const voiceRouteSessionKey = isNavigationActive && routeResult ? navigationVoiceSessionKey : null
+  const voiceRouteSessionKey = isNavigationActive && routeResult ? navigationSessionKey : null
   const voiceGuidanceSuspended = shouldSuspendNavigationVoiceGuidance(
     navigationDeviationState.status,
     navigationRecalculationStatus,

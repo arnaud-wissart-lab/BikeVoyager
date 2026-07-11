@@ -253,6 +253,7 @@ export default function MapRoute({
     navigationMode: store.navigationMode,
     navigationCameraMode: store.navigationCameraMode,
     simulationSpeedKmh: mapController.simulationSpeedKmh,
+    automaticNavigationRecalculationEnabled: store.automaticNavigationRecalculationEnabled,
     voiceGuidanceEnabled: store.voiceGuidanceEnabled,
     voiceGuidanceSupportStatus: mapController.voiceGuidance.supportStatus,
     poiAlertEnabled: store.poiAlertEnabled,
@@ -265,6 +266,8 @@ export default function MapRoute({
     poiAlertDistanceRange,
     onNavigationModeChange: mapController.handleNavigationModeChange,
     onNavigationCameraModeChange: mapController.handleNavigationCameraModeChange,
+    onAutomaticNavigationRecalculationEnabledChange:
+      store.setAutomaticNavigationRecalculationEnabled,
     onVoiceGuidanceEnabledChange: store.setVoiceGuidanceEnabled,
     onPoiAlertEnabledChange: store.setPoiAlertEnabled,
     onPoiAlertCategoryChange: poisController.handlePoiAlertCategoryChange,
@@ -369,10 +372,16 @@ export default function MapRoute({
         navigationRecalculationSuccessMessage={
           routingController.navigationRecalculationSuccessMessage
         }
+        navigationAutoRecalculationCancellationMessage={
+          routingController.navigationAutoRecalculationCancellationMessage
+        }
         onRecalculateFromCurrentPosition={() => {
           void routingController.handleRecalculateFromCurrentPosition()
         }}
-        onDismissNavigationDeviation={mapController.handleDismissNavigationDeviation}
+        onDismissNavigationDeviation={() => {
+          routingController.cancelAutomaticRecalculationForCurrentEpisode()
+          mapController.handleDismissNavigationDeviation()
+        }}
         activePoiAlert={mapController.activePoiAlert}
         getPoiDisplayName={mapController.getPoiDisplayName}
         poiCategoryLabels={mapController.poiCategoryLabels}

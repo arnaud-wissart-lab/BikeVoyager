@@ -4,7 +4,42 @@ Historique public des évolutions notables du projet.
 
 ## Unreleased
 
-- Aucun changement publié.
+- Aucun changement depuis la version 0.2.0.
+
+## 0.2.0 - 2026-07-11
+
+### Ajouté
+
+- Comparaison détaillée des itinéraires et affichage de l’alternative sur la carte.
+- Carnet de trajets avec duplication, édition, import/export BikeVoyager et export GPX.
+- Préréglages de profils vélo et VAE.
+- Feuille de route détaillée.
+- Guidage actif et guidage vocal optionnel.
+- Maintien de l’écran allumé pendant la navigation.
+- Détection de sortie d’itinéraire.
+- Recalcul manuel et recalcul automatique optionnel.
+
+### Amélioré
+
+- Affichage cohérent de la prochaine manœuvre et de sa distance.
+- Gestion des instructions manquantes dans la feuille de route et le guidage.
+- Navigation GPS plus autonome sur téléphone.
+- Persistance des nouvelles préférences de navigation.
+- Comparaison plus lisible avant application d’un trajet alternatif.
+
+### Corrigé
+
+- Ignorance des résultats de recalcul devenus obsolètes après un changement de trajet ou de session.
+- Conservation de l’ancien trajet après un échec de recalcul.
+- Stabilisation de l’identité d’une sortie d’itinéraire dans la zone d’hystérésis GPS.
+- Correction de la distance annoncée avant une manœuvre séparée par des segments sans instruction.
+- Prévention des doubles appels de Wake Lock et de recalcul automatique.
+
+### Technique
+
+- Extension des tests frontend de navigation, simulation, GPS, voix et préférences.
+- Aucun changement de contrat API pour les nouvelles fonctions de navigation.
+- Version frontend portée à `0.2.0`.
 
 ## 0.1.0 - 2026-07-08
 

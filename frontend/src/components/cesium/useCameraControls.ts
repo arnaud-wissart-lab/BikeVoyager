@@ -10,6 +10,7 @@ import {
   getNavigationCameraPreset,
   normalizeHeadingDegrees,
 } from './math'
+import { isViewerUsable } from './lifecycle'
 import type { CesiumModule, CesiumStatus, NavigationProgress, PoiMarker } from './types'
 
 type UseCameraControlsParams = {
@@ -56,7 +57,13 @@ export default function useCameraControls({
   useEffect(() => {
     const viewer = viewerRef.current
     const Cesium = cesiumRef.current
-    if (status !== 'ready' || !viewer || !Cesium || !navigationActive || !navigationProgress) {
+    if (
+      status !== 'ready' ||
+      !isViewerUsable(viewer) ||
+      !Cesium ||
+      !navigationActive ||
+      !navigationProgress
+    ) {
       return
     }
 
@@ -128,7 +135,7 @@ export default function useCameraControls({
     const Cesium = cesiumRef.current
     if (
       status !== 'ready' ||
-      !viewer ||
+      !isViewerUsable(viewer) ||
       !Cesium ||
       navigationActive ||
       mapCommandSeq === 0 ||

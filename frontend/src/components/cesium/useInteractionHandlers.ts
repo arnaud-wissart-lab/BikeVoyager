@@ -1,4 +1,5 @@
 import { useEffect, type MutableRefObject } from 'react'
+import { isHandlerUsable, isViewerUsable, type CesiumInteractionLifecycleRef } from './lifecycle'
 import { normalizeHeadingDegrees } from './math'
 import type {
   CesiumModule,
@@ -15,6 +16,7 @@ type UseInteractionHandlersParams = {
   viewerRef: MutableRefObject<import('cesium').Viewer | null>
   cesiumRef: MutableRefObject<CesiumModule | null>
   poiClickHandlerRef: MutableRefObject<import('cesium').ScreenSpaceEventHandler | null>
+  interactionLifecycleRef: CesiumInteractionLifecycleRef
 }
 
 const getCameraHeadingDegrees = (Cesium: CesiumModule, viewer: import('cesium').Viewer) => {
@@ -64,19 +66,25 @@ export default function useInteractionHandlers({
   viewerRef,
   cesiumRef,
   poiClickHandlerRef,
+  interactionLifecycleRef,
 }: UseInteractionHandlersParams) {
   useEffect(() => {
     const viewer = viewerRef.current
     const Cesium = cesiumRef.current
-    if (status !== 'ready' || !viewer || !Cesium) {
+    if (status !== 'ready' || !isViewerUsable(viewer) || !Cesium) {
       return
     }
 
-    if (poiClickHandlerRef.current && !poiClickHandlerRef.current.isDestroyed()) {
-      poiClickHandlerRef.current.destroy()
+    const previousHandler = poiClickHandlerRef.current
+    const previousLifecycle = interactionLifecycleRef.current
+    if (previousLifecycle?.handler === previousHandler) {
+      previousLifecycle.cleanup()
+    } else if (isHandlerUsable(previousHandler)) {
+      previousHandler.destroy()
     }
 
-    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
+    const canvas = viewer.scene.canvas
+    const handler = new Cesium.ScreenSpaceEventHandler(canvas)
     const preventNativeContextMenu = (event: MouseEvent) => {
       event.preventDefault()
     }
@@ -85,11 +93,11 @@ export default function useInteractionHandlers({
       : undefined
 
     if (onStreetViewContextMenu) {
-      viewer.scene.canvas.addEventListener('contextmenu', preventNativeContextMenu)
+      canvas.addEventListener('contextmenu', preventNativeContextMenu)
     }
 
     handler.setInputAction((movement: { position: import('cesium').Cartesian2 }) => {
-      if (!onPoiSelect) {
+      if (!onPoiSelect || !isViewerUsable(viewer) || !isHandlerUsable(handler)) {
         return
       }
 
@@ -116,6 +124,10 @@ export default function useInteractionHandlers({
 
     if (onStreetViewContextMenu) {
       handler.setInputAction((movement: { position: import('cesium').Cartesian2 }) => {
+        if (!isViewerUsable(viewer) || !isHandlerUsable(handler)) {
+          return
+        }
+
         const target = pickStreetViewTarget(Cesium, viewer, movement.position)
         if (target) {
           onStreetViewContextMenu({
@@ -130,19 +142,39 @@ export default function useInteractionHandlers({
     }
 
     poiClickHandlerRef.current = handler
+    let isCleanedUp = false
 
-    return () => {
+    const cleanup = () => {
+      if (isCleanedUp) {
+        return
+      }
+      isCleanedUp = true
+
       if (onStreetViewContextMenu) {
-        viewer.scene.canvas.removeEventListener('contextmenu', preventNativeContextMenu)
+        canvas.removeEventListener('contextmenu', preventNativeContextMenu)
       }
       removeCameraMoveStartListener?.()
-      if (poiClickHandlerRef.current && !poiClickHandlerRef.current.isDestroyed()) {
-        poiClickHandlerRef.current.destroy()
+      if (isHandlerUsable(handler)) {
+        handler.destroy()
       }
-      poiClickHandlerRef.current = null
+      if (poiClickHandlerRef.current === handler) {
+        poiClickHandlerRef.current = null
+      }
+      if (interactionLifecycleRef.current?.cleanup === cleanup) {
+        interactionLifecycleRef.current = null
+      }
     }
+
+    interactionLifecycleRef.current = {
+      viewer,
+      handler,
+      cleanup,
+    }
+
+    return cleanup
   }, [
     cesiumRef,
+    interactionLifecycleRef,
     onMapStateChange,
     onPoiSelect,
     onStreetViewContextMenu,

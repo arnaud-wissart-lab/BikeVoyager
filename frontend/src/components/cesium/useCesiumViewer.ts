@@ -1,5 +1,6 @@
-import { useEffect, useState, type MutableRefObject } from 'react'
+import { useEffect, useRef, useState, type MutableRefObject } from 'react'
 import { hasWebglSupport } from './math'
+import { isHandlerUsable, isViewerUsable, type CesiumInteractionLifecycleRef } from './lifecycle'
 import type { CesiumModule, CesiumStatus } from './types'
 
 declare const CESIUM_BASE_URL: string
@@ -16,6 +17,32 @@ type UseCesiumViewerParams = {
   lastAlternativeRouteSignatureRef: MutableRefObject<string | null>
   cesiumRef: MutableRefObject<CesiumModule | null>
   poiClickHandlerRef: MutableRefObject<import('cesium').ScreenSpaceEventHandler | null>
+  interactionLifecycleRef: CesiumInteractionLifecycleRef
+}
+
+const cleanupViewerInteractions = (
+  viewer: import('cesium').Viewer,
+  ownsCurrentViewer: boolean,
+  interactionLifecycleRef: CesiumInteractionLifecycleRef,
+  poiClickHandlerRef: MutableRefObject<import('cesium').ScreenSpaceEventHandler | null>,
+) => {
+  const interactionLifecycle = interactionLifecycleRef.current
+  if (interactionLifecycle?.viewer === viewer) {
+    interactionLifecycle.cleanup()
+    return
+  }
+
+  if (!ownsCurrentViewer) {
+    return
+  }
+
+  const handler = poiClickHandlerRef.current
+  if (isHandlerUsable(handler)) {
+    handler.destroy()
+  }
+  if (poiClickHandlerRef.current === handler) {
+    poiClickHandlerRef.current = null
+  }
 }
 
 export default function useCesiumViewer({
@@ -30,11 +57,14 @@ export default function useCesiumViewer({
   lastAlternativeRouteSignatureRef,
   cesiumRef,
   poiClickHandlerRef,
+  interactionLifecycleRef,
 }: UseCesiumViewerParams): CesiumStatus {
   const [status, setStatus] = useState<CesiumStatus>('loading')
+  const initializationGenerationRef = useRef(0)
 
   useEffect(() => {
-    if (!containerRef.current) {
+    const container = containerRef.current
+    if (!container) {
       return
     }
 
@@ -45,15 +75,23 @@ export default function useCesiumViewer({
     }
 
     let isActive = true
+    const generation = initializationGenerationRef.current + 1
+    initializationGenerationRef.current = generation
+    let createdViewer: import('cesium').Viewer | null = null
+    let createdCesium: CesiumModule | null = null
+
+    const isCurrentInitialization = () =>
+      isActive &&
+      initializationGenerationRef.current === generation &&
+      containerRef.current === container
 
     const initializeViewer = async () => {
       try {
         const cesiumModule = await import('cesium')
-        if (!isActive || !containerRef.current) {
+        if (!isCurrentInitialization()) {
           return
         }
-
-        cesiumRef.current = cesiumModule
+        createdCesium = cesiumModule
 
         const baseUrl =
           typeof CESIUM_BASE_URL !== 'undefined'
@@ -75,7 +113,11 @@ export default function useCesiumViewer({
             })
           : new cesiumModule.EllipsoidTerrainProvider()
 
-        const viewer = new cesiumModule.Viewer(containerRef.current, {
+        if (!isCurrentInitialization()) {
+          return
+        }
+
+        const viewer = new cesiumModule.Viewer(container, {
           terrainProvider,
           baseLayer: new cesiumModule.ImageryLayer(
             new cesiumModule.OpenStreetMapImageryProvider({
@@ -104,6 +146,14 @@ export default function useCesiumViewer({
           requestRenderMode: true,
           maximumRenderTimeChange: Number.POSITIVE_INFINITY,
         })
+        createdViewer = viewer
+
+        if (!isCurrentInitialization()) {
+          if (isViewerUsable(viewer)) {
+            viewer.destroy()
+          }
+          return
+        }
 
         viewer.scene.globe.depthTestAgainstTerrain = false
         viewer.scene.screenSpaceCameraController.enableCollisionDetection = true
@@ -114,9 +164,23 @@ export default function useCesiumViewer({
           Math.max(1, typeof window !== 'undefined' ? window.devicePixelRatio : 1),
         )
 
+        if (!isCurrentInitialization()) {
+          if (isViewerUsable(viewer)) {
+            viewer.destroy()
+          }
+          return
+        }
+
+        cesiumRef.current = cesiumModule
         viewerRef.current = viewer
         setStatus('ready')
       } catch (error) {
+        if (isViewerUsable(createdViewer)) {
+          createdViewer.destroy()
+        }
+        if (!isCurrentInitialization()) {
+          return
+        }
         console.error("[Cesium] Echec d'initialisation du viewer.", error)
         setStatus('fallback')
       }
@@ -126,27 +190,43 @@ export default function useCesiumViewer({
 
     return () => {
       isActive = false
-      if (viewerRef.current && !viewerRef.current.isDestroyed()) {
-        viewerRef.current.destroy()
+      if (initializationGenerationRef.current === generation) {
+        initializationGenerationRef.current += 1
       }
-      if (poiClickHandlerRef.current && !poiClickHandlerRef.current.isDestroyed()) {
-        poiClickHandlerRef.current.destroy()
+
+      const ownsCurrentViewer = createdViewer !== null && viewerRef.current === createdViewer
+      if (createdViewer) {
+        cleanupViewerInteractions(
+          createdViewer,
+          ownsCurrentViewer,
+          interactionLifecycleRef,
+          poiClickHandlerRef,
+        )
       }
-      poiClickHandlerRef.current = null
-      viewerRef.current = null
-      routeEntityRef.current = null
-      alternativeRouteEntityRef.current = null
-      poiEntitiesRef.current = []
-      navigationEntityRef.current = null
-      smoothedHeadingRef.current = null
-      lastRouteSignatureRef.current = null
-      lastAlternativeRouteSignatureRef.current = null
-      cesiumRef.current = null
+
+      if (isViewerUsable(createdViewer)) {
+        createdViewer.destroy()
+      }
+
+      if (ownsCurrentViewer) {
+        viewerRef.current = null
+        routeEntityRef.current = null
+        alternativeRouteEntityRef.current = null
+        poiEntitiesRef.current = []
+        navigationEntityRef.current = null
+        smoothedHeadingRef.current = null
+        lastRouteSignatureRef.current = null
+        lastAlternativeRouteSignatureRef.current = null
+        if (cesiumRef.current === createdCesium) {
+          cesiumRef.current = null
+        }
+      }
     }
   }, [
     alternativeRouteEntityRef,
     cesiumRef,
     containerRef,
+    interactionLifecycleRef,
     lastAlternativeRouteSignatureRef,
     lastRouteSignatureRef,
     navigationEntityRef,

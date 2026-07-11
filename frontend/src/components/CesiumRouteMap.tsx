@@ -5,6 +5,7 @@ import useCesiumViewer from './cesium/useCesiumViewer'
 import useInteractionHandlers from './cesium/useInteractionHandlers'
 import useMapLayers from './cesium/useMapLayers'
 import useRouteEntities from './cesium/useRouteEntities'
+import type { CesiumInteractionLifecycle } from './cesium/lifecycle'
 import type {
   CesiumRouteMapProps,
   CesiumModule,
@@ -59,6 +60,7 @@ export default function CesiumRouteMap({
   const lastProcessedCommandSeqRef = useRef(0)
   const cesiumRef = useRef<CesiumModule | null>(null)
   const poiClickHandlerRef = useRef<import('cesium').ScreenSpaceEventHandler | null>(null)
+  const interactionLifecycleRef = useRef<CesiumInteractionLifecycle | null>(null)
   const streetViewMenuRef = useRef<HTMLDivElement | null>(null)
   const [streetViewMenu, setStreetViewMenu] = useState<StreetViewContextMenuRequest | null>(null)
   const routeLayerCount =
@@ -86,6 +88,7 @@ export default function CesiumRouteMap({
     lastAlternativeRouteSignatureRef,
     cesiumRef,
     poiClickHandlerRef,
+    interactionLifecycleRef,
   })
 
   useMapLayers({
@@ -104,6 +107,7 @@ export default function CesiumRouteMap({
     viewerRef,
     cesiumRef,
     poiClickHandlerRef,
+    interactionLifecycleRef,
   })
   const visibleStreetViewMenu = status === 'ready' ? streetViewMenu : null
 

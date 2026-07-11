@@ -1,6 +1,7 @@
 import { StrictMode, type PropsWithChildren } from 'react'
 import { act, cleanup, renderHook } from '@testing-library/react'
 import {
+  buildNavigationDeviationEpisodeKey,
   createNavigationDeviationState,
   type NavigationDeviationState,
   type NavigationRecalculationPlan,
@@ -174,6 +175,71 @@ describe('useNavigationAutoRecalculation', () => {
     act(() => vi.advanceTimersByTime(6000))
     expect(params.onRecalculate).not.toHaveBeenCalled()
     act(() => vi.advanceTimersByTime(2000))
+    expect(params.onRecalculate).toHaveBeenCalledTimes(1)
+  })
+
+  it('conserve l’échéance initiale pendant une mesure dans la bande d’hystérésis', () => {
+    const params = createParams()
+    const { result, rerender } = renderHook(
+      (props: UseNavigationAutoRecalculationParams) => useNavigationAutoRecalculation(props),
+      { initialProps: params },
+    )
+    const episodeKey = buildNavigationDeviationEpisodeKey({
+      deviationState: params.deviationState,
+      routeSessionKey: params.routeSessionKey,
+    })
+
+    act(() => vi.advanceTimersByTime(2000))
+    expect(result.current.remainingSeconds).toBe(6)
+
+    const hysteresisState = {
+      ...params.deviationState,
+      distanceToRouteMeters: 35,
+      accuracyMeters: 5,
+      lastSampleAtMs: 1500,
+    }
+    rerender({ ...params, deviationState: hysteresisState })
+
+    expect(
+      buildNavigationDeviationEpisodeKey({
+        deviationState: hysteresisState,
+        routeSessionKey: params.routeSessionKey,
+      }),
+    ).toBe(episodeKey)
+    expect(result.current.status).toBe('countdown')
+    expect(result.current.remainingSeconds).toBe(6)
+
+    act(() => vi.advanceTimersByTime(6000))
+    expect(params.onRecalculate).toHaveBeenCalledTimes(1)
+  })
+
+  it('autorise un compte à rebours complet après un retour puis un nouvel épisode', () => {
+    const params = createParams()
+    const initialEpisodeKey = buildNavigationDeviationEpisodeKey({
+      deviationState: params.deviationState,
+      routeSessionKey: params.routeSessionKey,
+    })
+    const { result, rerender } = renderHook(
+      (props: UseNavigationAutoRecalculationParams) => useNavigationAutoRecalculation(props),
+      { initialProps: params },
+    )
+
+    act(() => vi.advanceTimersByTime(2000))
+    rerender({ ...params, deviationState: createNavigationDeviationState() })
+    expect(result.current.status).toBe('idle')
+
+    const nextEpisode = offRouteState(2000)
+    expect(
+      buildNavigationDeviationEpisodeKey({
+        deviationState: nextEpisode,
+        routeSessionKey: params.routeSessionKey,
+      }),
+    ).not.toBe(initialEpisodeKey)
+    rerender({ ...params, deviationState: nextEpisode })
+    expect(result.current.status).toBe('countdown')
+    expect(result.current.remainingSeconds).toBe(8)
+
+    act(() => vi.advanceTimersByTime(8000))
     expect(params.onRecalculate).toHaveBeenCalledTimes(1)
   })
 

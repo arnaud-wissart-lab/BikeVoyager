@@ -146,7 +146,7 @@ export const updateNavigationDeviationState = (
       ...sampledState,
       consecutiveOffRouteSamples: 0,
       consecutiveOnRouteSamples,
-      firstOffRouteAtMs: null,
+      firstOffRouteAtMs: state.status === 'off_route' ? state.firstOffRouteAtMs : null,
     }
   }
 
@@ -154,7 +154,7 @@ export const updateNavigationDeviationState = (
     ...sampledState,
     consecutiveOffRouteSamples: 0,
     consecutiveOnRouteSamples: 0,
-    firstOffRouteAtMs: null,
+    firstOffRouteAtMs: state.status === 'off_route' ? state.firstOffRouteAtMs : null,
   }
 }
 

@@ -2,10 +2,17 @@ import type { RouteStep } from './types'
 
 export type NavigationGuidance = {
   activeStepIndex: number
-  activeInstruction: string
+  activeInstruction: string | null
   distanceToManeuverMeters: number | null
+  nextStepIndex: number | null
   nextInstruction: string | null
   isArrival: boolean
+}
+
+export type NavigationUpcomingInstruction = {
+  stepIndex: number
+  instruction: string
+  startDistanceMeters: number
 }
 
 export type NavigationStepRange = {
@@ -85,11 +92,15 @@ const findLastInstructionRange = (
 const findNextInstruction = (
   ranges: NavigationStepRange[],
   activeRangeIndex: number,
-): string | null => {
+): NavigationUpcomingInstruction | null => {
   for (let index = activeRangeIndex + 1; index < ranges.length; index += 1) {
-    const instruction = ranges[index].instruction
-    if (instruction) {
-      return instruction
+    const range = ranges[index]
+    if (hasInstruction(range)) {
+      return {
+        stepIndex: range.stepIndex,
+        instruction: range.instruction,
+        startDistanceMeters: range.startDistanceMeters,
+      }
     }
   }
 
@@ -124,6 +135,7 @@ export const resolveNavigationGuidance = (
       activeStepIndex: lastInstructionRange.stepIndex,
       activeInstruction: lastInstructionRange.instruction,
       distanceToManeuverMeters: 0,
+      nextStepIndex: null,
       nextInstruction: null,
       isArrival: true,
     }
@@ -138,24 +150,22 @@ export const resolveNavigationGuidance = (
       normalizedProgressMeters < Math.max(0, range.endDistanceMeters - normalizedToleranceMeters),
   )
   const activeRange = ranges[Math.max(0, activeRangeIndex)]
-  if (!hasInstruction(activeRange)) {
+  const upcomingInstruction = findNextInstruction(ranges, activeRangeIndex)
+  const activeInstruction = activeRange.instruction
+  if (!activeInstruction && !upcomingInstruction) {
     return null
   }
-
-  const progressWithinRangeMeters = Math.max(
-    activeRange.startDistanceMeters,
-    normalizedProgressMeters,
-  )
-  const remainingStepDistanceMeters = Math.max(
-    0,
-    activeRange.endDistanceMeters - progressWithinRangeMeters,
-  )
+  const distanceToManeuverMeters = upcomingInstruction
+    ? Math.max(0, upcomingInstruction.startDistanceMeters - normalizedProgressMeters) /
+      routeToStepScale
+    : null
 
   return {
     activeStepIndex: activeRange.stepIndex,
-    activeInstruction: activeRange.instruction,
-    distanceToManeuverMeters: remainingStepDistanceMeters / routeToStepScale,
-    nextInstruction: findNextInstruction(ranges, activeRangeIndex),
+    activeInstruction,
+    distanceToManeuverMeters,
+    nextStepIndex: upcomingInstruction?.stepIndex ?? null,
+    nextInstruction: upcomingInstruction?.instruction ?? null,
     isArrival: false,
   }
 }

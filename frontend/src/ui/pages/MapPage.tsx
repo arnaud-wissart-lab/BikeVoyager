@@ -15,6 +15,7 @@ import type {
 } from '../../features/routing/domain'
 import type { PoiDisplayRow, PoiExternalLink } from '../../features/map/poiDetailsPresentation'
 import type { ScreenWakeLockStatus } from '../../features/map/useScreenWakeLock'
+import type { VoiceGuidanceSupportStatus } from '../../features/map/useNavigationVoiceGuidance'
 import MapSummaryPanel from './MapSummaryPanel'
 import NavigationOptionsPanel from './NavigationOptionsPanel'
 import PoiPanel from './PoiPanel'
@@ -91,6 +92,8 @@ type MapPageProps = {
   etaLabel: string
   navigationProgressPct: number | null
   navigationGuidance: NavigationGuidance | null
+  voiceGuidanceEnabled: boolean
+  voiceGuidanceSupportStatus: VoiceGuidanceSupportStatus
   wakeLockStatus: ScreenWakeLockStatus
   onNavigationCameraModeChange: (value: string) => void
   navigationError: string | null
@@ -171,6 +174,8 @@ export default function MapPage({
   etaLabel,
   navigationProgressPct,
   navigationGuidance,
+  voiceGuidanceEnabled,
+  voiceGuidanceSupportStatus,
   wakeLockStatus,
   onNavigationCameraModeChange,
   navigationError,
@@ -359,6 +364,8 @@ export default function MapPage({
         etaLabel={etaLabel}
         navigationProgressPct={navigationProgressPct}
         navigationGuidance={navigationGuidance}
+        voiceGuidanceEnabled={voiceGuidanceEnabled}
+        voiceGuidanceSupportStatus={voiceGuidanceSupportStatus}
         wakeLockStatus={wakeLockStatus}
         navigationCameraMode={navigationCameraMode}
         onNavigationCameraModeChange={onNavigationCameraModeChange}

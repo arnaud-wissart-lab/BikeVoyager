@@ -67,12 +67,16 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
   const [navigationCameraMode, setNavigationCameraMode] = useState(
     () => initialAppPreferences.navigationCameraMode,
   )
+  const [voiceGuidanceEnabled, setVoiceGuidanceEnabled] = useState(
+    () => initialAppPreferences.voiceGuidanceEnabled,
+  )
   const [navigationProgress, setNavigationProgress] = useState<NavigationProgress | null>(null)
   const [navigationError, setNavigationError] = useState<string | null>(null)
   const [navigationDeviationState, setNavigationDeviationState] =
     useState<NavigationDeviationState>(() => createNavigationDeviationState())
   const [navigationRecalculationStatus, setNavigationRecalculationStatus] =
     useState<NavigationRecalculationStatus>('idle')
+  const [navigationVoiceSessionKey, setNavigationVoiceSessionKey] = useState(0)
   const [poiAlertEnabled, setPoiAlertEnabled] = useState(
     () => initialAppPreferences.poiAlertEnabled,
   )
@@ -146,6 +150,9 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
     (value) => {
       invalidateNavigationRecalculation()
       const next = typeof value === 'function' ? value(navigationRouteResultRef.current) : value
+      if (next !== navigationRouteResultRef.current) {
+        setNavigationVoiceSessionKey((current) => current + 1)
+      }
       navigationRouteResultRef.current = next
       setRouteResultState(next)
     },
@@ -154,6 +161,7 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
 
   const setRouteResultFromNavigationRecalculation = useCallback((value: TripResult) => {
     navigationRouteResultRef.current = value
+    setNavigationVoiceSessionKey((current) => current + 1)
     setRouteResultState(value)
   }, [])
 
@@ -162,6 +170,9 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
       const next = typeof value === 'function' ? value(navigationIsActiveRef.current) : value
       if (next !== navigationIsActiveRef.current) {
         invalidateNavigationRecalculation()
+        if (next) {
+          setNavigationVoiceSessionKey((current) => current + 1)
+        }
       }
       navigationIsActiveRef.current = next
       setIsNavigationActiveState(next)
@@ -240,6 +251,8 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
     setNavigationMode,
     navigationCameraMode,
     setNavigationCameraMode,
+    voiceGuidanceEnabled,
+    setVoiceGuidanceEnabled,
     navigationProgress,
     setNavigationProgress,
     navigationError,
@@ -248,6 +261,7 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
     setNavigationDeviationState,
     navigationRecalculationStatus,
     setNavigationRecalculationStatus,
+    navigationVoiceSessionKey,
     poiAlertEnabled,
     setPoiAlertEnabled,
     poiAlertDistanceMeters,

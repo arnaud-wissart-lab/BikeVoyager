@@ -11,6 +11,7 @@ const guidance: NonNullable<MapNavigationOverlayProps['navigationGuidance']> = {
   activeStepIndex: 0,
   activeInstruction: 'Tourner à droite sur Rue X',
   distanceToManeuverMeters: 120,
+  nextStepIndex: 1,
   nextInstruction: 'Continuer sur Avenue Y',
   isArrival: false,
 }
@@ -26,6 +27,8 @@ const baseProps: MapNavigationOverlayProps = {
   etaLabel: '5 min',
   navigationProgressPct: 20,
   navigationGuidance: guidance,
+  voiceGuidanceEnabled: false,
+  voiceGuidanceSupportStatus: 'supported',
   wakeLockStatus: 'idle',
   navigationCameraMode: 'follow_3d',
   onNavigationCameraModeChange: vi.fn(),
@@ -52,24 +55,32 @@ const renderOverlay = (props: Partial<MapNavigationOverlayProps> = {}) =>
   renderWithProviders(<MapNavigationOverlay {...baseProps} {...props} />)
 
 describe('MapNavigationOverlay', () => {
-  it('affiche l’instruction active et la distance avant la manœuvre', () => {
+  it('associe la distance à la prochaine manœuvre', () => {
     renderOverlay()
 
     expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent(
-      'Tourner à droite sur Rue X',
+      'Continuer sur Avenue Y',
     )
     expect(screen.getByTestId('navigation-distance-to-maneuver')).toHaveTextContent('Dans 120 m')
   })
 
-  it('affiche l’instruction suivante', () => {
-    renderOverlay()
+  it('affiche la dernière instruction active sans distance en l’absence de manœuvre suivante', () => {
+    renderOverlay({
+      navigationGuidance: {
+        ...guidance,
+        distanceToManeuverMeters: null,
+        nextStepIndex: null,
+        nextInstruction: null,
+      },
+    })
 
-    expect(screen.getByTestId('navigation-next-instruction')).toHaveTextContent(
-      'Puis : Continuer sur Avenue Y',
+    expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent(
+      'Tourner à droite sur Rue X',
     )
+    expect(screen.queryByTestId('navigation-distance-to-maneuver')).not.toBeInTheDocument()
   })
 
-  it('affiche un fallback quand la distance de manœuvre est indisponible', () => {
+  it('n’affiche pas de fausse distance quand la distance de manœuvre est indisponible', () => {
     renderOverlay({
       navigationGuidance: {
         ...guidance,
@@ -77,7 +88,28 @@ describe('MapNavigationOverlay', () => {
       },
     })
 
-    expect(screen.getByTestId('navigation-distance-to-maneuver')).toHaveTextContent('Dans —')
+    expect(screen.queryByTestId('navigation-distance-to-maneuver')).not.toBeInTheDocument()
+    expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent(
+      'Continuer sur Avenue Y',
+    )
+  })
+
+  it('conserve la prochaine manœuvre pendant un segment sans instruction', () => {
+    renderOverlay({
+      navigationGuidance: {
+        ...guidance,
+        activeStepIndex: 1,
+        activeInstruction: null,
+        distanceToManeuverMeters: 80,
+        nextStepIndex: 3,
+      },
+    })
+
+    expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent(
+      'Continuer sur Avenue Y',
+    )
+    expect(screen.getByTestId('navigation-distance-to-maneuver')).toHaveTextContent('Dans 80 m')
+    expect(screen.getByTestId('nav-exit')).toBeEnabled()
   })
 
   it('masque uniquement la zone de guidage quand le modèle est absent', () => {
@@ -85,7 +117,6 @@ describe('MapNavigationOverlay', () => {
 
     expect(screen.queryByTestId('navigation-active-instruction')).not.toBeInTheDocument()
     expect(screen.queryByTestId('navigation-distance-to-maneuver')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('navigation-next-instruction')).not.toBeInTheDocument()
     expect(screen.getByText('Distance restante')).toBeInTheDocument()
     expect(screen.getByTestId('nav-exit')).toBeInTheDocument()
   })
@@ -96,14 +127,14 @@ describe('MapNavigationOverlay', () => {
         ...guidance,
         activeStepIndex: 2,
         distanceToManeuverMeters: 0,
+        nextStepIndex: null,
         nextInstruction: null,
         isArrival: true,
       },
     })
 
     expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent('Arrivée')
-    expect(screen.getByTestId('navigation-distance-to-maneuver')).toHaveTextContent('Dans 0 m')
-    expect(screen.queryByTestId('navigation-next-instruction')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('navigation-distance-to-maneuver')).not.toBeInTheDocument()
   })
 
   it('conserve les contrôles de sortie et de caméra', () => {
@@ -145,6 +176,31 @@ describe('MapNavigationOverlay', () => {
     renderOverlay({ wakeLockStatus: 'idle' })
 
     expect(screen.queryByTestId('navigation-wake-lock-status')).not.toBeInTheDocument()
+  })
+
+  it('affiche discrètement le guidage vocal actif sans masquer l’instruction', () => {
+    renderOverlay({ voiceGuidanceEnabled: true, voiceGuidanceSupportStatus: 'supported' })
+
+    expect(screen.getByTestId('navigation-voice-status')).toHaveTextContent('Guidage vocal actif')
+    expect(screen.getByTestId('navigation-active-instruction')).toBeInTheDocument()
+  })
+
+  it('affiche une erreur vocale non bloquante', () => {
+    renderOverlay({ voiceGuidanceEnabled: true, voiceGuidanceSupportStatus: 'error' })
+
+    expect(screen.getByTestId('navigation-voice-status')).toHaveTextContent(
+      'Guidage vocal indisponible',
+    )
+    expect(screen.getByRole('button', { name: 'Quitter' })).toBeEnabled()
+  })
+
+  it('masque le statut vocal si l’option est coupée ou non supportée', () => {
+    const firstRender = renderOverlay()
+    expect(screen.queryByTestId('navigation-voice-status')).not.toBeInTheDocument()
+
+    firstRender.unmount()
+    renderOverlay({ voiceGuidanceEnabled: true, voiceGuidanceSupportStatus: 'unsupported' })
+    expect(screen.queryByTestId('navigation-voice-status')).not.toBeInTheDocument()
   })
 
   it('affiche un avertissement compact sans masquer le guidage et les contrôles', () => {

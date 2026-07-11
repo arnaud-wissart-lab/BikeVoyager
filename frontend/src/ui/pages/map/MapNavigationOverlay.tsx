@@ -10,6 +10,7 @@ import type {
 } from '../../../features/routing/domain'
 import { formatRouteStepDistance } from '../../../features/routing/domain'
 import type { ScreenWakeLockStatus } from '../../../features/map/useScreenWakeLock'
+import type { VoiceGuidanceSupportStatus } from '../../../features/map/useNavigationVoiceGuidance'
 
 type MapNavigationOverlayProps = {
   isNavigationActive: boolean
@@ -22,6 +23,8 @@ type MapNavigationOverlayProps = {
   etaLabel: string
   navigationProgressPct: number | null
   navigationGuidance: NavigationGuidance | null
+  voiceGuidanceEnabled: boolean
+  voiceGuidanceSupportStatus: VoiceGuidanceSupportStatus
   wakeLockStatus: ScreenWakeLockStatus
   navigationCameraMode: NavigationCameraMode
   onNavigationCameraModeChange: (value: string) => void
@@ -58,6 +61,8 @@ export default function MapNavigationOverlay({
   etaLabel,
   navigationProgressPct,
   navigationGuidance,
+  voiceGuidanceEnabled,
+  voiceGuidanceSupportStatus,
   wakeLockStatus,
   navigationCameraMode,
   onNavigationCameraModeChange,
@@ -80,8 +85,9 @@ export default function MapNavigationOverlay({
     return null
   }
 
-  const maneuverDistanceLabel =
-    formatRouteStepDistance(navigationGuidance?.distanceToManeuverMeters) ?? t('placeholderValue')
+  const maneuverDistanceLabel = formatRouteStepDistance(
+    navigationGuidance?.distanceToManeuverMeters,
+  )
 
   return (
     <Box style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
@@ -138,26 +144,18 @@ export default function MapNavigationOverlay({
                 <Text size="xs" c="dimmed">
                   {t('navigationInstructionLabel')}
                 </Text>
-                <Text size="xs" fw={600} data-testid="navigation-distance-to-maneuver">
-                  {t('navigationDistanceToManeuver', { distance: maneuverDistanceLabel })}
-                </Text>
+                {!navigationGuidance.isArrival &&
+                  navigationGuidance.nextInstruction &&
+                  maneuverDistanceLabel && (
+                    <Text size="xs" fw={600} data-testid="navigation-distance-to-maneuver">
+                      {t('navigationDistanceToManeuver', { distance: maneuverDistanceLabel })}
+                    </Text>
+                  )}
                 <Text fw={700} lineClamp={2} data-testid="navigation-active-instruction">
                   {navigationGuidance.isArrival
                     ? t('navigationArrival')
-                    : navigationGuidance.activeInstruction}
+                    : (navigationGuidance.nextInstruction ?? navigationGuidance.activeInstruction)}
                 </Text>
-                {!navigationGuidance.isArrival && navigationGuidance.nextInstruction && (
-                  <Text
-                    size="xs"
-                    c="dimmed"
-                    lineClamp={2}
-                    data-testid="navigation-next-instruction"
-                  >
-                    {t('navigationNextInstruction', {
-                      instruction: navigationGuidance.nextInstruction,
-                    })}
-                  </Text>
-                )}
               </Stack>
             )}
             <SegmentedControl
@@ -260,6 +258,13 @@ export default function MapNavigationOverlay({
                   : wakeLockStatus === 'unsupported'
                     ? t('navigationWakeLockUnsupported')
                     : t('navigationWakeLockError')}
+              </Text>
+            )}
+            {voiceGuidanceEnabled && voiceGuidanceSupportStatus !== 'unsupported' && (
+              <Text size="xs" c="dimmed" data-testid="navigation-voice-status">
+                {voiceGuidanceSupportStatus === 'supported'
+                  ? t('navigationVoiceActive')
+                  : t('navigationVoiceUnavailable')}
               </Text>
             )}
             {navigationError && (

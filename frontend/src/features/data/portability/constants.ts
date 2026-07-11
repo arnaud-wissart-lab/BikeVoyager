@@ -17,6 +17,7 @@ export const defaultAppPreferences: AppPreferences = {
   mapViewMode: '3d',
   navigationMode: 'gps',
   navigationCameraMode: 'follow_3d',
+  voiceGuidanceEnabled: false,
   poiAlertEnabled: true,
   poiAlertDistanceMeters: 300,
   poiAlertCategories: defaultPoiAlertCategories,

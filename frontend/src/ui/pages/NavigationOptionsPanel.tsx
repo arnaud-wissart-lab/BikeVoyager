@@ -5,6 +5,7 @@ import type {
   NavigationMode,
   PoiCategory,
 } from '../../features/routing/domain'
+import type { VoiceGuidanceSupportStatus } from '../../features/map/useNavigationVoiceGuidance'
 
 type PoiCategoryOption = {
   value: string
@@ -16,6 +17,8 @@ type NavigationOptionsPanelProps = {
   navigationMode: NavigationMode
   navigationCameraMode: NavigationCameraMode
   simulationSpeedKmh: number
+  voiceGuidanceEnabled: boolean
+  voiceGuidanceSupportStatus: VoiceGuidanceSupportStatus
   poiAlertEnabled: boolean
   poiAlertCategories: PoiCategory[]
   poiAlertDistanceMeters: number
@@ -30,6 +33,7 @@ type NavigationOptionsPanelProps = {
   }
   onNavigationModeChange: (value: string) => void
   onNavigationCameraModeChange: (value: string) => void
+  onVoiceGuidanceEnabledChange: (checked: boolean) => void
   onPoiAlertEnabledChange: (checked: boolean) => void
   onPoiAlertCategoryChange: (values: string[]) => void
   onPoiAlertDistanceMetersChange: (value: number) => void
@@ -41,6 +45,8 @@ export default function NavigationOptionsPanel({
   navigationMode,
   navigationCameraMode,
   simulationSpeedKmh,
+  voiceGuidanceEnabled,
+  voiceGuidanceSupportStatus,
   poiAlertEnabled,
   poiAlertCategories,
   poiAlertDistanceMeters,
@@ -51,6 +57,7 @@ export default function NavigationOptionsPanel({
   poiAlertDistanceRange,
   onNavigationModeChange,
   onNavigationCameraModeChange,
+  onVoiceGuidanceEnabledChange,
   onPoiAlertEnabledChange,
   onPoiAlertCategoryChange,
   onPoiAlertDistanceMetersChange,
@@ -102,6 +109,28 @@ export default function NavigationOptionsPanel({
             ? t('navigationSimulationSpeedLabel', { speed: simulationSpeedKmh })
             : t('navigationGpsHint')}
         </Text>
+        <Stack gap={2}>
+          <Checkbox
+            checked={voiceGuidanceEnabled}
+            disabled={voiceGuidanceSupportStatus !== 'supported'}
+            onChange={(event) => onVoiceGuidanceEnabledChange(event.currentTarget.checked)}
+            label={t('navigationVoiceGuidanceLabel')}
+            size="xs"
+          />
+          <Text size="xs" c="dimmed">
+            {t('navigationVoiceGuidanceDescription')}
+          </Text>
+          {voiceGuidanceSupportStatus === 'unsupported' && (
+            <Text size="xs" c="dimmed">
+              {t('navigationVoiceUnsupportedBrowser')}
+            </Text>
+          )}
+          {voiceGuidanceSupportStatus === 'error' && (
+            <Text size="xs" c="dimmed">
+              {t('navigationVoiceUnavailable')}
+            </Text>
+          )}
+        </Stack>
         <Checkbox
           checked={poiAlertEnabled}
           onChange={(event) => onPoiAlertEnabledChange(event.currentTarget.checked)}

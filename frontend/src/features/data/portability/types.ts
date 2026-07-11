@@ -20,6 +20,7 @@ export type AppPreferences = {
   mapViewMode: MapViewMode
   navigationMode: NavigationMode
   navigationCameraMode: NavigationCameraMode
+  automaticNavigationRecalculationEnabled: boolean
   voiceGuidanceEnabled: boolean
   poiAlertEnabled: boolean
   poiAlertDistanceMeters: number

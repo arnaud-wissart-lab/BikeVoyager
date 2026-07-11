@@ -17,6 +17,7 @@ type NavigationOptionsPanelProps = {
   navigationMode: NavigationMode
   navigationCameraMode: NavigationCameraMode
   simulationSpeedKmh: number
+  automaticNavigationRecalculationEnabled: boolean
   voiceGuidanceEnabled: boolean
   voiceGuidanceSupportStatus: VoiceGuidanceSupportStatus
   poiAlertEnabled: boolean
@@ -33,6 +34,7 @@ type NavigationOptionsPanelProps = {
   }
   onNavigationModeChange: (value: string) => void
   onNavigationCameraModeChange: (value: string) => void
+  onAutomaticNavigationRecalculationEnabledChange: (checked: boolean) => void
   onVoiceGuidanceEnabledChange: (checked: boolean) => void
   onPoiAlertEnabledChange: (checked: boolean) => void
   onPoiAlertCategoryChange: (values: string[]) => void
@@ -45,6 +47,7 @@ export default function NavigationOptionsPanel({
   navigationMode,
   navigationCameraMode,
   simulationSpeedKmh,
+  automaticNavigationRecalculationEnabled,
   voiceGuidanceEnabled,
   voiceGuidanceSupportStatus,
   poiAlertEnabled,
@@ -57,6 +60,7 @@ export default function NavigationOptionsPanel({
   poiAlertDistanceRange,
   onNavigationModeChange,
   onNavigationCameraModeChange,
+  onAutomaticNavigationRecalculationEnabledChange,
   onVoiceGuidanceEnabledChange,
   onPoiAlertEnabledChange,
   onPoiAlertCategoryChange,
@@ -109,6 +113,27 @@ export default function NavigationOptionsPanel({
             ? t('navigationSimulationSpeedLabel', { speed: simulationSpeedKmh })
             : t('navigationGpsHint')}
         </Text>
+        <Stack gap={2}>
+          <Checkbox
+            checked={automaticNavigationRecalculationEnabled}
+            disabled={navigationMode === 'simulation'}
+            onChange={(event) =>
+              onAutomaticNavigationRecalculationEnabledChange(event.currentTarget.checked)
+            }
+            label={t('navigationAutoRecalculationLabel')}
+            aria-describedby="navigation-auto-recalculation-description navigation-auto-recalculation-availability navigation-auto-recalculation-limitations"
+            size="xs"
+          />
+          <Text id="navigation-auto-recalculation-description" size="xs" c="dimmed">
+            {t('navigationAutoRecalculationDescription')}
+          </Text>
+          <Text id="navigation-auto-recalculation-availability" size="xs" c="dimmed">
+            {t('navigationAutoRecalculationGpsOnly')}
+          </Text>
+          <Text id="navigation-auto-recalculation-limitations" size="xs" c="dimmed">
+            {t('navigationAutoRecalculationLimitations')}
+          </Text>
+        </Stack>
         <Stack gap={2}>
           <Checkbox
             checked={voiceGuidanceEnabled}

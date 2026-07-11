@@ -49,23 +49,23 @@ describe('cycle de vie du recalcul dans le store cartographique', () => {
     expect(result.current.navigationRecalculationRequestIdRef.current).toBeNull()
     expect(result.current.navigationRecalculationInFlightRef.current).toBe(false)
     expect(result.current.navigationRecalculationStatus).toBe('idle')
-    expect(result.current.navigationVoiceSessionKey).toBe(1)
+    expect(result.current.navigationSessionKey).toBe(1)
   })
 
-  it('crée une nouvelle session vocale au redémarrage et au recalcul', () => {
+  it('crée une nouvelle session de navigation au redémarrage et au recalcul', () => {
     const { result } = renderMapSlice()
 
     act(() => result.current.setIsNavigationActive(true))
-    expect(result.current.navigationVoiceSessionKey).toBe(1)
+    expect(result.current.navigationSessionKey).toBe(1)
 
     act(() => result.current.setIsNavigationActive(false))
-    expect(result.current.navigationVoiceSessionKey).toBe(1)
+    expect(result.current.navigationSessionKey).toBe(1)
 
     act(() => result.current.setIsNavigationActive(true))
-    expect(result.current.navigationVoiceSessionKey).toBe(2)
+    expect(result.current.navigationSessionKey).toBe(2)
 
     act(() => result.current.setRouteResultFromNavigationRecalculation(routeResult))
-    expect(result.current.navigationVoiceSessionKey).toBe(3)
+    expect(result.current.navigationSessionKey).toBe(3)
   })
 
   it('invalide une demande au démontage sans modifier un état démonté', () => {

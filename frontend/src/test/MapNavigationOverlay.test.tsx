@@ -35,6 +35,7 @@ const baseProps: MapNavigationOverlayProps = {
   navigationError: null,
   navigationOffRouteAlert: null,
   navigationRecalculationSuccessMessage: null,
+  navigationAutoRecalculationCancellationMessage: null,
   onRecalculateFromCurrentPosition: vi.fn(),
   onDismissNavigationDeviation: vi.fn(),
   activePoiAlert: null,
@@ -248,6 +249,40 @@ describe('MapNavigationOverlay', () => {
     await user.click(screen.getByTestId('navigation-dismiss-off-route'))
 
     expect(onRecalculateFromCurrentPosition).toHaveBeenCalledTimes(1)
+    expect(onDismissNavigationDeviation).toHaveBeenCalledTimes(1)
+  })
+
+  it('affiche et pilote le compte à rebours automatique sans masquer le guidage', async () => {
+    const user = userEvent.setup()
+    const onRecalculateFromCurrentPosition = vi.fn()
+    const onDismissNavigationDeviation = vi.fn()
+    renderOverlay({
+      navigationMode: 'gps',
+      navigationOffRouteAlert: {
+        distanceLabel: '75 m',
+        showRecalculateAction: true,
+        isRecalculateDisabled: false,
+        isRecalculating: false,
+        isDismissDisabled: false,
+        unavailableMessage: null,
+        errorMessage: null,
+        autoRecalculationStatus: 'countdown',
+        autoRecalculationRemainingSeconds: 8,
+      },
+      onRecalculateFromCurrentPosition,
+      onDismissNavigationDeviation,
+    })
+
+    expect(screen.getByTestId('navigation-auto-recalculation-countdown')).toHaveTextContent(
+      'Recalcul automatique dans 8 s',
+    )
+    expect(screen.getByTestId('navigation-active-instruction')).toBeVisible()
+    expect(screen.getByTestId('nav-exit')).toBeEnabled()
+
+    await user.click(screen.getByTestId('navigation-auto-recalculate-now'))
+    expect(onRecalculateFromCurrentPosition).toHaveBeenCalledTimes(1)
+
+    await user.click(screen.getByTestId('navigation-dismiss-off-route'))
     expect(onDismissNavigationDeviation).toHaveBeenCalledTimes(1)
   })
 

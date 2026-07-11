@@ -70,6 +70,10 @@ export const normalizeAppPreferences = (
     navigationCameraMode: isNavigationCameraMode(value.navigationCameraMode)
       ? value.navigationCameraMode
       : defaultAppPreferences.navigationCameraMode,
+    automaticNavigationRecalculationEnabled:
+      typeof value.automaticNavigationRecalculationEnabled === 'boolean'
+        ? value.automaticNavigationRecalculationEnabled
+        : defaultAppPreferences.automaticNavigationRecalculationEnabled,
     voiceGuidanceEnabled:
       typeof value.voiceGuidanceEnabled === 'boolean'
         ? value.voiceGuidanceEnabled

@@ -28,6 +28,7 @@ import { createRoutingControllerActions } from './useRoutingController.actions'
 import { useRoutingFeatureSlice } from './useRoutingFeatureSlice'
 import type { UseRoutingControllerParams } from './useRoutingController.types'
 import { useNavigationDeviationPresentation } from './useNavigationDeviationPresentation'
+import { useNavigationAutoRecalculation } from '../map/useNavigationAutoRecalculation'
 
 export const useRoutingController = ({
   store,
@@ -51,6 +52,10 @@ export const useRoutingController = ({
     routeResult,
     navigationDeviationState,
     navigationRecalculationStatus,
+    automaticNavigationRecalculationEnabled,
+    isNavigationActive,
+    navigationMode,
+    navigationSessionKey,
     setNavigationRecalculationStatus,
     routeErrorKey,
     routeErrorMessage,
@@ -109,7 +114,7 @@ export const useRoutingController = ({
     requestRoute,
     requestLoop,
     getNavigationRecalculationPlan,
-    handleRecalculateFromCurrentPosition,
+    handleRecalculateFromCurrentPosition: handleManualRecalculateFromCurrentPosition,
     handleCalculate,
     recalculateWithDetours,
     addDetourPointAndRecalculate,
@@ -137,14 +142,39 @@ export const useRoutingController = ({
     markDirty,
   })
 
-  const { navigationOffRouteAlert, navigationRecalculationSuccessMessage } =
-    useNavigationDeviationPresentation({
-      deviationState: navigationDeviationState,
-      recalculationStatus: navigationRecalculationStatus,
-      getRecalculationPlan: getNavigationRecalculationPlan,
-      setRecalculationStatus: setNavigationRecalculationStatus,
-      t,
-    })
+  const navigationAutoRecalculation = useNavigationAutoRecalculation({
+    enabled: automaticNavigationRecalculationEnabled,
+    isNavigationActive,
+    navigationMode,
+    deviationState: navigationDeviationState,
+    recalculationStatus: navigationRecalculationStatus,
+    routeSessionKey: isNavigationActive && routeResult ? navigationSessionKey : null,
+    getRecalculationPlan: getNavigationRecalculationPlan,
+    onRecalculate: handleManualRecalculateFromCurrentPosition,
+  })
+
+  const {
+    navigationOffRouteAlert: baseNavigationOffRouteAlert,
+    navigationRecalculationSuccessMessage,
+  } = useNavigationDeviationPresentation({
+    deviationState: navigationDeviationState,
+    recalculationStatus: navigationRecalculationStatus,
+    getRecalculationPlan: getNavigationRecalculationPlan,
+    setRecalculationStatus: setNavigationRecalculationStatus,
+    t,
+  })
+  const navigationOffRouteAlert = baseNavigationOffRouteAlert
+    ? {
+        ...baseNavigationOffRouteAlert,
+        autoRecalculationStatus: navigationAutoRecalculation.status,
+        autoRecalculationRemainingSeconds: navigationAutoRecalculation.remainingSeconds,
+      }
+    : null
+  const navigationAutoRecalculationCancellationMessage =
+    navigationAutoRecalculation.status === 'cancelled' &&
+    navigationDeviationState.status === 'dismissed'
+      ? t('navigationAutoRecalculationCancelled')
+      : null
 
   const handleResetProfiles = () => {
     setProfileSettings(defaultProfileSettings)
@@ -432,9 +462,12 @@ export const useRoutingController = ({
     handleCalculate,
     requestRoute,
     requestLoop,
-    handleRecalculateFromCurrentPosition,
+    handleRecalculateFromCurrentPosition: navigationAutoRecalculation.recalculateNow,
+    cancelAutomaticRecalculationForCurrentEpisode:
+      navigationAutoRecalculation.cancelForCurrentEpisode,
     navigationOffRouteAlert,
     navigationRecalculationSuccessMessage,
+    navigationAutoRecalculationCancellationMessage,
     addDetourPointAndRecalculate,
     removeDetourPointAndRecalculate,
     recalculateWithDetours,

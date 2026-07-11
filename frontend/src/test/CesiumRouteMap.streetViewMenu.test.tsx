@@ -179,4 +179,14 @@ describe('Menu Street View de CesiumRouteMap', () => {
       'false',
     )
   })
+
+  it('monte, démonte et remonte la carte sans géométrie', () => {
+    const firstRender = renderMap()
+
+    expect(screen.getByTestId('cesium-route-map')).toHaveAttribute('data-route-layer-count', '0')
+    expect(() => firstRender.unmount()).not.toThrow()
+
+    expect(() => renderMap()).not.toThrow()
+    expect(screen.getByTestId('cesium-route-map')).toHaveAttribute('data-route-layer-count', '0')
+  })
 })

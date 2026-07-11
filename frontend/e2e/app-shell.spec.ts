@@ -91,3 +91,41 @@ test('parcours utilisateur complet planifier vers carte', async ({ page, isMobil
   await expect(page.getByText('Paris')).toBeVisible()
   await expect(page.getByText('Lyon')).toBeVisible()
 })
+
+test('navigation répétée entre Planifier et Carte sans trajet', async ({ page }) => {
+  const pageErrors: string[] = []
+  const consoleErrors: string[] = []
+  page.on('pageerror', (error) => {
+    pageErrors.push(error.stack ?? error.message)
+  })
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      consoleErrors.push(message.text())
+    }
+  })
+  await page.addInitScript(() => {
+    localStorage.removeItem('bv_last_route')
+  })
+
+  await page.goto('/#/planifier')
+
+  for (let cycle = 0; cycle < 5; cycle += 1) {
+    await page
+      .getByText(/^Carte$|^Map$/i)
+      .first()
+      .click()
+    await expect(page).toHaveURL(/#\/carte$/)
+    await expect(page.getByTestId('cesium-route-map')).toBeVisible()
+
+    await page
+      .getByText(/^Planifier$|^Plan$/i)
+      .first()
+      .click()
+    await expect(page).toHaveURL(/#\/planifier$/)
+    await expect(page.getByText(/^BikeVoyager$/).first()).toBeVisible()
+    await expect(page.getByText(/Planifier un parcours|Plan a route/i)).toBeVisible()
+  }
+
+  expect(pageErrors).toEqual([])
+  expect(consoleErrors.filter((message) => /scene|cesium|destroy/i.test(message))).toEqual([])
+})

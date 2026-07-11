@@ -6,6 +6,7 @@ import type {
   RouteGeometry,
 } from '../../features/routing/domain'
 import { buildRouteHeights, buildRouteSignature, haversineDistanceMeters } from './math'
+import { isViewerUsable } from './lifecycle'
 import type { CesiumModule, CesiumStatus, NavigationProgress, PoiMarker } from './types'
 
 type UseRouteEntitiesParams = {
@@ -86,7 +87,7 @@ export default function useRouteEntities({
   useEffect(() => {
     const viewer = viewerRef.current
     const Cesium = cesiumRef.current
-    if (status !== 'ready' || !viewer || !Cesium) {
+    if (status !== 'ready' || !isViewerUsable(viewer) || !Cesium) {
       return
     }
 
@@ -155,7 +156,7 @@ export default function useRouteEntities({
   useEffect(() => {
     const viewer = viewerRef.current
     const Cesium = cesiumRef.current
-    if (status !== 'ready' || !viewer || !Cesium) {
+    if (status !== 'ready' || !isViewerUsable(viewer) || !Cesium) {
       return
     }
 
@@ -210,7 +211,7 @@ export default function useRouteEntities({
   useEffect(() => {
     const viewer = viewerRef.current
     const Cesium = cesiumRef.current
-    if (!viewer || !Cesium) {
+    if (status !== 'ready' || !isViewerUsable(viewer) || !Cesium) {
       return
     }
 
@@ -248,7 +249,14 @@ export default function useRouteEntities({
   useEffect(() => {
     const viewer = viewerRef.current
     const Cesium = cesiumRef.current
-    if (!viewer || !Cesium || !activePoiId || !pois || pois.length === 0) {
+    if (
+      status !== 'ready' ||
+      !isViewerUsable(viewer) ||
+      !Cesium ||
+      !activePoiId ||
+      !pois ||
+      pois.length === 0
+    ) {
       return
     }
 
@@ -304,7 +312,7 @@ export default function useRouteEntities({
   useEffect(() => {
     const viewer = viewerRef.current
     const Cesium = cesiumRef.current
-    if (!viewer || !Cesium) {
+    if (status !== 'ready' || !isViewerUsable(viewer) || !Cesium) {
       return
     }
 

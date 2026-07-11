@@ -51,6 +51,7 @@ type ViewerMock = {
     heading: number
   }
   zoomTo: ReturnType<typeof vi.fn>
+  isDestroyed: ReturnType<typeof vi.fn>
 }
 
 const createCesiumMock = () =>
@@ -100,6 +101,7 @@ const createViewerMock = (): ViewerMock => ({
     heading: 0,
   },
   zoomTo: vi.fn(),
+  isDestroyed: vi.fn(() => false),
 })
 
 type HarnessProps = {

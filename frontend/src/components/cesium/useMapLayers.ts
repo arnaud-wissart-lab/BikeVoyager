@@ -1,5 +1,6 @@
 import { useEffect, type MutableRefObject } from 'react'
 import type { MapViewMode } from '../../features/routing/domain'
+import { isViewerUsable } from './lifecycle'
 import type { CesiumModule, CesiumStatus } from './types'
 
 type UseMapLayersParams = {
@@ -20,7 +21,7 @@ export default function useMapLayers({
   useEffect(() => {
     const viewer = viewerRef.current
     const Cesium = cesiumRef.current
-    if (!viewer || !Cesium) {
+    if (status !== 'ready' || !isViewerUsable(viewer) || !Cesium) {
       return
     }
 

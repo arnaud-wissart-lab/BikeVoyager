@@ -92,7 +92,7 @@ test('parcours utilisateur complet planifier vers carte', async ({ page, isMobil
   await expect(page.getByText('Lyon')).toBeVisible()
 })
 
-test('navigation répétée entre Planifier et Carte sans trajet', async ({ page }) => {
+test('navigation répétée entre Planifier et Carte sans trajet', async ({ page, isMobile }) => {
   const pageErrors: string[] = []
   const consoleErrors: string[] = []
   page.on('pageerror', (error) => {
@@ -105,22 +105,34 @@ test('navigation répétée entre Planifier et Carte sans trajet', async ({ page
   })
   await page.addInitScript(() => {
     localStorage.removeItem('bv_last_route')
+
+    // Ce scénario valide le démontage et la navigation avec le repli WebGL utilisé en CI.
+    const originalGetContext = HTMLCanvasElement.prototype.getContext
+    Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+      configurable: true,
+      value(contextId: string, ...args: unknown[]) {
+        if (contextId === 'webgl' || contextId === 'experimental-webgl') {
+          return null
+        }
+
+        return Reflect.apply(originalGetContext, this, [contextId, ...args])
+      },
+    })
   })
 
   await page.goto('/#/planifier')
 
+  const getNavigationItem = (label: RegExp) =>
+    isMobile
+      ? page.locator('footer').getByRole('button', { name: label })
+      : page.locator('header').getByText(label).first()
+
   for (let cycle = 0; cycle < 5; cycle += 1) {
-    await page
-      .getByText(/^Carte$|^Map$/i)
-      .first()
-      .click()
+    await getNavigationItem(/^Carte$|^Map$/i).click()
     await expect(page).toHaveURL(/#\/carte$/)
     await expect(page.getByTestId('cesium-route-map')).toBeVisible()
 
-    await page
-      .getByText(/^Planifier$|^Plan$/i)
-      .first()
-      .click()
+    await getNavigationItem(/^Planifier$|^Plan$/i).click()
     await expect(page).toHaveURL(/#\/planifier$/)
     await expect(page.getByText(/^BikeVoyager$/).first()).toBeVisible()
     await expect(page.getByText(/Planifier un parcours|Plan a route/i)).toBeVisible()

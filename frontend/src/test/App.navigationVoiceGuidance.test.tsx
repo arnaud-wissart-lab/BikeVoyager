@@ -81,7 +81,7 @@ afterEach(() => {
 })
 
 describe('guidage vocal intégré', () => {
-  it('persiste et exécute les instructions pendant une navigation simulée', async () => {
+  it('conserve la cadence vocale à travers des segments sans instruction', async () => {
     const user = userEvent.setup()
     const speech = installSpeechSynthesisMock()
     setDesktopMatchMedia()
@@ -92,16 +92,17 @@ describe('guidage vocal intégré', () => {
         type: 'LineString',
         coordinates: [
           [2.3522, 48.8566],
-          [2.3522, 48.862],
+          [2.3522, 48.8629],
         ],
       },
-      distance_m: 600,
-      duration_s_engine: 144,
-      eta_s: 144,
+      distance_m: 700,
+      duration_s_engine: 168,
+      eta_s: 168,
       turn_by_turn: [
-        { instruction: 'Prendre la rue A', distance_m: 100, duration_s: 24, type: 1 },
-        { instruction: 'Continuer sur la rue B', distance_m: 200, duration_s: 48, type: 2 },
-        { instruction: 'Rejoindre la rue C', distance_m: 300, duration_s: 72, type: 3 },
+        { instruction: 'Continuer sur Rue A', distance_m: 100, duration_s: 24, type: 1 },
+        { instruction: '', distance_m: 200, duration_s: 48, type: 2 },
+        { instruction: '   ', distance_m: 300, duration_s: 72, type: 3 },
+        { instruction: 'Tourner à droite sur Rue C', distance_m: 100, duration_s: 24, type: 4 },
       ],
       elevation_profile: [],
     })
@@ -119,21 +120,33 @@ describe('guidage vocal intégré', () => {
 
     vi.useFakeTimers()
     fireEvent.click(screen.getByTestId('nav-start'))
-    expect(speech.spoken[0].text).toBe('Dans 100 mètres, Continuer sur la rue B')
-    expect(speech.spoken[0].text).not.toContain('Prendre la rue A')
+    expect(speech.spoken[0].text).toBe('Dans 600 mètres, Tourner à droite sur Rue C')
+    expect(speech.spoken[0].text).not.toContain('Continuer sur Rue A')
     expect(screen.getByTestId('navigation-voice-status')).toHaveTextContent('Guidage vocal actif')
-
-    await act(async () => vi.advanceTimersByTimeAsync(30_000))
     expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent(
-      'Continuer sur la rue B',
+      'Tourner à droite sur Rue C',
     )
-    expect(speech.spoken.at(-1)?.text).toContain('Rejoindre la rue C')
-    expect(speech.spoken.at(-1)?.text).not.toContain('Continuer sur la rue B')
-    expect(
-      speech.spoken.some(
-        (utterance) => utterance.text === 'Dans 200 mètres, Continuer sur la rue B',
-      ),
-    ).toBe(false)
+
+    await act(async () => vi.advanceTimersByTimeAsync(115_000))
+    expect(speech.synthesis.speak).toHaveBeenCalledTimes(1)
+    expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent(
+      'Tourner à droite sur Rue C',
+    )
+
+    await act(async () => vi.advanceTimersByTimeAsync(11_000))
+    expect(speech.synthesis.speak).toHaveBeenCalledTimes(2)
+    expect(speech.spoken.at(-1)?.text).toMatch(/^Dans \d+ mètres, Tourner à droite sur Rue C$/)
+
+    await act(async () => vi.advanceTimersByTimeAsync(14_000))
+    expect(speech.synthesis.speak).toHaveBeenCalledTimes(3)
+    expect(speech.spoken.at(-1)?.text).toBe('Tourner à droite sur Rue C')
+
+    await act(async () => vi.advanceTimersByTimeAsync(6_000))
+    expect(speech.synthesis.speak).toHaveBeenCalledTimes(3)
+    expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent(
+      'Tourner à droite sur Rue C',
+    )
+    expect(screen.queryByTestId('navigation-distance-to-maneuver')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByTestId('nav-exit'))
     expect(speech.synthesis.cancel).toHaveBeenCalled()

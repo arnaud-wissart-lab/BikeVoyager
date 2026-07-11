@@ -55,24 +55,32 @@ const renderOverlay = (props: Partial<MapNavigationOverlayProps> = {}) =>
   renderWithProviders(<MapNavigationOverlay {...baseProps} {...props} />)
 
 describe('MapNavigationOverlay', () => {
-  it('affiche l’instruction active et la distance avant la manœuvre', () => {
+  it('associe la distance à la prochaine manœuvre', () => {
     renderOverlay()
 
     expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent(
-      'Tourner à droite sur Rue X',
+      'Continuer sur Avenue Y',
     )
     expect(screen.getByTestId('navigation-distance-to-maneuver')).toHaveTextContent('Dans 120 m')
   })
 
-  it('affiche l’instruction suivante', () => {
-    renderOverlay()
+  it('affiche la dernière instruction active sans distance en l’absence de manœuvre suivante', () => {
+    renderOverlay({
+      navigationGuidance: {
+        ...guidance,
+        distanceToManeuverMeters: null,
+        nextStepIndex: null,
+        nextInstruction: null,
+      },
+    })
 
-    expect(screen.getByTestId('navigation-next-instruction')).toHaveTextContent(
-      'Puis : Continuer sur Avenue Y',
+    expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent(
+      'Tourner à droite sur Rue X',
     )
+    expect(screen.queryByTestId('navigation-distance-to-maneuver')).not.toBeInTheDocument()
   })
 
-  it('affiche un fallback quand la distance de manœuvre est indisponible', () => {
+  it('n’affiche pas de fausse distance quand la distance de manœuvre est indisponible', () => {
     renderOverlay({
       navigationGuidance: {
         ...guidance,
@@ -80,7 +88,28 @@ describe('MapNavigationOverlay', () => {
       },
     })
 
-    expect(screen.getByTestId('navigation-distance-to-maneuver')).toHaveTextContent('Dans —')
+    expect(screen.queryByTestId('navigation-distance-to-maneuver')).not.toBeInTheDocument()
+    expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent(
+      'Continuer sur Avenue Y',
+    )
+  })
+
+  it('conserve la prochaine manœuvre pendant un segment sans instruction', () => {
+    renderOverlay({
+      navigationGuidance: {
+        ...guidance,
+        activeStepIndex: 1,
+        activeInstruction: null,
+        distanceToManeuverMeters: 80,
+        nextStepIndex: 3,
+      },
+    })
+
+    expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent(
+      'Continuer sur Avenue Y',
+    )
+    expect(screen.getByTestId('navigation-distance-to-maneuver')).toHaveTextContent('Dans 80 m')
+    expect(screen.getByTestId('nav-exit')).toBeEnabled()
   })
 
   it('masque uniquement la zone de guidage quand le modèle est absent', () => {
@@ -88,7 +117,6 @@ describe('MapNavigationOverlay', () => {
 
     expect(screen.queryByTestId('navigation-active-instruction')).not.toBeInTheDocument()
     expect(screen.queryByTestId('navigation-distance-to-maneuver')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('navigation-next-instruction')).not.toBeInTheDocument()
     expect(screen.getByText('Distance restante')).toBeInTheDocument()
     expect(screen.getByTestId('nav-exit')).toBeInTheDocument()
   })
@@ -106,8 +134,7 @@ describe('MapNavigationOverlay', () => {
     })
 
     expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent('Arrivée')
-    expect(screen.getByTestId('navigation-distance-to-maneuver')).toHaveTextContent('Dans 0 m')
-    expect(screen.queryByTestId('navigation-next-instruction')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('navigation-distance-to-maneuver')).not.toBeInTheDocument()
   })
 
   it('conserve les contrôles de sortie et de caméra', () => {

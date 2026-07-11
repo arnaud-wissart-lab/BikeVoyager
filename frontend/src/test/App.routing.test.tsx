@@ -428,7 +428,7 @@ describe('App routing', () => {
     })
   })
 
-  it('actualise l’instruction active pendant une navigation simulée', async () => {
+  it('actualise la prochaine manœuvre pendant une navigation simulée', async () => {
     const user = userEvent.setup()
 
     setDesktopMatchMedia()
@@ -464,7 +464,7 @@ describe('App routing', () => {
       fireEvent.click(screen.getByTestId('nav-start'))
 
       expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent(
-        'Prendre la rue A',
+        'Continuer sur la rue B',
       )
 
       await act(async () => {
@@ -472,10 +472,10 @@ describe('App routing', () => {
       })
 
       expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent(
-        'Continuer sur la rue B',
+        'Rejoindre la rue C',
       )
       expect(screen.getByTestId('navigation-active-instruction')).not.toHaveTextContent(
-        'Prendre la rue A',
+        'Continuer sur la rue B',
       )
     } finally {
       vi.useRealTimers()

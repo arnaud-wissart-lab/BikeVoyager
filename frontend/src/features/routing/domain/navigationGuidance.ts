@@ -2,7 +2,7 @@ import type { RouteStep } from './types'
 
 export type NavigationGuidance = {
   activeStepIndex: number
-  activeInstruction: string
+  activeInstruction: string | null
   distanceToManeuverMeters: number | null
   nextStepIndex: number | null
   nextInstruction: string | null
@@ -12,6 +12,7 @@ export type NavigationGuidance = {
 export type NavigationUpcomingInstruction = {
   stepIndex: number
   instruction: string
+  startDistanceMeters: number
 }
 
 export type NavigationStepRange = {
@@ -98,6 +99,7 @@ const findNextInstruction = (
       return {
         stepIndex: range.stepIndex,
         instruction: range.instruction,
+        startDistanceMeters: range.startDistanceMeters,
       }
     }
   }
@@ -148,25 +150,20 @@ export const resolveNavigationGuidance = (
       normalizedProgressMeters < Math.max(0, range.endDistanceMeters - normalizedToleranceMeters),
   )
   const activeRange = ranges[Math.max(0, activeRangeIndex)]
-  if (!hasInstruction(activeRange)) {
+  const upcomingInstruction = findNextInstruction(ranges, activeRangeIndex)
+  const activeInstruction = activeRange.instruction
+  if (!activeInstruction && !upcomingInstruction) {
     return null
   }
-
-  const progressWithinRangeMeters = Math.max(
-    activeRange.startDistanceMeters,
-    normalizedProgressMeters,
-  )
-  const remainingStepDistanceMeters = Math.max(
-    0,
-    activeRange.endDistanceMeters - progressWithinRangeMeters,
-  )
-
-  const upcomingInstruction = findNextInstruction(ranges, activeRangeIndex)
+  const distanceToManeuverMeters = upcomingInstruction
+    ? Math.max(0, upcomingInstruction.startDistanceMeters - normalizedProgressMeters) /
+      routeToStepScale
+    : null
 
   return {
     activeStepIndex: activeRange.stepIndex,
-    activeInstruction: activeRange.instruction,
-    distanceToManeuverMeters: remainingStepDistanceMeters / routeToStepScale,
+    activeInstruction,
+    distanceToManeuverMeters,
     nextStepIndex: upcomingInstruction?.stepIndex ?? null,
     nextInstruction: upcomingInstruction?.instruction ?? null,
     isArrival: false,

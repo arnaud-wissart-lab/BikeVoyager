@@ -76,7 +76,7 @@ describe('navigationGuidance', () => {
     expect(resolveNavigationGuidance(steps, 350, 600)).toEqual({
       activeStepIndex: 2,
       activeInstruction: 'Étape C',
-      distanceToManeuverMeters: 250,
+      distanceToManeuverMeters: null,
       nextStepIndex: null,
       nextInstruction: null,
       isArrival: false,
@@ -127,11 +127,18 @@ describe('navigationGuidance', () => {
         endDistanceMeters: 200,
       },
     ])
-    expect(resolveNavigationGuidance(invalidSteps, 0, 200)).toBeNull()
+    expect(resolveNavigationGuidance(invalidSteps, 0, 200)).toEqual({
+      activeStepIndex: 1,
+      activeInstruction: null,
+      distanceToManeuverMeters: 100,
+      nextStepIndex: 3,
+      nextInstruction: 'Étape valide',
+      isArrival: false,
+    })
     expect(resolveNavigationGuidance(invalidSteps, 100, 200)).toEqual({
       activeStepIndex: 3,
       activeInstruction: 'Étape valide',
-      distanceToManeuverMeters: 100,
+      distanceToManeuverMeters: null,
       nextStepIndex: null,
       nextInstruction: null,
       isArrival: false,
@@ -170,17 +177,27 @@ describe('navigationGuidance', () => {
     expect(resolveNavigationGuidance(stepsWithGap, 50, 1200)).toMatchObject({
       activeStepIndex: 0,
       activeInstruction: 'Étape A',
-      distanceToManeuverMeters: 50,
+      distanceToManeuverMeters: 1050,
+      nextStepIndex: 2,
+      nextInstruction: 'Étape C',
     })
-    expect(resolveNavigationGuidance(stepsWithGap, 500, 1200)).toBeNull()
+    expect(resolveNavigationGuidance(stepsWithGap, 500, 1200)).toMatchObject({
+      activeStepIndex: 1,
+      activeInstruction: null,
+      distanceToManeuverMeters: 600,
+      nextStepIndex: 2,
+      nextInstruction: 'Étape C',
+    })
     expect(resolveNavigationGuidance(stepsWithGap, 1150, 1200)).toMatchObject({
       activeStepIndex: 2,
       activeInstruction: 'Étape C',
-      distanceToManeuverMeters: 50,
+      distanceToManeuverMeters: null,
+      nextStepIndex: null,
+      nextInstruction: null,
     })
   })
 
-  it('cherche l’instruction suivante au-delà de plusieurs segments vides', () => {
+  it('maintient la distance réelle vers la prochaine instruction à travers les segments vides', () => {
     const stepsWithSeveralGaps = [
       { instruction: 'Étape A', distance_m: 100 },
       { instruction: '', distance_m: 200 },
@@ -188,10 +205,41 @@ describe('navigationGuidance', () => {
       { instruction: 'Étape C', distance_m: 100 },
     ]
 
-    expect(resolveNavigationGuidance(stepsWithSeveralGaps, 50, 700)).toMatchObject({
+    expect(resolveNavigationGuidance(stepsWithSeveralGaps, 50, 700)).toEqual({
+      activeStepIndex: 0,
       activeInstruction: 'Étape A',
+      distanceToManeuverMeters: 550,
       nextStepIndex: 3,
       nextInstruction: 'Étape C',
+      isArrival: false,
+    })
+    expect(resolveNavigationGuidance(stepsWithSeveralGaps, 500, 700)).toEqual({
+      activeStepIndex: 2,
+      activeInstruction: null,
+      distanceToManeuverMeters: 100,
+      nextStepIndex: 3,
+      nextInstruction: 'Étape C',
+      isArrival: false,
+    })
+    expect(resolveNavigationGuidance(stepsWithSeveralGaps, 550, 700)).toMatchObject({
+      activeInstruction: null,
+      distanceToManeuverMeters: 50,
+      nextStepIndex: 3,
+      nextInstruction: 'Étape C',
+    })
+    expect(resolveNavigationGuidance(stepsWithSeveralGaps, 590, 700)).toMatchObject({
+      activeInstruction: null,
+      distanceToManeuverMeters: 10,
+      nextStepIndex: 3,
+      nextInstruction: 'Étape C',
+    })
+    expect(resolveNavigationGuidance(stepsWithSeveralGaps, 600, 700)).toEqual({
+      activeStepIndex: 3,
+      activeInstruction: 'Étape C',
+      distanceToManeuverMeters: null,
+      nextStepIndex: null,
+      nextInstruction: null,
+      isArrival: false,
     })
   })
 
@@ -204,7 +252,7 @@ describe('navigationGuidance', () => {
     expect(resolveNavigationGuidance(stepsWithZeroDistance, 0, 200)).toEqual({
       activeStepIndex: 1,
       activeInstruction: 'Étape mesurable',
-      distanceToManeuverMeters: 200,
+      distanceToManeuverMeters: null,
       nextStepIndex: null,
       nextInstruction: null,
       isArrival: false,

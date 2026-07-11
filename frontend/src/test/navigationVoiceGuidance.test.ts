@@ -2,6 +2,7 @@ import {
   buildNavigationVoiceAnnouncementKey,
   createNavigationVoiceAnnouncement,
   formatSpokenDistance,
+  resolveNavigationGuidance,
   resolveNavigationVoiceBand,
   shouldSuspendNavigationVoiceGuidance,
   type NavigationGuidance,
@@ -29,6 +30,13 @@ const translate = (key: string, values?: Record<string, string>) => {
   }
   return `Dans ${values?.distance}, ${values?.instruction}`
 }
+
+const stepsWithSilentSegments = [
+  { instruction: 'Continuer sur Rue A', distance_m: 100 },
+  { instruction: '', distance_m: 200 },
+  { instruction: '   ', distance_m: 300 },
+  { instruction: 'Tourner à droite sur Rue C', distance_m: 100 },
+]
 
 describe('guidage vocal de navigation', () => {
   it('résout les bandes centralisées aux seuils attendus', () => {
@@ -65,6 +73,72 @@ describe('guidage vocal de navigation', () => {
       stepIndex: 1,
     })
     expect(announcement?.text).not.toContain('Continuer sur Rue A')
+  })
+
+  it('cadence la prochaine manœuvre à travers les segments sans instruction', () => {
+    const at50Meters = resolveNavigationGuidance(stepsWithSilentSegments, 50, 700)
+    const at500Meters = resolveNavigationGuidance(stepsWithSilentSegments, 500, 700)
+    const at550Meters = resolveNavigationGuidance(stepsWithSilentSegments, 550, 700)
+    const at590Meters = resolveNavigationGuidance(stepsWithSilentSegments, 590, 700)
+    const at600Meters = resolveNavigationGuidance(stepsWithSilentSegments, 600, 700)
+    expect(at50Meters).not.toBeNull()
+    expect(at500Meters).not.toBeNull()
+    expect(at550Meters).not.toBeNull()
+    expect(at590Meters).not.toBeNull()
+    expect(at600Meters).not.toBeNull()
+    if (!at50Meters || !at500Meters || !at550Meters || !at590Meters || !at600Meters) {
+      return
+    }
+
+    const advance = createNavigationVoiceAnnouncement({
+      guidance: at50Meters,
+      previousGuidance: null,
+      language: 'fr',
+      translate,
+    })
+    expect(advance).toMatchObject({
+      key: 'step:3:advance',
+      text: 'Dans 550 mètres, Tourner à droite sur Rue C',
+    })
+    expect(advance?.text).not.toContain('Continuer sur Rue A')
+    expect(
+      createNavigationVoiceAnnouncement({
+        guidance: at500Meters,
+        previousGuidance: at50Meters,
+        language: 'fr',
+        translate,
+      }),
+    ).toBeNull()
+    expect(
+      createNavigationVoiceAnnouncement({
+        guidance: at550Meters,
+        previousGuidance: at500Meters,
+        language: 'fr',
+        translate,
+      }),
+    ).toMatchObject({
+      key: 'step:3:near',
+      text: 'Dans 50 mètres, Tourner à droite sur Rue C',
+    })
+    expect(
+      createNavigationVoiceAnnouncement({
+        guidance: at590Meters,
+        previousGuidance: at550Meters,
+        language: 'fr',
+        translate,
+      }),
+    ).toMatchObject({
+      key: 'step:3:immediate',
+      text: 'Tourner à droite sur Rue C',
+    })
+    expect(
+      createNavigationVoiceAnnouncement({
+        guidance: at600Meters,
+        previousGuidance: at590Meters,
+        language: 'fr',
+        translate,
+      }),
+    ).toBeNull()
   })
 
   it('annonce le premier passage dans les bandes near et immediate', () => {

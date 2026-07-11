@@ -85,8 +85,9 @@ export default function MapNavigationOverlay({
     return null
   }
 
-  const maneuverDistanceLabel =
-    formatRouteStepDistance(navigationGuidance?.distanceToManeuverMeters) ?? t('placeholderValue')
+  const maneuverDistanceLabel = formatRouteStepDistance(
+    navigationGuidance?.distanceToManeuverMeters,
+  )
 
   return (
     <Box style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
@@ -143,26 +144,18 @@ export default function MapNavigationOverlay({
                 <Text size="xs" c="dimmed">
                   {t('navigationInstructionLabel')}
                 </Text>
-                <Text size="xs" fw={600} data-testid="navigation-distance-to-maneuver">
-                  {t('navigationDistanceToManeuver', { distance: maneuverDistanceLabel })}
-                </Text>
+                {!navigationGuidance.isArrival &&
+                  navigationGuidance.nextInstruction &&
+                  maneuverDistanceLabel && (
+                    <Text size="xs" fw={600} data-testid="navigation-distance-to-maneuver">
+                      {t('navigationDistanceToManeuver', { distance: maneuverDistanceLabel })}
+                    </Text>
+                  )}
                 <Text fw={700} lineClamp={2} data-testid="navigation-active-instruction">
                   {navigationGuidance.isArrival
                     ? t('navigationArrival')
-                    : navigationGuidance.activeInstruction}
+                    : (navigationGuidance.nextInstruction ?? navigationGuidance.activeInstruction)}
                 </Text>
-                {!navigationGuidance.isArrival && navigationGuidance.nextInstruction && (
-                  <Text
-                    size="xs"
-                    c="dimmed"
-                    lineClamp={2}
-                    data-testid="navigation-next-instruction"
-                  >
-                    {t('navigationNextInstruction', {
-                      instruction: navigationGuidance.nextInstruction,
-                    })}
-                  </Text>
-                )}
               </Stack>
             )}
             <SegmentedControl

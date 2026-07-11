@@ -7,11 +7,16 @@ import {
   type NavigationGuidance,
 } from '../features/routing/domain'
 
-const guidance = (distanceToManeuverMeters: number, activeStepIndex = 0): NavigationGuidance => ({
+const guidance = (
+  distanceToManeuverMeters: number,
+  nextStepIndex = 1,
+  activeStepIndex = 0,
+): NavigationGuidance => ({
   activeStepIndex,
-  activeInstruction: 'Tournez à droite sur Rue X',
+  activeInstruction: 'Continuer sur Rue A',
   distanceToManeuverMeters,
-  nextInstruction: 'Continuez tout droit',
+  nextStepIndex,
+  nextInstruction: 'Tourner à droite sur Rue B',
   isArrival: false,
 })
 
@@ -45,31 +50,36 @@ describe('guidage vocal de navigation', () => {
     expect(shouldSuspendNavigationVoiceGuidance('on_route', 'success')).toBe(false)
   })
 
-  it('annonce la première apparition d’une étape à plus de 80 mètres', () => {
-    expect(
-      createNavigationVoiceAnnouncement({
-        guidance: guidance(348),
-        previousGuidance: null,
-        language: 'fr',
-        translate,
-      }),
-    ).toEqual({
-      key: 'step:0:advance',
-      kind: 'advance',
-      text: 'Dans 350 mètres, Tournez à droite sur Rue X',
-      stepIndex: 0,
+  it('annonce la prochaine manœuvre à plus de 80 mètres sans reprendre l’instruction active', () => {
+    const announcement = createNavigationVoiceAnnouncement({
+      guidance: guidance(200),
+      previousGuidance: null,
+      language: 'fr',
+      translate,
     })
+
+    expect(announcement).toEqual({
+      key: 'step:1:advance',
+      kind: 'advance',
+      text: 'Dans 200 mètres, Tourner à droite sur Rue B',
+      stepIndex: 1,
+    })
+    expect(announcement?.text).not.toContain('Continuer sur Rue A')
   })
 
   it('annonce le premier passage dans les bandes near et immediate', () => {
-    expect(
-      createNavigationVoiceAnnouncement({
-        guidance: guidance(79),
-        previousGuidance: guidance(100),
-        language: 'fr',
-        translate,
-      })?.kind,
-    ).toBe('near')
+    const nearAnnouncement = createNavigationVoiceAnnouncement({
+      guidance: guidance(79),
+      previousGuidance: guidance(100),
+      language: 'fr',
+      translate,
+    })
+    expect(nearAnnouncement).toMatchObject({
+      key: 'step:1:near',
+      kind: 'near',
+      text: 'Dans 80 mètres, Tourner à droite sur Rue B',
+      stepIndex: 1,
+    })
     expect(
       createNavigationVoiceAnnouncement({
         guidance: guidance(19),
@@ -77,7 +87,12 @@ describe('guidage vocal de navigation', () => {
         language: 'fr',
         translate,
       }),
-    ).toMatchObject({ kind: 'immediate', text: 'Tournez à droite sur Rue X' })
+    ).toMatchObject({
+      key: 'step:1:immediate',
+      kind: 'immediate',
+      text: 'Tourner à droite sur Rue B',
+      stepIndex: 1,
+    })
   })
 
   it('sélectionne uniquement la bande la plus urgente lors d’un saut direct', () => {
@@ -89,7 +104,8 @@ describe('guidage vocal de navigation', () => {
     })
 
     expect(announcement?.kind).toBe('immediate')
-    expect(announcement?.key).toBe('step:0:immediate')
+    expect(announcement?.key).toBe('step:1:immediate')
+    expect(announcement?.text).toBe('Tourner à droite sur Rue B')
   })
 
   it('ne répète pas une bande et ne rejoue pas une bande moins urgente', () => {
@@ -114,17 +130,22 @@ describe('guidage vocal de navigation', () => {
   it('crée une annonce pour une nouvelle étape et pour l’arrivée', () => {
     expect(
       createNavigationVoiceAnnouncement({
-        guidance: guidance(150, 2),
-        previousGuidance: guidance(10, 1),
+        guidance: guidance(150, 3, 2),
+        previousGuidance: guidance(10, 2, 1),
         language: 'fr',
         translate,
       })?.key,
-    ).toBe('step:2:advance')
+    ).toBe('step:3:advance')
 
     expect(
       createNavigationVoiceAnnouncement({
-        guidance: { ...guidance(0, 3), isArrival: true },
-        previousGuidance: guidance(10, 3),
+        guidance: {
+          ...guidance(0, 4, 3),
+          nextStepIndex: null,
+          nextInstruction: null,
+          isArrival: true,
+        },
+        previousGuidance: guidance(10, 4, 3),
         language: 'fr',
         translate,
       }),
@@ -134,6 +155,25 @@ describe('guidage vocal de navigation', () => {
       text: 'Vous êtes arrivé.',
       stepIndex: 3,
     })
+  })
+
+  it('ne produit aucune annonce de distance sans prochaine instruction complète', () => {
+    expect(
+      createNavigationVoiceAnnouncement({
+        guidance: { ...guidance(200), nextInstruction: null },
+        previousGuidance: null,
+        language: 'fr',
+        translate,
+      }),
+    ).toBeNull()
+    expect(
+      createNavigationVoiceAnnouncement({
+        guidance: { ...guidance(200), nextStepIndex: null },
+        previousGuidance: null,
+        language: 'fr',
+        translate,
+      }),
+    ).toBeNull()
   })
 
   it('produit des clés déterministes', () => {

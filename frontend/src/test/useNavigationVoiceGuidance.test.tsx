@@ -89,14 +89,26 @@ const installSpeechSynthesis = (initialVoices: SpeechSynthesisVoice[] = []) => {
   }
 }
 
-const guidance = (distanceToManeuverMeters: number, activeStepIndex = 0): NavigationGuidance => ({
-  activeStepIndex,
-  activeInstruction: `Instruction ${activeStepIndex}`,
+type GuidanceOptions = Partial<Omit<NavigationGuidance, 'distanceToManeuverMeters'>>
+const guidance = (
+  distanceToManeuverMeters: number,
+  options: GuidanceOptions = {},
+): NavigationGuidance => ({
+  activeStepIndex: options.activeStepIndex ?? 0,
+  activeInstruction: options.activeInstruction ?? 'Continuer sur Rue A',
   distanceToManeuverMeters,
-  nextInstruction: null,
-  isArrival: false,
+  nextStepIndex: options.nextStepIndex === undefined ? 1 : options.nextStepIndex,
+  nextInstruction:
+    options.nextInstruction === undefined ? 'Tourner à droite sur Rue B' : options.nextInstruction,
+  isArrival: options.isArrival ?? false,
 })
 
+const nextManeuverGuidance = guidance(120, {
+  activeStepIndex: 1,
+  activeInstruction: 'Tourner à droite sur Rue B',
+  nextStepIndex: 2,
+  nextInstruction: 'Tourner à gauche sur Rue C',
+})
 const defaultParams: UseNavigationVoiceGuidanceParams = {
   enabled: true,
   isNavigationActive: true,
@@ -167,12 +179,27 @@ describe('useNavigationVoiceGuidance', () => {
     expect(synthesis.speak).not.toHaveBeenCalled()
   })
 
-  it('annonce la première instruction sans répéter la même bande', () => {
+  it('reste silencieux sans prochaine instruction complète', () => {
+    const { synthesis } = installSpeechSynthesis()
+    const { rerender } = renderVoiceHook({
+      guidance: guidance(200, { nextInstruction: null }),
+    })
+
+    expect(synthesis.speak).not.toHaveBeenCalled()
+    rerender({
+      ...defaultParams,
+      guidance: guidance(200, { nextStepIndex: null }),
+    })
+    expect(synthesis.speak).not.toHaveBeenCalled()
+  })
+
+  it('annonce la prochaine instruction sans répéter la même bande', () => {
     const { synthesis, spoken } = installSpeechSynthesis()
     const { rerender } = renderVoiceHook()
 
     expect(synthesis.speak).toHaveBeenCalledTimes(1)
-    expect(spoken[0].text).toBe('Dans 200 mètres, Instruction 0')
+    expect(spoken[0].text).toBe('Dans 200 mètres, Tourner à droite sur Rue B')
+    expect(spoken[0].text).not.toContain('Continuer sur Rue A')
 
     rerender({ ...defaultParams, guidance: guidance(190) })
     rerender({ ...defaultParams, guidance: guidance(150) })
@@ -195,10 +222,10 @@ describe('useNavigationVoiceGuidance', () => {
     const { rerender } = renderVoiceHook()
 
     rerender({ ...defaultParams, guidance: guidance(75) })
-    expect(spoken.at(-1)?.text).toBe('Dans 75 mètres, Instruction 0')
+    expect(spoken.at(-1)?.text).toBe('Dans 75 mètres, Tourner à droite sur Rue B')
 
     rerender({ ...defaultParams, guidance: guidance(10) })
-    expect(spoken.at(-1)?.text).toBe('Instruction 0')
+    expect(spoken.at(-1)?.text).toBe('Tourner à droite sur Rue B')
     expect(synthesis.speak).toHaveBeenCalledTimes(3)
   })
 
@@ -210,8 +237,8 @@ describe('useNavigationVoiceGuidance', () => {
 
     expect(synthesis.speak).toHaveBeenCalledTimes(2)
     expect(spoken.map((utterance) => utterance.text)).toEqual([
-      'Dans 200 mètres, Instruction 0',
-      'Instruction 0',
+      'Dans 200 mètres, Tourner à droite sur Rue B',
+      'Tourner à droite sur Rue B',
     ])
   })
 
@@ -219,8 +246,14 @@ describe('useNavigationVoiceGuidance', () => {
     const { synthesis, spoken } = installSpeechSynthesis()
     const { rerender } = renderVoiceHook()
 
-    rerender({ ...defaultParams, guidance: guidance(120, 1) })
-    const arrival = { ...guidance(0, 1), isArrival: true }
+    rerender({ ...defaultParams, guidance: nextManeuverGuidance })
+    const arrival = guidance(0, {
+      activeStepIndex: 2,
+      activeInstruction: 'Tourner à gauche sur Rue C',
+      nextStepIndex: null,
+      nextInstruction: null,
+      isArrival: true,
+    })
     rerender({ ...defaultParams, guidance: arrival })
     rerender({ ...defaultParams, guidance: arrival })
 
@@ -276,7 +309,7 @@ describe('useNavigationVoiceGuidance', () => {
 
     rerender({ ...defaultParams, guidance: guidance(10), suspended: false })
     expect(synthesis.speak).toHaveBeenCalledTimes(2)
-    expect(spoken.at(-1)?.text).toBe('Instruction 0')
+    expect(spoken.at(-1)?.text).toBe('Tourner à droite sur Rue B')
   })
 
   it('réinitialise la déduplication pour un nouveau trajet', () => {
@@ -293,10 +326,10 @@ describe('useNavigationVoiceGuidance', () => {
     const { synthesis } = installSpeechSynthesis()
     const { rerender } = renderVoiceHook()
 
-    rerender({ ...defaultParams, routeSessionKey: 2, guidance: guidance(150, 0), suspended: true })
+    rerender({ ...defaultParams, routeSessionKey: 2, guidance: guidance(150), suspended: true })
     expect(synthesis.speak).toHaveBeenCalledTimes(1)
 
-    rerender({ ...defaultParams, routeSessionKey: 2, guidance: guidance(150, 0) })
+    rerender({ ...defaultParams, routeSessionKey: 2, guidance: guidance(150) })
     expect(synthesis.speak).toHaveBeenCalledTimes(2)
   })
 
@@ -305,7 +338,7 @@ describe('useNavigationVoiceGuidance', () => {
     const { result, rerender } = renderVoiceHook()
     const oldUtterance = spoken[0]
 
-    rerender({ ...defaultParams, guidance: guidance(120, 1) })
+    rerender({ ...defaultParams, guidance: nextManeuverGuidance })
     act(() => {
       oldUtterance.onerror?.({ error: 'network' } as SpeechSynthesisErrorEvent)
     })
@@ -345,7 +378,7 @@ describe('useNavigationVoiceGuidance', () => {
     const { rerender } = renderVoiceHook()
 
     act(() => speech.setVoices([frenchVoice]))
-    rerender({ ...defaultParams, guidance: guidance(120, 1) })
+    rerender({ ...defaultParams, guidance: nextManeuverGuidance })
 
     expect(speech.spoken.at(-1)?.voice).toBe(frenchVoice)
   })

@@ -119,16 +119,21 @@ describe('guidage vocal intégré', () => {
 
     vi.useFakeTimers()
     fireEvent.click(screen.getByTestId('nav-start'))
-    expect(speech.spoken[0].text).toContain('Prendre la rue A')
+    expect(speech.spoken[0].text).toBe('Dans 100 mètres, Continuer sur la rue B')
+    expect(speech.spoken[0].text).not.toContain('Prendre la rue A')
     expect(screen.getByTestId('navigation-voice-status')).toHaveTextContent('Guidage vocal actif')
 
     await act(async () => vi.advanceTimersByTimeAsync(30_000))
-    expect(
-      speech.spoken.some((utterance) => utterance.text.includes('Continuer sur la rue B')),
-    ).toBe(true)
     expect(screen.getByTestId('navigation-active-instruction')).toHaveTextContent(
       'Continuer sur la rue B',
     )
+    expect(speech.spoken.at(-1)?.text).toContain('Rejoindre la rue C')
+    expect(speech.spoken.at(-1)?.text).not.toContain('Continuer sur la rue B')
+    expect(
+      speech.spoken.some(
+        (utterance) => utterance.text === 'Dans 200 mètres, Continuer sur la rue B',
+      ),
+    ).toBe(false)
 
     fireEvent.click(screen.getByTestId('nav-exit'))
     expect(speech.synthesis.cancel).toHaveBeenCalled()

@@ -141,26 +141,27 @@ export const createNavigationVoiceAnnouncement = ({
     }
   }
 
-  const instruction = guidance.activeInstruction.trim().replace(/\s+/g, ' ')
+  const instruction = guidance.nextInstruction?.trim().replace(/\s+/g, ' ') ?? ''
   const band = resolveNavigationVoiceBand(guidance.distanceToManeuverMeters)
-  if (!instruction || !band) {
+  if (!instruction || guidance.nextStepIndex === null || !band) {
     return null
   }
 
-  if (previousGuidance?.activeStepIndex === guidance.activeStepIndex) {
+  if (previousGuidance?.nextStepIndex === guidance.nextStepIndex) {
     const previousBand = resolveNavigationVoiceBand(previousGuidance.distanceToManeuverMeters)
     if (previousBand && bandUrgency[band] <= bandUrgency[previousBand]) {
       return null
     }
   }
 
-  const key = buildNavigationVoiceAnnouncementKey(band, guidance.activeStepIndex)
+  const stepIndex = guidance.nextStepIndex
+  const key = buildNavigationVoiceAnnouncementKey(band, stepIndex)
   if (band === 'immediate') {
     return {
       key,
       kind: band,
       text: translate('navigationVoiceImmediate', { instruction }),
-      stepIndex: guidance.activeStepIndex,
+      stepIndex,
     }
   }
 
@@ -173,6 +174,6 @@ export const createNavigationVoiceAnnouncement = ({
     key,
     kind: band,
     text: translate('navigationVoiceAdvance', { distance, instruction }),
-    stepIndex: guidance.activeStepIndex,
+    stepIndex,
   }
 }

@@ -11,6 +11,7 @@ const guidance: NonNullable<MapNavigationOverlayProps['navigationGuidance']> = {
   activeStepIndex: 0,
   activeInstruction: 'Tourner à droite sur Rue X',
   distanceToManeuverMeters: 120,
+  nextStepIndex: 1,
   nextInstruction: 'Continuer sur Avenue Y',
   isArrival: false,
 }
@@ -98,6 +99,7 @@ describe('MapNavigationOverlay', () => {
         ...guidance,
         activeStepIndex: 2,
         distanceToManeuverMeters: 0,
+        nextStepIndex: null,
         nextInstruction: null,
         isArrival: true,
       },

@@ -4,8 +4,14 @@ export type NavigationGuidance = {
   activeStepIndex: number
   activeInstruction: string
   distanceToManeuverMeters: number | null
+  nextStepIndex: number | null
   nextInstruction: string | null
   isArrival: boolean
+}
+
+export type NavigationUpcomingInstruction = {
+  stepIndex: number
+  instruction: string
 }
 
 export type NavigationStepRange = {
@@ -85,11 +91,14 @@ const findLastInstructionRange = (
 const findNextInstruction = (
   ranges: NavigationStepRange[],
   activeRangeIndex: number,
-): string | null => {
+): NavigationUpcomingInstruction | null => {
   for (let index = activeRangeIndex + 1; index < ranges.length; index += 1) {
-    const instruction = ranges[index].instruction
-    if (instruction) {
-      return instruction
+    const range = ranges[index]
+    if (hasInstruction(range)) {
+      return {
+        stepIndex: range.stepIndex,
+        instruction: range.instruction,
+      }
     }
   }
 
@@ -124,6 +133,7 @@ export const resolveNavigationGuidance = (
       activeStepIndex: lastInstructionRange.stepIndex,
       activeInstruction: lastInstructionRange.instruction,
       distanceToManeuverMeters: 0,
+      nextStepIndex: null,
       nextInstruction: null,
       isArrival: true,
     }
@@ -151,11 +161,14 @@ export const resolveNavigationGuidance = (
     activeRange.endDistanceMeters - progressWithinRangeMeters,
   )
 
+  const upcomingInstruction = findNextInstruction(ranges, activeRangeIndex)
+
   return {
     activeStepIndex: activeRange.stepIndex,
     activeInstruction: activeRange.instruction,
     distanceToManeuverMeters: remainingStepDistanceMeters / routeToStepScale,
-    nextInstruction: findNextInstruction(ranges, activeRangeIndex),
+    nextStepIndex: upcomingInstruction?.stepIndex ?? null,
+    nextInstruction: upcomingInstruction?.instruction ?? null,
     isArrival: false,
   }
 }

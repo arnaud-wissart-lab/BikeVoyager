@@ -40,6 +40,7 @@ describe('navigationGuidance', () => {
       activeStepIndex: 0,
       activeInstruction: 'Étape A',
       distanceToManeuverMeters: 100,
+      nextStepIndex: 1,
       nextInstruction: 'Étape B',
       isArrival: false,
     })
@@ -50,6 +51,7 @@ describe('navigationGuidance', () => {
       activeStepIndex: 1,
       activeInstruction: 'Étape B',
       distanceToManeuverMeters: 200,
+      nextStepIndex: 2,
       nextInstruction: 'Étape C',
       isArrival: false,
     })
@@ -64,6 +66,7 @@ describe('navigationGuidance', () => {
     expect(resolveNavigationGuidance(steps, 150, 600)).toMatchObject({
       activeStepIndex: 1,
       distanceToManeuverMeters: 150,
+      nextStepIndex: 2,
       nextInstruction: 'Étape C',
       isArrival: false,
     })
@@ -74,6 +77,7 @@ describe('navigationGuidance', () => {
       activeStepIndex: 2,
       activeInstruction: 'Étape C',
       distanceToManeuverMeters: 250,
+      nextStepIndex: null,
       nextInstruction: null,
       isArrival: false,
     })
@@ -84,6 +88,7 @@ describe('navigationGuidance', () => {
       activeStepIndex: 2,
       activeInstruction: 'Étape C',
       distanceToManeuverMeters: 0,
+      nextStepIndex: null,
       nextInstruction: null,
       isArrival: true,
     }
@@ -127,6 +132,7 @@ describe('navigationGuidance', () => {
       activeStepIndex: 3,
       activeInstruction: 'Étape valide',
       distanceToManeuverMeters: 100,
+      nextStepIndex: null,
       nextInstruction: null,
       isArrival: false,
     })
@@ -184,6 +190,7 @@ describe('navigationGuidance', () => {
 
     expect(resolveNavigationGuidance(stepsWithSeveralGaps, 50, 700)).toMatchObject({
       activeInstruction: 'Étape A',
+      nextStepIndex: 3,
       nextInstruction: 'Étape C',
     })
   })
@@ -198,6 +205,7 @@ describe('navigationGuidance', () => {
       activeStepIndex: 1,
       activeInstruction: 'Étape mesurable',
       distanceToManeuverMeters: 200,
+      nextStepIndex: null,
       nextInstruction: null,
       isArrival: false,
     })
@@ -211,6 +219,7 @@ describe('navigationGuidance', () => {
       activeStepIndex: 1,
       activeInstruction: 'Étape B',
       distanceToManeuverMeters: 200,
+      nextStepIndex: 2,
       nextInstruction: 'Étape C',
       isArrival: false,
     })

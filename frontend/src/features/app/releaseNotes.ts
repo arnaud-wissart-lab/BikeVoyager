@@ -26,6 +26,127 @@ export type ReleaseNote = {
 export const releaseNotes: ReleaseNote[] = [
   {
     version: appVersion,
+    date: '2026-07-11',
+    sections: [
+      {
+        title: {
+          fr: 'Navigation sur le terrain',
+          en: 'On-the-road navigation',
+        },
+        items: [
+          {
+            type: 'added',
+            text: {
+              fr: 'Feuille de route détaillée avec les différentes étapes du trajet.',
+              en: 'Detailed roadbook with each step of the journey.',
+            },
+          },
+          {
+            type: 'added',
+            text: {
+              fr: 'Guidage actif avec prochaine manœuvre, distance et instructions vocales optionnelles sans service externe.',
+              en: 'Active guidance with the next maneuver, its distance, and optional voice instructions without an external service.',
+            },
+          },
+          {
+            type: 'added',
+            text: {
+              fr: 'Maintien de l’écran allumé pendant la navigation lorsque le navigateur le permet.',
+              en: 'Keep the screen awake during navigation when supported by the browser.',
+            },
+          },
+          {
+            type: 'added',
+            text: {
+              fr: 'Détection des sorties d’itinéraire avec recalcul manuel ou automatique optionnel depuis la position GPS réelle.',
+              en: 'Off-route detection with manual or optional automatic recalculation from your actual GPS position.',
+            },
+          },
+        ],
+      },
+      {
+        title: {
+          fr: 'Préparation et choix du trajet',
+          en: 'Route planning and selection',
+        },
+        items: [
+          {
+            type: 'improved',
+            text: {
+              fr: 'Comparaison des trajets avec leur distance, leur durée et leur dénivelé.',
+              en: 'Compare routes by distance, duration, and elevation gain.',
+            },
+          },
+          {
+            type: 'improved',
+            text: {
+              fr: 'Affichage simultané du trajet actuel et de l’alternative sur la carte.',
+              en: 'View the current route and its alternative together on the map.',
+            },
+          },
+          {
+            type: 'added',
+            text: {
+              fr: 'Préréglages adaptés au vélo et au VAE.',
+              en: 'Ready-to-use presets for bikes and e-bikes.',
+            },
+          },
+          {
+            type: 'added',
+            text: {
+              fr: 'Carnet de trajets sauvegardés avec export GPX direct.',
+              en: 'Saved route library with direct GPX export.',
+            },
+          },
+        ],
+      },
+      {
+        title: {
+          fr: 'Fiabilité et confort',
+          en: 'Reliability and comfort',
+        },
+        items: [
+          {
+            type: 'fixed',
+            text: {
+              fr: 'Conservation du trajet courant lorsqu’un recalcul échoue.',
+              en: 'Keep the current route when recalculation fails.',
+            },
+          },
+          {
+            type: 'fixed',
+            text: {
+              fr: 'Protection contre les résultats de recalcul devenus obsolètes.',
+              en: 'Protection against recalculation results that are no longer relevant.',
+            },
+          },
+          {
+            type: 'improved',
+            text: {
+              fr: 'Gestion plus fiable des segments sans instruction et des distances avant la prochaine manœuvre.',
+              en: 'More reliable handling of segments without instructions and distances to the next maneuver.',
+            },
+          },
+          {
+            type: 'improved',
+            text: {
+              fr: 'Préférences de navigation sauvegardées et restaurables.',
+              en: 'Navigation preferences can be saved and restored.',
+            },
+          },
+          {
+            type: 'improved',
+            text: {
+              fr: 'Fonctionnement adapté lorsque le maintien de l’écran ou la synthèse vocale ne sont pas disponibles.',
+              en: 'Graceful operation when screen wake or speech synthesis is unavailable.',
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '2026-07-08',
     sections: [
       {

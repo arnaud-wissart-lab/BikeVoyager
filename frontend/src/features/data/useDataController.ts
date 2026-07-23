@@ -82,6 +82,7 @@ export const useDataController = ({
     endPlace,
     targetDistanceKm,
     profileSettings,
+    profileCatalog,
     cloudProvider,
     cloudAutoBackupEnabled,
     poiAlertEnabled,
@@ -170,6 +171,7 @@ export const useDataController = ({
       buildBackupExport({
         preferences: buildExportedPreferences({
           profileSettings,
+          profileCatalog,
           appPreferences,
           language,
           themeMode,
@@ -201,6 +203,7 @@ export const useDataController = ({
       onewayStartPlace,
       onewayStartValue,
       profileSettings,
+      profileCatalog,
       routeResult,
       savedTrips,
       targetDistanceKm,
@@ -297,6 +300,7 @@ export const useDataController = ({
 
   useDataControllerPersistence({
     profileSettings,
+    profileCatalog,
     appPreferences,
     savedTrips,
     addressBook,

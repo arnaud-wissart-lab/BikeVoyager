@@ -8,10 +8,16 @@ import {
   type SavedTripRecord,
 } from './dataPortability'
 import { addressBookFilterAll } from './addressBookUtils'
-import { profileStorageKey, type ProfileSettings } from '../routing/domain'
+import {
+  profileCatalogStorageKey,
+  profileStorageKey,
+  type ProfileCatalog,
+  type ProfileSettings,
+} from '../routing/domain'
 
 type UseDataControllerPersistenceParams = {
   profileSettings: ProfileSettings
+  profileCatalog: ProfileCatalog
   appPreferences: AppPreferences
   savedTrips: SavedTripRecord[]
   addressBook: AddressBookEntry[]
@@ -25,6 +31,7 @@ type UseDataControllerPersistenceParams = {
 
 export const useDataControllerPersistence = ({
   profileSettings,
+  profileCatalog,
   appPreferences,
   savedTrips,
   addressBook,
@@ -38,6 +45,10 @@ export const useDataControllerPersistence = ({
   useEffect(() => {
     localStorage.setItem(profileStorageKey, JSON.stringify(profileSettings))
   }, [profileSettings])
+
+  useEffect(() => {
+    localStorage.setItem(profileCatalogStorageKey, JSON.stringify(profileCatalog))
+  }, [profileCatalog])
 
   useEffect(() => {
     if (typeof window === 'undefined') {

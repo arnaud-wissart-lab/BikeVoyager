@@ -4,6 +4,7 @@ import {
   isNavigationCameraMode,
   isNavigationMode,
   isTripType,
+  normalizeProfileCatalog,
   normalizeProfileSettings,
   poiAlertDistanceRange,
   poiCorridorRange,
@@ -371,8 +372,11 @@ export const normalizeExportedPreferences = (value: unknown): ExportedPreference
       ? value.app
       : null
 
+  const profileSettings = normalizeProfileSettings(sourceProfile as Partial<ProfileSettings>)
+
   return {
-    profileSettings: normalizeProfileSettings(sourceProfile as Partial<ProfileSettings>),
+    profileSettings,
+    profileCatalog: normalizeProfileCatalog(value.profileCatalog, profileSettings),
     appPreferences: normalizeAppPreferences(sourceApp as Partial<AppPreferences> | null),
     language: normalizeLanguage(value.language),
     themeMode: normalizeThemeMode(value.themeMode),

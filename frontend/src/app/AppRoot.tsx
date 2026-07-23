@@ -206,6 +206,7 @@ export default function AppRoot() {
       borderColor={borderColor}
       availableViewportHeight={availableViewportHeight}
       chromeFooterHeight={chromeFooterHeight}
+      onNavigate={handleNavigate}
       store={store}
       mapController={mapController}
       routingController={routingController}
@@ -239,6 +240,10 @@ export default function AppRoot() {
         isMapRoute={route === 'carte'}
         mobileHeaderTitle={mapController.mobileHeaderTitle}
         mapHeaderTitle={mapController.mapHeaderTitle}
+        mapStartLabel={mapController.startLabel}
+        mapEndLabel={mapController.endLabel}
+        mapTripType={mapController.mapTripType}
+        mapLoopLabel={t('typeLoop')}
         appNameLabel={t('appName')}
         language={language}
         onLanguageChange={(value) => {

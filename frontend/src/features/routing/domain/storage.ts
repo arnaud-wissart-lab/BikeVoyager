@@ -2,6 +2,7 @@ import {
   defaultProfileSettings,
   emptyPlannerDraft,
   plannerDraftStorageKey,
+  profileCatalogStorageKey,
   profileStorageKey,
   routeStorageKey,
   speedRanges,
@@ -16,6 +17,16 @@ import type {
   RouteResult,
   TripResult,
 } from './types'
+import {
+  areProfileSettingsEqual,
+  defaultProfileCatalog,
+  findProfileMatchingSettings,
+  profilePresets,
+  resolveProfileById,
+  type CustomProfile,
+  type ProfileCatalog,
+  type ProfilePresetKey,
+} from './profilePresets'
 
 export const normalizeProfileSettings = (
   value: Partial<ProfileSettings> | null | undefined,
@@ -60,6 +71,74 @@ export const loadProfileSettings = (): ProfileSettings => {
     return normalizeProfileSettings(parsed)
   } catch {
     return defaultProfileSettings
+  }
+}
+
+export const normalizeProfileCatalog = (
+  value: unknown,
+  currentSettings: ProfileSettings,
+): ProfileCatalog => {
+  const source =
+    value && typeof value === 'object' ? (value as Partial<ProfileCatalog>) : defaultProfileCatalog
+  const presetKeys = new Set(profilePresets.map((preset) => preset.key))
+  const presetOverrides = Object.fromEntries(
+    Object.entries(source.presetOverrides ?? {})
+      .filter(([key]) => presetKeys.has(key as ProfilePresetKey))
+      .map(([key, settings]) => [
+        key,
+        normalizeProfileSettings(settings as Partial<ProfileSettings>),
+      ]),
+  ) as ProfileCatalog['presetOverrides']
+  const customProfiles: CustomProfile[] = []
+  const knownIds = new Set<string>()
+
+  for (const candidate of Array.isArray(source.customProfiles) ? source.customProfiles : []) {
+    if (!candidate || typeof candidate !== 'object') {
+      continue
+    }
+
+    const profile = candidate as Partial<CustomProfile>
+    const id = typeof profile.id === 'string' ? profile.id.trim() : ''
+    const name = typeof profile.name === 'string' ? profile.name.trim().slice(0, 60) : ''
+    if (!id.startsWith('custom:') || !name || knownIds.has(id)) {
+      continue
+    }
+
+    knownIds.add(id)
+    customProfiles.push({
+      id,
+      name,
+      settings: normalizeProfileSettings(profile.settings),
+    })
+  }
+
+  const catalog: ProfileCatalog = {
+    activeProfileId: typeof source.activeProfileId === 'string' ? source.activeProfileId : null,
+    presetOverrides,
+    customProfiles,
+  }
+  const activeProfile = resolveProfileById(catalog, catalog.activeProfileId)
+  if (!activeProfile || !areProfileSettingsEqual(activeProfile.settings, currentSettings)) {
+    catalog.activeProfileId = findProfileMatchingSettings(catalog, currentSettings)?.id ?? null
+  }
+
+  return catalog
+}
+
+export const loadProfileCatalog = (currentSettings: ProfileSettings): ProfileCatalog => {
+  if (typeof window === 'undefined') {
+    return normalizeProfileCatalog(defaultProfileCatalog, currentSettings)
+  }
+
+  const raw = localStorage.getItem(profileCatalogStorageKey)
+  if (!raw) {
+    return normalizeProfileCatalog(defaultProfileCatalog, currentSettings)
+  }
+
+  try {
+    return normalizeProfileCatalog(JSON.parse(raw), currentSettings)
+  } catch {
+    return normalizeProfileCatalog(defaultProfileCatalog, currentSettings)
   }
 }
 

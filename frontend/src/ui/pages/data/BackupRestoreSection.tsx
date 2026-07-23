@@ -1,5 +1,5 @@
-import { Group, Paper, Stack, Text, ThemeIcon, type ButtonProps } from '@mantine/core'
-import { IconDeviceFloppy } from '@tabler/icons-react'
+import { Alert, Group, Paper, Stack, Text, ThemeIcon, type ButtonProps } from '@mantine/core'
+import { IconBrowser, IconDeviceFloppy } from '@tabler/icons-react'
 import type { ChangeEvent, RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import DataActionsBar from './DataActionsBar'
@@ -39,6 +39,15 @@ export default function BackupRestoreSection({
         <Text size="sm" c="dimmed">
           {t('dataHubBody')}
         </Text>
+        <Alert
+          variant="light"
+          color="orange"
+          radius="sm"
+          icon={isDesktop ? <IconBrowser size={18} /> : undefined}
+          title={t('dataLocalStorageNoticeTitle')}
+        >
+          {t('dataLocalStorageNoticeBody')}
+        </Alert>
         <DataActionsBar isDesktop={isDesktop}>
           <ExportSection
             isDesktop={isDesktop}

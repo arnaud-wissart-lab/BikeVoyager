@@ -6,10 +6,12 @@ import { usePoisController } from '../../features/pois/usePoisController'
 import {
   computeElevationStats,
   computeRouteDifficulty,
+  findProfileMatchingSettings,
   normalizeNumericInput,
   poiAlertDistanceRange,
   poiCorridorRange,
   type RouteDifficulty,
+  type RouteKey,
 } from '../../features/routing/domain'
 import { useRoutingController } from '../../features/routing/useRoutingController'
 import type { AppStore } from '../../state/appStore'
@@ -28,6 +30,7 @@ type MapRouteProps = {
   borderColor: string
   availableViewportHeight: string
   chromeFooterHeight: number
+  onNavigate: (route: RouteKey) => void
   store: AppStore
   mapController: ReturnType<typeof useMapController>
   routingController: ReturnType<typeof useRoutingController>
@@ -53,6 +56,7 @@ export default function MapRoute({
   borderColor,
   availableViewportHeight,
   chromeFooterHeight,
+  onNavigate,
   store,
   mapController,
   routingController,
@@ -61,6 +65,13 @@ export default function MapRoute({
   detourHandlers,
 }: MapRouteProps) {
   const overlapLabel = store.routeResult?.kind === 'loop' ? store.routeResult.overlapScore : null
+  const activeProfile = findProfileMatchingSettings(store.profileCatalog, store.profileSettings)
+  const activeProfileLabel =
+    activeProfile?.kind === 'preset'
+      ? t(activeProfile.preset.labelKey)
+      : activeProfile?.kind === 'custom'
+        ? activeProfile.profile.name
+        : t('profileCurrentCustomShort')
   const overlapHint =
     overlapLabel === 'faible'
       ? t('mapOverlapLowHelp')
@@ -162,6 +173,8 @@ export default function MapRoute({
     isExporting: store.isExporting,
     exportError: store.exportError,
     routeErrorMessage: routingController.routeErrorDisplayMessage,
+    activeProfileLabel,
+    onOpenProfiles: () => onNavigate('profils'),
     onOpenAlternativeComparison: () => {
       void routingController.handleOpenAlternativeComparison()
     },

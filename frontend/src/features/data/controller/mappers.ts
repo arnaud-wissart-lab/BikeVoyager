@@ -1,4 +1,4 @@
-import type { PlannerDraft, ProfileSettings } from '../../routing/domain'
+import type { PlannerDraft, ProfileCatalog, ProfileSettings } from '../../routing/domain'
 import type {
   AppPreferences,
   ExportedPreferences,
@@ -8,6 +8,7 @@ import type {
 
 type BuildExportedPreferencesParams = {
   profileSettings: ProfileSettings
+  profileCatalog: ProfileCatalog
   appPreferences: AppPreferences
   language: 'fr' | 'en'
   themeMode: 'light' | 'dark' | 'auto'
@@ -15,12 +16,14 @@ type BuildExportedPreferencesParams = {
 
 export const buildExportedPreferences = ({
   profileSettings,
+  profileCatalog,
   appPreferences,
   language,
   themeMode,
 }: BuildExportedPreferencesParams) =>
   ({
     profileSettings,
+    profileCatalog,
     appPreferences,
     language: (language === 'en' ? 'en' : 'fr') as SupportedLanguage,
     themeMode: themeMode as ThemeModePreference,

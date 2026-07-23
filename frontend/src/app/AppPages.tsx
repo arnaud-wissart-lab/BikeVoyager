@@ -26,6 +26,7 @@ type AppPagesProps = {
   borderColor: string
   availableViewportHeight: string
   chromeFooterHeight: number
+  onNavigate: (route: RouteKey) => void
   store: AppStore
   mapController: ReturnType<typeof useMapController>
   routingController: ReturnType<typeof useRoutingController>
@@ -47,6 +48,7 @@ export default function AppPages({
   borderColor,
   availableViewportHeight,
   chromeFooterHeight,
+  onNavigate,
   store,
   mapController,
   routingController,
@@ -67,6 +69,7 @@ export default function AppPages({
         borderColor={borderColor}
         availableViewportHeight={availableViewportHeight}
         chromeFooterHeight={chromeFooterHeight}
+        onNavigate={onNavigate}
         store={store}
         mapController={mapController}
         routingController={routingController}
@@ -78,14 +81,7 @@ export default function AppPages({
   }
 
   if (route === 'profils') {
-    return (
-      <SettingsRoute
-        contentSize={contentSize}
-        isDesktop={isDesktop}
-        store={store}
-        routingController={routingController}
-      />
-    )
+    return <SettingsRoute contentSize={contentSize} isDesktop={isDesktop} store={store} />
   }
 
   if (route === 'donnees') {

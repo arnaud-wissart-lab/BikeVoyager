@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../App'
 import { appPreferencesStorageKey, savedTripsStorageKey } from '../features/data/dataPortability'
@@ -1485,6 +1485,31 @@ describe('App routing', () => {
       routeOptionVariants[2],
       routeOptionVariants[3],
     ])
+  })
+
+  it('affiche le trajet sur deux lignes et donne accès au profil actif', async () => {
+    const user = userEvent.setup()
+    setupRouteComparisonTest(createJsonResponse(currentComparisonRoute))
+
+    renderWithProviders(<App />)
+
+    const routeTitle = await screen.findByTestId('route-header-title')
+    expect(within(routeTitle).getByText('Départ')).toBeInTheDocument()
+    expect(within(routeTitle).getByText('Arrivée')).toBeInTheDocument()
+    expect(routeTitle).not.toHaveAttribute('title')
+
+    const navigation = screen.getByRole('tablist')
+    expect(navigation.compareDocumentPosition(routeTitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Profil actif : Standard. Gérer les profils.',
+      }),
+    )
+
+    expect(window.location.hash).toBe('#/profils')
   })
 
   it('précharge et conserve une seule alternative lorsque les autres sont des doublons', async () => {

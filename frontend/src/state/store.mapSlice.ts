@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateA
 import type { AppPreferences } from '../features/data/dataPortability'
 import {
   loadProfileSettings,
+  loadProfileCatalog,
   loadStoredRoute,
   createNavigationDeviationState,
   type DetourPoint,
@@ -13,6 +14,7 @@ import {
   type PlaceCandidate,
   type PoiItem,
   type ProfileSettings,
+  type ProfileCatalog,
   type RouteAlternativeCandidate,
   type RouteAlternativeOption,
   type RouteComparisonSummary,
@@ -120,6 +122,9 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
   const [isAlternativeLoading, setIsAlternativeLoading] = useState(false)
   const [profileSettings, setProfileSettings] = useState<ProfileSettings>(() =>
     loadProfileSettings(),
+  )
+  const [profileCatalog, setProfileCatalog] = useState<ProfileCatalog>(() =>
+    loadProfileCatalog(profileSettings),
   )
 
   const alertSeenPoiIdsRef = useRef(new Set<string>())
@@ -324,6 +329,8 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
     setIsAlternativeLoading,
     profileSettings,
     setProfileSettings,
+    profileCatalog,
+    setProfileCatalog,
     alertSeenPoiIdsRef,
     simulationDistanceRef,
     navigationRecalculationInFlightRef,

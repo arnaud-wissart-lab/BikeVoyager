@@ -14,6 +14,20 @@ const preferences = {
     speeds: { walk: 5, bike: 16, ebike: 24 },
     ebikeAssist: 'medium' as const,
   },
+  profileCatalog: {
+    activeProfileId: 'custom:velotaf',
+    presetOverrides: {},
+    customProfiles: [
+      {
+        id: 'custom:velotaf',
+        name: 'Vélotaf',
+        settings: {
+          speeds: { walk: 5, bike: 16, ebike: 24 },
+          ebikeAssist: 'medium' as const,
+        },
+      },
+    ],
+  },
   appPreferences: {
     ...defaultAppPreferences,
     automaticNavigationRecalculationEnabled: true,
@@ -54,6 +68,14 @@ describe('préférence de recalcul automatique', () => {
       imported?.kind === 'preferences' &&
         imported.preferences.appPreferences.automaticNavigationRecalculationEnabled,
     ).toBe(true)
+    expect(
+      imported?.kind === 'preferences' && imported.preferences.profileCatalog.customProfiles,
+    ).toEqual([
+      expect.objectContaining({
+        id: 'custom:velotaf',
+        name: 'Vélotaf',
+      }),
+    ])
   })
 
   it('conserve la valeur dans une sauvegarde complète', () => {
@@ -92,8 +114,10 @@ describe('préférence de recalcul automatique', () => {
     }
 
     const setAutomaticNavigationRecalculationEnabled = vi.fn()
+    const setProfileCatalog = vi.fn()
     const store = {
       setProfileSettings: vi.fn(),
+      setProfileCatalog,
       setAutomaticNavigationRecalculationEnabled,
       setVoiceGuidanceEnabled: vi.fn(),
       setPoiAlertEnabled: vi.fn(),
@@ -114,5 +138,16 @@ describe('préférence de recalcul automatique', () => {
     })
 
     expect(setAutomaticNavigationRecalculationEnabled).toHaveBeenCalledWith(true)
+    expect(setProfileCatalog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        activeProfileId: 'custom:velotaf',
+        customProfiles: [
+          expect.objectContaining({
+            id: 'custom:velotaf',
+            name: 'Vélotaf',
+          }),
+        ],
+      }),
+    )
   })
 })

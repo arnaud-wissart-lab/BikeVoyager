@@ -22,6 +22,7 @@ type DataImportStoreSlice = Pick<
   AppStore,
   | 'routeResult'
   | 'setProfileSettings'
+  | 'setProfileCatalog'
   | 'setPoiAlertEnabled'
   | 'setAutomaticNavigationRecalculationEnabled'
   | 'setVoiceGuidanceEnabled'
@@ -61,6 +62,7 @@ const applyImportedPreferences = (
   preferences: ExportedPreferences,
 ) => {
   store.setProfileSettings(preferences.profileSettings)
+  store.setProfileCatalog(preferences.profileCatalog)
   store.setAutomaticNavigationRecalculationEnabled(
     preferences.appPreferences.automaticNavigationRecalculationEnabled,
   )

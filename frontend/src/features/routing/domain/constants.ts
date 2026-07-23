@@ -13,6 +13,7 @@ export const mapPaddingRatio = 0.18
 
 export const routeValues: RouteKey[] = ['planifier', 'carte', 'profils', 'donnees', 'aide']
 export const profileStorageKey = 'bv_profile_settings'
+export const profileCatalogStorageKey = 'bv_profile_catalog'
 export const routeStorageKey = 'bv_last_route'
 export const plannerDraftStorageKey = 'bv_planner_draft'
 export const emptyPlannerDraft: PlannerDraft = {

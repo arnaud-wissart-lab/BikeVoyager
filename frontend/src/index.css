@@ -4,6 +4,10 @@
   --bikevoyager-icon-accent: var(--mantine-color-blue-6);
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 [data-mantine-color-scheme='dark'] {
   --bikevoyager-panel-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
   --bikevoyager-icon-accent: var(--mantine-color-blue-4);

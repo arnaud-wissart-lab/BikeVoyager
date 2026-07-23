@@ -11,11 +11,18 @@ import {
   UnstyledButton,
   VisuallyHidden,
 } from '@mantine/core'
-import { IconDeviceDesktop, IconMoon, IconSun, type TablerIcon } from '@tabler/icons-react'
+import {
+  IconDeviceDesktop,
+  IconFlag,
+  IconMapPin,
+  IconMoon,
+  IconSun,
+  type TablerIcon,
+} from '@tabler/icons-react'
 import englishFlagUrl from 'flag-icons/flags/4x3/gb.svg'
 import frenchFlagUrl from 'flag-icons/flags/4x3/fr.svg'
 import type { ReactNode } from 'react'
-import type { MapViewMode, RouteKey } from '../../features/routing/domain'
+import type { MapViewMode, RouteKey, TripType } from '../../features/routing/domain'
 
 export type ShellNavItem = {
   key: RouteKey
@@ -71,6 +78,87 @@ const ControlGlyph = ({ children }: { children: ReactNode }) => (
   </span>
 )
 
+type RouteHeaderTitleProps = {
+  mapHeaderTitle: string
+  mapStartLabel: string
+  mapEndLabel: string
+  mapTripType: TripType | null
+  mapLoopLabel: string
+  withTooltip: boolean
+}
+
+const RouteHeaderTitle = ({
+  mapHeaderTitle,
+  mapStartLabel,
+  mapEndLabel,
+  mapTripType,
+  mapLoopLabel,
+  withTooltip,
+}: RouteHeaderTitleProps) => {
+  const lineStyle = {
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  } as const
+  const content = (
+    <Box
+      aria-label={mapHeaderTitle}
+      data-testid="route-header-title"
+      style={{ minWidth: 0, width: '100%' }}
+    >
+      <Group gap={6} wrap="nowrap">
+        <IconMapPin
+          size={14}
+          color="var(--mantine-color-teal-6)"
+          aria-hidden
+          style={{ flexShrink: 0 }}
+        />
+        <Text component="span" size="sm" fw={600} lh={1.2} style={lineStyle}>
+          {mapStartLabel}
+        </Text>
+      </Group>
+      <Group gap={6} wrap="nowrap">
+        <IconFlag
+          size={14}
+          color="var(--mantine-color-red-6)"
+          aria-hidden
+          style={{ flexShrink: 0 }}
+        />
+        <Text component="span" size="sm" fw={600} lh={1.2} style={lineStyle}>
+          {mapTripType === 'loop' ? mapLoopLabel : mapEndLabel}
+        </Text>
+      </Group>
+    </Box>
+  )
+
+  if (!withTooltip) {
+    return content
+  }
+
+  return (
+    <Tooltip
+      label={mapHeaderTitle}
+      position="bottom-start"
+      openDelay={350}
+      withArrow
+      multiline
+      maw={360}
+      radius="md"
+      transitionProps={{ transition: 'fade-down', duration: 150 }}
+      styles={{
+        tooltip: {
+          boxShadow: 'var(--mantine-shadow-md)',
+          fontWeight: 500,
+          padding: '8px 10px',
+        },
+      }}
+    >
+      {content}
+    </Tooltip>
+  )
+}
+
 type ShellLayoutProps = {
   isDesktop: boolean
   route: RouteKey
@@ -92,6 +180,10 @@ type ShellLayoutProps = {
   isMapRoute: boolean
   mobileHeaderTitle: string
   mapHeaderTitle: string
+  mapStartLabel: string
+  mapEndLabel: string
+  mapTripType: TripType | null
+  mapLoopLabel: string
   appNameLabel: string
   language: 'fr' | 'en'
   onLanguageChange: (language: 'fr' | 'en') => void
@@ -138,6 +230,10 @@ export default function ShellLayout({
   isMapRoute,
   mobileHeaderTitle,
   mapHeaderTitle,
+  mapStartLabel,
+  mapEndLabel,
+  mapTripType,
+  mapLoopLabel,
   appNameLabel,
   language,
   onLanguageChange,
@@ -182,9 +278,22 @@ export default function ShellLayout({
             <Group justify="space-between" align="center" h="100%" wrap="nowrap">
               {showMobileCompactHeader ? (
                 <>
-                  <Text fw={600} lineClamp={1} style={{ minWidth: 0, flex: 1 }}>
-                    {mobileHeaderTitle}
-                  </Text>
+                  <Box style={{ minWidth: 0, flex: 1 }}>
+                    {isMapRoute && mapHeaderTitle ? (
+                      <RouteHeaderTitle
+                        mapHeaderTitle={mapHeaderTitle}
+                        mapStartLabel={mapStartLabel}
+                        mapEndLabel={mapEndLabel}
+                        mapTripType={mapTripType}
+                        mapLoopLabel={mapLoopLabel}
+                        withTooltip={false}
+                      />
+                    ) : (
+                      <Text fw={700} size="lg" lineClamp={1}>
+                        {mobileHeaderTitle}
+                      </Text>
+                    )}
+                  </Box>
                   <Group gap={6} align="center" wrap="nowrap">
                     <ActionIcon
                       variant="light"
@@ -199,7 +308,7 @@ export default function ShellLayout({
                     </ActionIcon>
                     <ActionIcon
                       variant="light"
-                      color={themeMode === 'auto' ? 'blue' : isDarkTheme ? 'indigo' : 'orange'}
+                      color={themeMode === 'auto' ? 'cyan' : isDarkTheme ? 'violet' : 'orange'}
                       radius="xl"
                       size={36}
                       onClick={() => onThemeModeChange(nextThemeMode)}
@@ -207,9 +316,9 @@ export default function ShellLayout({
                       title={mobileThemeActionLabel}
                     >
                       {themeMode === 'auto' ? (
-                        <IconDeviceDesktop size={18} color="var(--mantine-color-blue-6)" />
+                        <IconDeviceDesktop size={18} color="var(--mantine-color-cyan-7)" />
                       ) : isDarkTheme ? (
-                        <IconMoon size={18} color="var(--mantine-color-indigo-6)" />
+                        <IconMoon size={18} color="var(--mantine-color-violet-6)" />
                       ) : (
                         <IconSun size={18} color="var(--mantine-color-orange-6)" />
                       )}
@@ -219,14 +328,6 @@ export default function ShellLayout({
               ) : (
                 <>
                   <Group gap="md" align="center" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
-                    <Text
-                      fw={600}
-                      lineClamp={1}
-                      title={showDesktopMapHeader ? mapHeaderTitle : appNameLabel}
-                      style={{ flex: '0 0 10rem', minWidth: 0, maxWidth: '10rem' }}
-                    >
-                      {showDesktopMapHeader ? mapHeaderTitle : appNameLabel}
-                    </Text>
                     {isDesktop && (
                       <Tabs
                         value={route}
@@ -243,7 +344,22 @@ export default function ShellLayout({
                         </Tabs.List>
                       </Tabs>
                     )}
-                    <Box style={{ flex: 1 }} />
+                    <Box style={{ flex: 1, minWidth: '12rem' }}>
+                      {showDesktopMapHeader ? (
+                        <RouteHeaderTitle
+                          mapHeaderTitle={mapHeaderTitle}
+                          mapStartLabel={mapStartLabel}
+                          mapEndLabel={mapEndLabel}
+                          mapTripType={mapTripType}
+                          mapLoopLabel={mapLoopLabel}
+                          withTooltip
+                        />
+                      ) : (
+                        <Text fw={700} size="lg" lineClamp={1}>
+                          {appNameLabel}
+                        </Text>
+                      )}
+                    </Box>
                   </Group>
 
                   <Group gap={6} align="center" wrap="nowrap">
@@ -258,6 +374,7 @@ export default function ShellLayout({
                           { label: mapView2dLabel, value: '2d' },
                           { label: mapView3dLabel, value: '3d' },
                         ]}
+                        withItemsBorders={false}
                         styles={segmentedControlStyles}
                       />
                     )}
@@ -291,6 +408,7 @@ export default function ShellLayout({
                           value: 'en',
                         },
                       ]}
+                      withItemsBorders={false}
                       styles={segmentedControlStyles}
                     />
                     <SegmentedControl
@@ -306,7 +424,7 @@ export default function ShellLayout({
                               <ControlGlyph>
                                 <IconDeviceDesktop
                                   size={18}
-                                  color="var(--mantine-color-blue-6)"
+                                  color="var(--mantine-color-cyan-7)"
                                   aria-hidden
                                 />
                                 <VisuallyHidden>{themeAutoLabel}</VisuallyHidden>
@@ -336,7 +454,7 @@ export default function ShellLayout({
                               <ControlGlyph>
                                 <IconMoon
                                   size={18}
-                                  color="var(--mantine-color-indigo-6)"
+                                  color="var(--mantine-color-violet-6)"
                                   aria-hidden
                                 />
                                 <VisuallyHidden>{themeDarkLabel}</VisuallyHidden>
@@ -346,6 +464,7 @@ export default function ShellLayout({
                           value: 'dark',
                         },
                       ]}
+                      withItemsBorders={false}
                       styles={segmentedControlStyles}
                     />
                   </Group>

@@ -7,6 +7,7 @@ import type {
   PlannerDraft,
   PoiCategory,
   ProfileSettings,
+  ProfileCatalog,
   TripResult,
   TripType,
 } from '../../routing/domain'
@@ -61,6 +62,7 @@ export type AddressBookEntry = {
 
 export type ExportedPreferences = {
   profileSettings: ProfileSettings
+  profileCatalog: ProfileCatalog
   appPreferences: AppPreferences
   language: SupportedLanguage
   themeMode: ThemeModePreference

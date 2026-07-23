@@ -6,6 +6,7 @@ import {
   IconDownload,
   IconGps,
   IconRouteAltLeft,
+  IconUser,
 } from '@tabler/icons-react'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -41,7 +42,9 @@ type MapSummaryPanelProps = {
   isExporting: boolean
   exportError: string | null
   routeErrorMessage: string | null
+  activeProfileLabel: string
   onOpenAlternativeComparison: () => void
+  onOpenProfiles: () => void
   onOpenNavigationSetup: () => void
   onExportRoute: (format: RouteExportFormat) => void
   onOpenSaveTripDialog: () => void
@@ -71,7 +74,9 @@ export default function MapSummaryPanel({
   isExporting,
   exportError,
   routeErrorMessage,
+  activeProfileLabel,
   onOpenAlternativeComparison,
+  onOpenProfiles,
   onOpenNavigationSetup,
   onExportRoute,
   onOpenSaveTripDialog,
@@ -153,6 +158,35 @@ export default function MapSummaryPanel({
       <Stack gap={6}>
         {renderMetricRow(t('mapSummaryDistance'), distanceLabel)}
         {renderMetricRow(t('mapSummaryEta'), etaLabel)}
+        <Group justify="space-between" align="center" gap="sm" wrap="nowrap">
+          <Text size={metricTextSize} c="dimmed">
+            {t('mapSummaryProfile')}
+          </Text>
+          <Tooltip label={t('mapActiveProfileAction', { name: activeProfileLabel })}>
+            <Button
+              variant="subtle"
+              color="violet"
+              size="compact-xs"
+              leftSection={<IconUser size={15} />}
+              onClick={onOpenProfiles}
+              aria-label={t('mapActiveProfileAction', { name: activeProfileLabel })}
+              styles={{
+                root: {
+                  minWidth: 0,
+                  maxWidth: '70%',
+                },
+                label: {
+                  display: 'block',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                },
+              }}
+            >
+              {activeProfileLabel}
+            </Button>
+          </Tooltip>
+        </Group>
         {overlapLabel && (
           <>
             {renderMetricRow(t('mapSummaryOverlap'), overlapLabel)}
@@ -288,60 +322,62 @@ export default function MapSummaryPanel({
         w="100%"
         aria-label={t('mapRouteActions')}
       >
-        <Tooltip
-          label={alternativeActionLabel}
-          opened={isAlternativeActionDisabled && isAlternativeHintOpen}
-          disabled={!isAlternativeActionDisabled}
-          events={{ hover: false, focus: false, touch: false }}
-          withArrow
-          multiline
-        >
-          <Button
-            variant="default"
-            size={isCompact ? 'xs' : 'sm'}
-            onClick={(event) => {
-              if (isAlternativeActionDisabled) {
-                event.preventDefault()
-                showAlternativeHint(true)
-                return
-              }
-
-              onOpenAlternativeComparison()
-            }}
-            onPointerEnter={(event) => {
-              if (event.pointerType === 'mouse') {
-                showAlternativeHint(false)
-              }
-            }}
-            onPointerLeave={(event) => {
-              if (event.pointerType === 'mouse') {
-                hideAlternativeHint()
-              }
-            }}
-            onPointerDown={(event) => {
-              if (event.pointerType !== 'mouse') {
-                showAlternativeHint(true)
-              }
-            }}
-            onKeyDown={(event) => {
-              if (isAlternativeActionDisabled && (event.key === 'Enter' || event.key === ' ')) {
-                showAlternativeHint(true)
-              }
-            }}
-            data-unavailable={isAlternativeActionDisabled || undefined}
-            aria-busy={isAlternativeActionPending}
-            leftSection={<IconRouteAltLeft size={16} />}
-            aria-label={alternativeActionLabel}
-            style={{
-              flex: '0 0 auto',
-              minWidth: isCompact ? 54 : 60,
-              opacity: isAlternativeActionDisabled ? 0.55 : 1,
-              cursor: isAlternativeActionDisabled ? 'not-allowed' : 'pointer',
-            }}
+        <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
+          <Tooltip
+            label={alternativeActionLabel}
+            opened={isAlternativeActionDisabled && isAlternativeHintOpen}
+            disabled={!isAlternativeActionDisabled}
+            events={{ hover: false, focus: false, touch: false }}
+            withArrow
+            multiline
           >
-            {alternativeCount}
-          </Button>
-        </Tooltip>
+            <Button
+              variant="default"
+              size={isCompact ? 'xs' : 'sm'}
+              onClick={(event) => {
+                if (isAlternativeActionDisabled) {
+                  event.preventDefault()
+                  showAlternativeHint(true)
+                  return
+                }
+
+                onOpenAlternativeComparison()
+              }}
+              onPointerEnter={(event) => {
+                if (event.pointerType === 'mouse') {
+                  showAlternativeHint(false)
+                }
+              }}
+              onPointerLeave={(event) => {
+                if (event.pointerType === 'mouse') {
+                  hideAlternativeHint()
+                }
+              }}
+              onPointerDown={(event) => {
+                if (event.pointerType !== 'mouse') {
+                  showAlternativeHint(true)
+                }
+              }}
+              onKeyDown={(event) => {
+                if (isAlternativeActionDisabled && (event.key === 'Enter' || event.key === ' ')) {
+                  showAlternativeHint(true)
+                }
+              }}
+              data-unavailable={isAlternativeActionDisabled || undefined}
+              aria-busy={isAlternativeActionPending}
+              leftSection={<IconRouteAltLeft size={16} />}
+              aria-label={alternativeActionLabel}
+              style={{
+                flex: '0 0 auto',
+                minWidth: isCompact ? 54 : 60,
+                opacity: isAlternativeActionDisabled ? 0.55 : 1,
+                cursor: isAlternativeActionDisabled ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {alternativeCount}
+            </Button>
+          </Tooltip>
+        </Group>
         <Group gap="xs" wrap="nowrap" ml="auto">
           <Tooltip label={t('navigationSetupOpen')}>
             <ActionIcon

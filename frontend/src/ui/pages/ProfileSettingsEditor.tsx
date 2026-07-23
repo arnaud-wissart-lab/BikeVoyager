@@ -1,11 +1,4 @@
-import {
-  Group,
-  NumberInput,
-  SegmentedControl,
-  Slider,
-  Stack,
-  Text,
-} from '@mantine/core'
+import { Group, NumberInput, SegmentedControl, Slider, Stack, Text } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import {
   normalizeNumericInput,
@@ -20,10 +13,7 @@ type ProfileSettingsEditorProps = {
   onChange: (settings: ProfileSettings) => void
 }
 
-export default function ProfileSettingsEditor({
-  settings,
-  onChange,
-}: ProfileSettingsEditorProps) {
+export default function ProfileSettingsEditor({ settings, onChange }: ProfileSettingsEditorProps) {
   const { t } = useTranslation()
 
   const handleSpeedChange = (mode: Mode, value: number | '') => {

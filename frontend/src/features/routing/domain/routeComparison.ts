@@ -26,12 +26,6 @@ export type RouteComparisonDelta = {
   difficultyChanged: boolean
 }
 
-export type RouteAlternativeCandidate = {
-  route: TripResult
-  routeAlternativeIndex: number | null
-  loopAlternativeIndex: number | null
-}
-
 export type RouteComparisonSummary = {
   current: RouteComparisonMetrics
   alternative: RouteComparisonMetrics

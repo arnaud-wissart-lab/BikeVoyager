@@ -49,14 +49,14 @@ const alternativeComparisonRoute: TripResult = {
       [2.37, 48.865],
     ],
   },
-  distance_m: 2400,
-  duration_s_engine: 600,
-  eta_s: 600,
+  distance_m: 1400,
+  duration_s_engine: 360,
+  eta_s: 360,
   turn_by_turn: [],
   elevation_profile: [
     { distance_m: 0, elevation_m: 100 },
-    { distance_m: 1200, elevation_m: 150 },
-    { distance_m: 2400, elevation_m: 120 },
+    { distance_m: 700, elevation_m: 150 },
+    { distance_m: 1400, elevation_m: 120 },
   ],
 }
 
@@ -69,13 +69,13 @@ const secondAlternativeComparisonRoute: TripResult = {
       [2.38, 48.87],
     ],
   },
-  distance_m: 3600,
-  eta_s: 900,
-  duration_s_engine: 900,
+  distance_m: 1600,
+  eta_s: 420,
+  duration_s_engine: 420,
   elevation_profile: [
     { distance_m: 0, elevation_m: 100 },
-    { distance_m: 1800, elevation_m: 155 },
-    { distance_m: 3600, elevation_m: 125 },
+    { distance_m: 800, elevation_m: 155 },
+    { distance_m: 1600, elevation_m: 125 },
   ],
 }
 
@@ -131,12 +131,12 @@ const secondAlternativeComparisonLoop: TripResult = {
       [2.3522, 48.8566],
     ],
   },
-  distance_m: 6000,
-  eta_s: 1500,
+  distance_m: 5200,
+  eta_s: 1260,
   elevation_profile: [
     { distance_m: 0, elevation_m: 100 },
-    { distance_m: 3000, elevation_m: 155 },
-    { distance_m: 6000, elevation_m: 105 },
+    { distance_m: 2600, elevation_m: 155 },
+    { distance_m: 5200, elevation_m: 105 },
   ],
 }
 
@@ -167,6 +167,22 @@ const setupRouteComparisonTest = (routeResponse: Response | (() => Response)) =>
     JSON.stringify({
       mode: 'bike',
       tripType: 'oneway',
+      onewayStartValue: 'Départ',
+      onewayStartPlace: {
+        label: 'Départ',
+        lat: 48.8566,
+        lon: 2.3522,
+        score: 1,
+        source: 'test',
+      },
+      endValue: 'Arrivée',
+      endPlace: {
+        label: 'Arrivée',
+        lat: 48.86,
+        lon: 2.36,
+        score: 1,
+        source: 'test',
+      },
     }),
   )
   saveRouteResultToStorage(currentComparisonRoute)
@@ -191,6 +207,14 @@ const setupLoopComparisonTest = (loopResponse: Response | (() => Response)) => {
     JSON.stringify({
       mode: 'bike',
       tripType: 'loop',
+      loopStartValue: 'Départ',
+      loopStartPlace: {
+        label: 'Départ',
+        lat: 48.8566,
+        lon: 2.3522,
+        score: 1,
+        source: 'test',
+      },
     }),
   )
   saveRouteResultToStorage(currentComparisonLoop)
@@ -1396,47 +1420,46 @@ describe('App routing', () => {
   })
 
   it('ne compare pas le trajet avec lui-même quand aucune variante distincte n’est trouvée', async () => {
-    const user = userEvent.setup()
     const mockFetch = setupRouteComparisonTest(createJsonResponse(currentComparisonRoute))
 
     renderWithProviders(<App />)
 
-    await user.click(await screen.findByRole('button', { name: 'Proposer un autre trajet' }))
-
-    expect(await screen.findByTestId('route-alternative-unavailable')).toHaveTextContent(
-      'Aucun autre trajet distinct n’a été trouvé.',
-    )
-    expect(screen.queryByText('Comparer les trajets')).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)).toHaveLength(3)
+    })
     expect(
-      screen.queryByRole('button', { name: 'Proposer un autre trajet' }),
+      screen.queryByRole('button', { name: /Consulter .*alternative/ }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Aucun autre trajet distinct n’a été trouvé.'),
     ).not.toBeInTheDocument()
     expect(screen.getByTestId('cesium-route-map')).toHaveAttribute('data-route-layer-count', '1')
 
     const routeBodies = getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)
-    expect(routeBodies).toHaveLength(routeOptionVariants.length)
     expect(routeBodies.map((body) => body.options)).toEqual([
       routeOptionVariants[1],
       routeOptionVariants[2],
       routeOptionVariants[3],
-      routeOptionVariants[0],
     ])
   })
 
-  it('ignore un doublon puis compare la première variante réellement distincte', async () => {
+  it('précharge et conserve une seule alternative lorsque les autres sont des doublons', async () => {
     const user = userEvent.setup()
     const routeResponses = [
       createJsonResponse(currentComparisonRoute),
+      createJsonResponse(alternativeComparisonRoute),
       createJsonResponse(alternativeComparisonRoute),
     ]
     const mockFetch = setupRouteComparisonTest(() => routeResponses.shift() ?? routeResponses[0])
 
     renderWithProviders(<App />)
 
-    await user.click(await screen.findByRole('button', { name: 'Proposer un autre trajet' }))
+    await user.click(await screen.findByRole('button', { name: 'Consulter 1 alternative' }))
 
     expect(await screen.findByText('Comparer les trajets')).toBeInTheDocument()
     expect(screen.getAllByText('1.2 km').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('2.4 km').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('1.4 km').length).toBeGreaterThan(0)
+    expect(screen.getByText('Part différente')).toBeInTheDocument()
 
     const storedRoute = JSON.parse(localStorage.getItem(routeStorageKey) ?? '{}') as {
       distance_m?: number
@@ -1444,47 +1467,29 @@ describe('App routing', () => {
     expect(storedRoute.distance_m).toBe(currentComparisonRoute.distance_m)
 
     const routeBodies = getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)
-    expect(routeBodies).toHaveLength(2)
-    expect(routeBodies[0].options).toEqual(routeOptionVariants[1])
-    expect(routeBodies[1].options).toEqual(routeOptionVariants[2])
+    expect(routeBodies).toHaveLength(3)
   })
 
-  it('ignore une géométrie différente quand toutes les métriques affichées sont identiques', async () => {
-    const user = userEvent.setup()
+  it('conserve une géométrie réellement différente même si les métriques sont identiques', async () => {
     const sameMetricsWithDifferentGeometry = {
       ...currentComparisonRoute,
       geometry: alternativeComparisonRoute.geometry,
     }
-    const routeResponses = [
-      createJsonResponse(sameMetricsWithDifferentGeometry),
-      createJsonResponse(alternativeComparisonRoute),
-    ]
-    const mockFetch = setupRouteComparisonTest(
-      () => routeResponses.shift() ?? createJsonResponse(alternativeComparisonRoute),
-    )
+    setupRouteComparisonTest(createJsonResponse(sameMetricsWithDifferentGeometry))
 
     renderWithProviders(<App />)
 
-    await user.click(await screen.findByRole('button', { name: 'Proposer un autre trajet' }))
-
-    expect(await screen.findByText('Comparer les trajets')).toBeInTheDocument()
-    expect(screen.getAllByText('1.2 km').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('2.4 km').length).toBeGreaterThan(0)
-
-    const routeBodies = getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)
-    expect(routeBodies).toHaveLength(2)
-    expect(routeBodies[0].options).toEqual(routeOptionVariants[1])
-    expect(routeBodies[1].options).toEqual(routeOptionVariants[2])
+    expect(
+      await screen.findByRole('button', { name: 'Consulter 1 alternative' }),
+    ).toBeInTheDocument()
   })
 
-  it('ne repropose pas une alternative déjà vue pendant la même comparaison', async () => {
+  it('présente plusieurs alternatives triables dans un même tableau', async () => {
     const user = userEvent.setup()
     const routeResponses = [
       createJsonResponse(alternativeComparisonRoute),
-      createJsonResponse(currentComparisonRoute),
-      createJsonResponse(alternativeComparisonRoute),
-      createJsonResponse(currentComparisonRoute),
-      createJsonResponse(alternativeComparisonRoute),
+      createJsonResponse(secondAlternativeComparisonRoute),
+      createJsonResponse(secondAlternativeComparisonRoute),
     ]
     const mockFetch = setupRouteComparisonTest(
       () => routeResponses.shift() ?? createJsonResponse(currentComparisonRoute),
@@ -1492,106 +1497,69 @@ describe('App routing', () => {
 
     renderWithProviders(<App />)
 
-    await user.click(await screen.findByRole('button', { name: 'Proposer un autre trajet' }))
-    await screen.findByText('2.4 km')
-    await user.click(screen.getByRole('button', { name: 'Proposer une autre alternative' }))
-
-    expect(await screen.findByTestId('route-alternative-unavailable')).toHaveTextContent(
-      'Aucun autre trajet distinct n’a été trouvé.',
-    )
-    expect(screen.queryByText('Comparer les trajets')).not.toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: 'Consulter 2 alternatives' }))
+    expect(await screen.findByText('Comparer les trajets')).toBeInTheDocument()
+    expect(screen.getAllByText('Alternative 1').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Alternative 2').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('1.4 km').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('1.6 km').length).toBeGreaterThan(0)
+    expect(screen.getAllByLabelText('Trier les alternatives')[0]).toBeInTheDocument()
 
     const routeBodies = getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)
-    expect(routeBodies).toHaveLength(5)
+    expect(routeBodies).toHaveLength(3)
     expect(routeBodies.map((body) => body.options)).toEqual([
       routeOptionVariants[1],
       routeOptionVariants[2],
       routeOptionVariants[3],
-      routeOptionVariants[0],
-      routeOptionVariants[1],
     ])
   })
 
-  it('ouvre une comparaison quand un autre trajet est proposé sans écraser le trajet courant', async () => {
-    const user = userEvent.setup()
-    setupRouteComparisonTest(createJsonResponse(alternativeComparisonRoute))
-
-    renderWithProviders(<App />)
-
-    await user.click(await screen.findByRole('button', { name: 'Proposer un autre trajet' }))
-
-    expect(await screen.findByText('Comparer les trajets')).toBeInTheDocument()
-    const map = await screen.findByTestId('cesium-route-map')
-    expect(map).toHaveAttribute('data-route-layer-count', '2')
-    expect(map).toHaveAttribute('data-alternative-route-visible', 'true')
-    expect(screen.getByText('Trajet actuel')).toBeInTheDocument()
-    expect(screen.getByText('Alternative')).toBeInTheDocument()
-    expect(screen.getAllByText('1.2 km').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('2.4 km').length).toBeGreaterThan(0)
-  })
-
-  it('rouvre la comparaison existante sans recalculer après sa fermeture', async () => {
+  it('rouvre le catalogue sans requête supplémentaire après sa fermeture', async () => {
     const user = userEvent.setup()
     const mockFetch = setupRouteComparisonTest(createJsonResponse(alternativeComparisonRoute))
 
     renderWithProviders(<App />)
 
-    await user.click(await screen.findByRole('button', { name: 'Proposer un autre trajet' }))
-    await screen.findByText('Comparer les trajets')
+    const alternativesButton = await screen.findByRole('button', {
+      name: 'Consulter 1 alternative',
+    })
+    await user.click(alternativesButton)
+    expect(await screen.findByText('Comparer les trajets')).toBeInTheDocument()
+    const map = await screen.findByTestId('cesium-route-map')
+    expect(map).toHaveAttribute('data-route-layer-count', '2')
+    expect(map).toHaveAttribute('data-alternative-route-visible', 'true')
 
     await user.keyboard('{Escape}')
 
     await waitFor(() => {
       expect(screen.queryByText('Comparer les trajets')).not.toBeInTheDocument()
     })
-    expect(screen.getByRole('button', { name: 'Voir la comparaison' })).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: 'Exporter le trajet actuel en GPX' }),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Sauvegarder le trajet actuel' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Consulter 1 alternative' })).toBeInTheDocument()
+    expect(map).toHaveAttribute('data-alternative-route-visible', 'false')
 
-    await user.click(screen.getByRole('button', { name: 'Voir la comparaison' }))
+    await user.click(screen.getByRole('button', { name: 'Consulter 1 alternative' }))
 
     expect(await screen.findByText('Comparer les trajets')).toBeInTheDocument()
-    expect(screen.getAllByText('2.4 km').length).toBeGreaterThan(0)
-    expect(getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)).toHaveLength(1)
+    expect(getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)).toHaveLength(3)
   })
 
-  it('garde le trajet courant quand l’utilisateur conserve le trajet actuel', async () => {
-    const user = userEvent.setup()
-    setupRouteComparisonTest(createJsonResponse(alternativeComparisonRoute))
-
-    renderWithProviders(<App />)
-
-    await user.click(await screen.findByRole('button', { name: 'Proposer un autre trajet' }))
-    await screen.findByText('Comparer les trajets')
-    await user.click(screen.getByRole('button', { name: 'Garder le trajet actuel' }))
-
-    await waitFor(() => {
-      expect(screen.queryByText('Comparer les trajets')).not.toBeInTheDocument()
-    })
-    await waitFor(() => {
-      expect(screen.getByTestId('cesium-route-map')).toHaveAttribute(
-        'data-alternative-route-visible',
-        'false',
-      )
-    })
-    expect(screen.getAllByText('1.2 km').length).toBeGreaterThan(0)
-    expect(screen.queryByText('2.4 km')).not.toBeInTheDocument()
-  })
-
-  it('remplace le trajet courant quand l’utilisateur applique l’alternative', async () => {
+  it('applique l’alternative sélectionnée dans le catalogue', async () => {
     const user = userEvent.setup()
     const routeResponses = [
       createJsonResponse(alternativeComparisonRoute),
       createJsonResponse(secondAlternativeComparisonRoute),
+      createJsonResponse(secondAlternativeComparisonRoute),
     ]
-    const mockFetch = setupRouteComparisonTest(() => routeResponses.shift() ?? routeResponses[0])
+    setupRouteComparisonTest(
+      () => routeResponses.shift() ?? createJsonResponse(currentComparisonRoute),
+    )
 
     renderWithProviders(<App />)
 
-    await user.click(await screen.findByRole('button', { name: 'Proposer un autre trajet' }))
-    await screen.findByText('Comparer les trajets')
+    await user.click(await screen.findByRole('button', { name: 'Consulter 2 alternatives' }))
+    const firstAlternativeRadio = screen.getByRole('radio', { name: 'Alternative 1' })
+    await user.click(firstAlternativeRadio)
+    expect(firstAlternativeRadio).toBeChecked()
     await user.click(screen.getByRole('button', { name: 'Utiliser cette alternative' }))
 
     await waitFor(() => {
@@ -1604,70 +1572,49 @@ describe('App routing', () => {
       )
     })
     await waitFor(() => {
-      expect(screen.getAllByText('2.4 km').length).toBeGreaterThan(0)
+      const storedRoute = JSON.parse(localStorage.getItem(routeStorageKey) ?? 'null') as TripResult
+      expect(storedRoute.distance_m).toBe(secondAlternativeComparisonRoute.distance_m)
     })
-
-    await user.click(screen.getByRole('button', { name: 'Proposer un autre trajet' }))
-    await screen.findByText('3.6 km')
-
-    const routeBodies = getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)
-    expect(routeBodies).toHaveLength(2)
-    expect(routeBodies[0].options).toEqual(routeOptionVariants[1])
-    expect(routeBodies[1].options).toEqual(routeOptionVariants[2])
   })
 
-  it('relance un calcul quand l’utilisateur demande une autre alternative', async () => {
-    const user = userEvent.setup()
-    const routeResponses = [
-      createJsonResponse(alternativeComparisonRoute),
-      createJsonResponse(secondAlternativeComparisonRoute),
-    ]
-    const mockFetch = setupRouteComparisonTest(() => routeResponses.shift() ?? routeResponses[0])
-
-    renderWithProviders(<App />)
-
-    await user.click(await screen.findByRole('button', { name: 'Proposer un autre trajet' }))
-    await screen.findByText('2.4 km')
-    await user.click(screen.getByRole('button', { name: 'Proposer une autre alternative' }))
-
-    await screen.findByText('3.6 km')
-    const routeBodies = getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)
-    expect(routeBodies).toHaveLength(2)
-    expect(routeBodies[0].options).toEqual(routeOptionVariants[1])
-    expect(routeBodies[1].options).toEqual(routeOptionVariants[2])
-  })
-
-  it('relance une autre boucle avec la variation suivante sans appliquer la première', async () => {
+  it('précharge un catalogue borné pour une boucle', async () => {
     const user = userEvent.setup()
     const loopResponses = [
       createJsonResponse(alternativeComparisonLoop),
       createJsonResponse(secondAlternativeComparisonLoop),
+      createJsonResponse(secondAlternativeComparisonLoop),
+      createJsonResponse(currentComparisonLoop),
     ]
-    const mockFetch = setupLoopComparisonTest(() => loopResponses.shift() ?? loopResponses[0])
+    const mockFetch = setupLoopComparisonTest(
+      () => loopResponses.shift() ?? createJsonResponse(currentComparisonLoop),
+    )
 
     renderWithProviders(<App />)
 
-    await user.click(await screen.findByRole('button', { name: 'Générer une autre boucle' }))
-    await screen.findByText('5.0 km')
-    await user.click(screen.getByRole('button', { name: 'Proposer une autre alternative' }))
+    await user.click(await screen.findByRole('button', { name: 'Consulter 2 alternatives' }))
 
-    await screen.findByText('6.0 km')
+    expect(await screen.findByText('Comparer les trajets')).toBeInTheDocument()
+    expect(screen.getAllByText('5.0 km').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('5.2 km').length).toBeGreaterThan(0)
     const loopBodies = getJsonRequestBodies<LoopRequestPayload>(mockFetch, apiPaths.loop)
-    expect(loopBodies).toHaveLength(2)
-    expect(loopBodies[0].variation).toBe(1)
-    expect(loopBodies[1].variation).toBe(2)
+    expect(loopBodies).toHaveLength(4)
+    expect(loopBodies.map((body) => body.variation)).toEqual([1, 2, 3, 4])
   })
 
-  it('affiche un fallback propre si l’alternative échoue', async () => {
-    const user = userEvent.setup()
-    setupRouteComparisonTest(createJsonResponse({ message: 'Alternative impossible.' }, 500))
+  it('masque l’accès aux alternatives si leur préchargement échoue', async () => {
+    const mockFetch = setupRouteComparisonTest(
+      createJsonResponse({ message: 'Alternative impossible.' }, 500),
+    )
 
     renderWithProviders(<App />)
 
-    await user.click(await screen.findByRole('button', { name: 'Proposer un autre trajet' }))
-
-    expect(await screen.findByText('Alternative indisponible')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Utiliser cette alternative' })).toBeDisabled()
+    await waitFor(() => {
+      expect(getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)).toHaveLength(3)
+    })
+    expect(
+      screen.queryByRole('button', { name: /Consulter .*alternative/ }),
+    ).not.toBeInTheDocument()
     expect(screen.getAllByText('1.2 km').length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: 'Suivi / Simu GPS' })).toBeEnabled()
   })
 })

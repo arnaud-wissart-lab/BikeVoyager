@@ -1,35 +1,38 @@
 import {
-  Alert,
   Badge,
   Box,
   Button,
   Drawer,
   Group,
   ScrollArea,
+  SegmentedControl,
+  Select,
   Stack,
   Table,
   Text,
 } from '@mantine/core'
-import { IconCheck, IconRefresh, IconRouteAltLeft, IconX } from '@tabler/icons-react'
+import { IconCheck, IconRouteAltLeft, IconX } from '@tabler/icons-react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type {
+  RouteAlternativeOption,
   RouteComparisonDelta,
   RouteComparisonMetrics,
-  RouteComparisonSummary,
   RouteDifficulty,
 } from '../../features/routing/domain'
+import { alternativeRouteColor, currentRouteColor } from '../../features/routing/routePresentation'
 
 type RouteAlternativeComparisonDialogProps = {
   opened: boolean
   isCompact: boolean
-  isLoading: boolean
-  comparison: RouteComparisonSummary | null
-  routeErrorMessage: string | null
-  onApplyAlternative: () => void
-  onKeepCurrentRoute: () => void
-  onRecalculateAlternative: () => void
+  alternatives: RouteAlternativeOption[]
+  selectedAlternativeId: string | null
+  onSelectAlternative: (alternativeId: string) => void
+  onApplyAlternative: (alternativeId: string) => void
   onClose: () => void
 }
+
+type AlternativeSort = 'relevance' | 'distance' | 'elevation_asc' | 'elevation_desc'
 
 type MetricRow = {
   key: keyof RouteComparisonMetrics
@@ -45,22 +48,78 @@ const difficultyTranslationKeys: Record<RouteDifficulty, string> = {
   hard: 'routeDifficultyHard',
 }
 
-const currentRouteColor = '#2b8a3e'
-const alternativeRouteColor = '#1971c2'
+const compareNullableNumbers = (
+  first: number | null,
+  second: number | null,
+  direction: 'ascending' | 'descending',
+) => {
+  if (first === null) {
+    return 1
+  }
+  if (second === null) {
+    return -1
+  }
+
+  return direction === 'ascending' ? first - second : second - first
+}
 
 export default function RouteAlternativeComparisonDialog({
   opened,
   isCompact,
-  isLoading,
-  comparison,
-  routeErrorMessage,
+  alternatives,
+  selectedAlternativeId,
+  onSelectAlternative,
   onApplyAlternative,
-  onKeepCurrentRoute,
-  onRecalculateAlternative,
   onClose,
 }: RouteAlternativeComparisonDialogProps) {
   const { t } = useTranslation()
+  const [sort, setSort] = useState<AlternativeSort>('relevance')
+  const [localSelectedAlternativeId, setLocalSelectedAlternativeId] = useState<string | null>(null)
   const placeholder = t('placeholderValue')
+  const currentMetrics = alternatives[0]?.comparison.current ?? null
+
+  useEffect(() => {
+    if (!opened) {
+      return
+    }
+
+    const nextSelectedId = alternatives.some(
+      (alternative) => alternative.id === selectedAlternativeId,
+    )
+      ? selectedAlternativeId
+      : (alternatives[0]?.id ?? null)
+    setLocalSelectedAlternativeId(nextSelectedId)
+  }, [alternatives, opened, selectedAlternativeId])
+
+  const orderedAlternatives = useMemo(() => {
+    const nextAlternatives = [...alternatives]
+    nextAlternatives.sort((first, second) => {
+      if (sort === 'distance') {
+        return compareNullableNumbers(
+          first.comparison.alternative.distanceMeters,
+          second.comparison.alternative.distanceMeters,
+          'ascending',
+        )
+      }
+      if (sort === 'elevation_asc') {
+        return compareNullableNumbers(
+          first.comparison.alternative.elevationGainMeters,
+          second.comparison.alternative.elevationGainMeters,
+          'ascending',
+        )
+      }
+      if (sort === 'elevation_desc') {
+        return compareNullableNumbers(
+          first.comparison.alternative.elevationGainMeters,
+          second.comparison.alternative.elevationGainMeters,
+          'descending',
+        )
+      }
+
+      return second.assessment.relevanceScore - first.assessment.relevanceScore
+    })
+    return nextAlternatives
+  }, [alternatives, sort])
 
   const formatDistance = (distanceMeters: number | null) => {
     if (distanceMeters === null || !Number.isFinite(distanceMeters)) {
@@ -86,7 +145,6 @@ export default function RouteAlternativeComparisonDialog({
     if (hours <= 0) {
       return `${minutes} ${t('unitMin')}`
     }
-
     if (minutes === 0) {
       return `${hours} ${t('unitHour')}`
     }
@@ -109,11 +167,14 @@ export default function RouteAlternativeComparisonDialog({
   const formatDelta = (
     delta: number | boolean | null,
     formatter: (value: number | null) => string,
+    minimumMagnitude: number,
   ) => {
     if (delta === null || typeof delta === 'boolean' || !Number.isFinite(delta)) {
-      return placeholder
+      return null
     }
-
+    if (Math.abs(delta) < minimumMagnitude) {
+      return null
+    }
     if (delta === 0) {
       return formatter(0)
     }
@@ -164,148 +225,273 @@ export default function RouteAlternativeComparisonDialog({
     },
   ]
 
-  const renderDeltaCell = (row: MetricRow) => {
-    if (!comparison || !row.deltaKey) {
-      return placeholder
+  const getDeltaLabel = (alternative: RouteAlternativeOption, row: MetricRow) => {
+    if (!row.deltaKey) {
+      return null
     }
-
     if (row.deltaKey === 'difficultyChanged') {
-      return comparison.delta.difficultyChanged
+      return alternative.comparison.delta.difficultyChanged
         ? t('routeComparisonDifficultyChanged')
-        : placeholder
+        : null
     }
 
-    const delta = comparison.delta[row.deltaKey]
     const formatter =
       row.deltaKey === 'durationSeconds'
         ? formatDuration
         : row.deltaKey === 'distanceMeters'
           ? formatDistance
           : formatElevation
-
-    return formatDelta(delta, formatter)
+    const minimumMagnitude = row.deltaKey === 'durationSeconds' ? 30 : 1
+    return formatDelta(alternative.comparison.delta[row.deltaKey], formatter, minimumMagnitude)
   }
 
-  const insightLabels = comparison
-    ? [
-        comparison.delta.distanceMeters !== null && comparison.delta.distanceMeters < 0
-          ? t('routeComparisonShorter')
-          : null,
-        comparison.delta.distanceMeters !== null && comparison.delta.distanceMeters > 0
-          ? t('routeComparisonLonger')
-          : null,
-        comparison.delta.elevationGainMeters !== null && comparison.delta.elevationGainMeters < 0
-          ? t('routeComparisonClimbsLess')
-          : null,
-        comparison.delta.elevationGainMeters !== null && comparison.delta.elevationGainMeters > 0
-          ? t('routeComparisonClimbsMore')
-          : null,
-      ].filter((label): label is string => Boolean(label))
-    : []
+  const routeMetricEntries = [
+    ...(currentMetrics
+      ? [
+          {
+            id: 'current',
+            distance: currentMetrics.distanceMeters,
+            elevation: currentMetrics.elevationGainMeters,
+          },
+        ]
+      : []),
+    ...alternatives.map((alternative) => ({
+      id: alternative.id,
+      distance: alternative.comparison.alternative.distanceMeters,
+      elevation: alternative.comparison.alternative.elevationGainMeters,
+    })),
+  ]
+  const distanceEntries = routeMetricEntries.filter(
+    (entry): entry is typeof entry & { distance: number } => entry.distance !== null,
+  )
+  const elevationEntries = routeMetricEntries.filter(
+    (entry): entry is typeof entry & { elevation: number } => entry.elevation !== null,
+  )
+  const distanceValues = distanceEntries.map((entry) => entry.distance)
+  const elevationValues = elevationEntries.map((entry) => entry.elevation)
+  const shortestRouteId =
+    distanceValues.length > 1 && Math.max(...distanceValues) - Math.min(...distanceValues) >= 10
+      ? distanceEntries.reduce((best, entry) => (entry.distance < best.distance ? entry : best)).id
+      : null
+  const flattestRouteId =
+    elevationValues.length > 1 && Math.max(...elevationValues) - Math.min(...elevationValues) >= 10
+      ? elevationEntries.reduce((best, entry) => (entry.elevation < best.elevation ? entry : best))
+          .id
+      : null
+  const hilliestRouteId =
+    elevationValues.length > 1 && Math.max(...elevationValues) - Math.min(...elevationValues) >= 10
+      ? elevationEntries.reduce((best, entry) => (entry.elevation > best.elevation ? entry : best))
+          .id
+      : null
 
-  const renderRouteHeader = (label: string, color: string) => (
-    <Group gap={6} wrap="nowrap">
-      <Box
-        aria-hidden
-        style={{
-          width: 20,
-          height: 4,
-          borderRadius: 2,
-          backgroundColor: color,
-          flexShrink: 0,
-        }}
-      />
-      <Text component="span" size="sm" fw={600}>
-        {label}
-      </Text>
+  const renderRouteBadges = (routeId: string) => (
+    <Group gap={4} wrap="wrap">
+      {routeId === shortestRouteId && (
+        <Badge size="xs" variant="light" color="teal">
+          {t('routeComparisonShortest')}
+        </Badge>
+      )}
+      {routeId === flattestRouteId && (
+        <Badge size="xs" variant="light" color="cyan">
+          {t('routeComparisonFlattest')}
+        </Badge>
+      )}
+      {routeId === hilliestRouteId && (
+        <Badge size="xs" variant="light" color="pink">
+          {t('routeComparisonHilliest')}
+        </Badge>
+      )}
     </Group>
   )
 
+  const renderRouteHeader = (
+    routeId: string,
+    label: string,
+    color: string,
+    isAlternative: boolean,
+  ) => (
+    <Stack gap={4}>
+      <Group gap={6} wrap="nowrap">
+        <Box
+          aria-hidden
+          style={{
+            width: 24,
+            height: isAlternative ? 0 : 4,
+            borderTop: isAlternative ? `4px dashed ${color}` : undefined,
+            borderRadius: isAlternative ? 0 : 2,
+            backgroundColor: isAlternative ? undefined : color,
+            flexShrink: 0,
+          }}
+        />
+        <Text component="span" size="sm" fw={600}>
+          {label}
+        </Text>
+      </Group>
+      {renderRouteBadges(routeId)}
+    </Stack>
+  )
+
   const content = (
-    <Stack gap="md">
-      {isLoading && (
-        <Alert color="blue" variant="light" icon={<IconRefresh size={16} />}>
-          {t('routeComparisonLoading')}
-        </Alert>
-      )}
-
-      {!isLoading && !comparison && (
-        <Alert color="orange" variant="light" icon={<IconRouteAltLeft size={16} />}>
-          <Stack gap={4}>
-            <Text size="sm" fw={600}>
-              {t('routeComparisonUnavailable')}
-            </Text>
-            {routeErrorMessage && <Text size="sm">{routeErrorMessage}</Text>}
-          </Stack>
-        </Alert>
-      )}
-
-      {comparison && (
+    <Stack
+      gap="md"
+      style={{
+        width: isCompact ? 'calc(100dvw - 32px)' : '100%',
+        maxWidth: '100%',
+        minWidth: 0,
+      }}
+    >
+      {orderedAlternatives.length > 0 && (
         <>
-          {insightLabels.length > 0 && (
-            <Group gap="xs">
-              {insightLabels.map((label) => (
-                <Badge key={label} variant="light" color="blue">
-                  {label}
-                </Badge>
-              ))}
-            </Group>
-          )}
+          <Select
+            label={t('routeComparisonSortLabel')}
+            size="xs"
+            value={sort}
+            onChange={(value) => setSort((value as AlternativeSort | null) ?? 'relevance')}
+            data={[
+              { value: 'relevance', label: t('routeComparisonSortRelevance') },
+              { value: 'distance', label: t('routeComparisonSortShortest') },
+              { value: 'elevation_asc', label: t('routeComparisonSortFlattest') },
+              { value: 'elevation_desc', label: t('routeComparisonSortHilliest') },
+            ]}
+            allowDeselect={false}
+          />
 
-          <Table striped highlightOnHover withTableBorder withColumnBorders>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>{t('routeComparisonMetric')}</Table.Th>
-                <Table.Th>
-                  {renderRouteHeader(t('routeComparisonCurrent'), currentRouteColor)}
-                </Table.Th>
-                <Table.Th>
-                  {renderRouteHeader(t('routeComparisonAlternative'), alternativeRouteColor)}
-                </Table.Th>
-                <Table.Th>{t('routeComparisonDelta')}</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {metricRows.map((row) => (
-                <Table.Tr key={row.key}>
+          <SegmentedControl
+            fullWidth
+            size="xs"
+            value={localSelectedAlternativeId ?? orderedAlternatives[0].id}
+            onChange={(alternativeId) => {
+              setLocalSelectedAlternativeId(alternativeId)
+              onSelectAlternative(alternativeId)
+            }}
+            data={orderedAlternatives.map((alternative, index) => ({
+              value: alternative.id,
+              label: t('routeComparisonAlternativeNumber', { number: index + 1 }),
+            }))}
+          />
+
+          <Table.ScrollContainer minWidth={260 + orderedAlternatives.length * 150}>
+            <Table withTableBorder withColumnBorders>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>{t('routeComparisonMetric')}</Table.Th>
+                  <Table.Th>
+                    {renderRouteHeader(
+                      'current',
+                      t('routeComparisonCurrent'),
+                      currentRouteColor,
+                      false,
+                    )}
+                  </Table.Th>
+                  {orderedAlternatives.map((alternative, index) => (
+                    <Table.Th
+                      key={alternative.id}
+                      bg={
+                        alternative.id === localSelectedAlternativeId
+                          ? 'var(--mantine-color-grape-light)'
+                          : undefined
+                      }
+                    >
+                      {renderRouteHeader(
+                        alternative.id,
+                        t('routeComparisonAlternativeNumber', { number: index + 1 }),
+                        alternativeRouteColor,
+                        true,
+                      )}
+                    </Table.Th>
+                  ))}
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                <Table.Tr>
                   <Table.Td>
                     <Text size="sm" fw={600}>
-                      {t(row.labelKey)}
+                      {t('routeComparisonDistinctPart')}
                     </Text>
                   </Table.Td>
-                  <Table.Td>{row.format(comparison.current[row.key]) ?? placeholder}</Table.Td>
-                  <Table.Td>{row.format(comparison.alternative[row.key]) ?? placeholder}</Table.Td>
-                  <Table.Td>{renderDeltaCell(row)}</Table.Td>
+                  <Table.Td>{t('routeComparisonReference')}</Table.Td>
+                  {orderedAlternatives.map((alternative) => (
+                    <Table.Td
+                      key={alternative.id}
+                      bg={
+                        alternative.id === localSelectedAlternativeId
+                          ? 'var(--mantine-color-grape-light)'
+                          : undefined
+                      }
+                    >
+                      <Text size="sm" fw={600}>
+                        {Math.round(alternative.assessment.distinctRatio * 100)} %
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        {formatDistance(alternative.assessment.distinctDistanceMeters)}
+                      </Text>
+                    </Table.Td>
+                  ))}
                 </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
+                {metricRows.map((row) => (
+                  <Table.Tr key={row.key}>
+                    <Table.Td>
+                      <Text size="sm" fw={600}>
+                        {t(row.labelKey)}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
+                      {currentMetrics
+                        ? (row.format(currentMetrics[row.key]) ?? placeholder)
+                        : placeholder}
+                    </Table.Td>
+                    {orderedAlternatives.map((alternative) => {
+                      const deltaLabel = getDeltaLabel(alternative, row)
+                      return (
+                        <Table.Td
+                          key={alternative.id}
+                          bg={
+                            alternative.id === localSelectedAlternativeId
+                              ? 'var(--mantine-color-grape-light)'
+                              : undefined
+                          }
+                        >
+                          <Text size="sm">
+                            {row.format(alternative.comparison.alternative[row.key]) ?? placeholder}
+                          </Text>
+                          {deltaLabel && (
+                            <Text size="xs" c="dimmed">
+                              {deltaLabel}
+                            </Text>
+                          )}
+                        </Table.Td>
+                      )
+                    })}
+                  </Table.Tr>
+                ))}
+              </Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
         </>
       )}
 
-      <Group justify="flex-end" gap="xs">
-        <Button
-          variant="default"
-          onClick={onClose}
-          disabled={isLoading}
-          leftSection={<IconX size={16} />}
-        >
+      <Group
+        justify="flex-end"
+        gap="xs"
+        wrap="wrap"
+        style={{
+          position: 'sticky',
+          bottom: 0,
+          zIndex: 1,
+          paddingTop: 8,
+          background: 'var(--mantine-color-body)',
+        }}
+      >
+        <Button variant="default" onClick={onClose} leftSection={<IconX size={16} />}>
           {t('routeComparisonClose')}
         </Button>
-        <Button variant="light" onClick={onKeepCurrentRoute} disabled={isLoading}>
-          {t('routeComparisonKeepCurrent')}
-        </Button>
         <Button
-          variant="light"
-          onClick={onRecalculateAlternative}
-          loading={isLoading}
-          leftSection={<IconRefresh size={16} />}
-        >
-          {t('routeComparisonRecalculate')}
-        </Button>
-        <Button
-          onClick={onApplyAlternative}
-          disabled={!comparison || isLoading}
+          onClick={() => {
+            if (localSelectedAlternativeId) {
+              onApplyAlternative(localSelectedAlternativeId)
+            }
+          }}
+          disabled={!localSelectedAlternativeId}
           leftSection={<IconCheck size={16} />}
         >
           {t('routeComparisonApply')}
@@ -318,17 +504,22 @@ export default function RouteAlternativeComparisonDialog({
     <Drawer
       opened={opened}
       onClose={onClose}
-      title={t('routeComparisonTitle')}
+      title={
+        <Group gap="xs">
+          <IconRouteAltLeft size={18} />
+          <Text fw={600}>{t('routeComparisonTitle')}</Text>
+        </Group>
+      }
       position={isCompact ? 'bottom' : 'right'}
-      size={isCompact ? '78%' : 'min(42rem, 48vw)'}
+      size={isCompact ? '82%' : 'min(52rem, 58vw)'}
       withOverlay={false}
-      closeOnClickOutside={false}
+      closeOnClickOutside
       trapFocus={false}
       lockScroll={false}
       data-testid="route-comparison-panel"
     >
       <ScrollArea.Autosize
-        mah={isCompact ? 'calc(78dvh - 5rem)' : 'calc(100dvh - 5rem)'}
+        mah={isCompact ? 'calc(82dvh - 5rem)' : 'calc(100dvh - 5rem)'}
         offsetScrollbars
       >
         {content}

@@ -2,26 +2,23 @@ import type { TFunction } from 'i18next'
 import type { AppStore } from '../../state/appStore'
 import { fetchLoop, fetchRoute } from './api'
 import {
-  areRoutesEquivalentForComparison,
+  areRoutesNearDuplicate,
+  assessRouteAlternative,
   buildLoopRequest,
   createRouteComparisonSummary,
   loopAlternativeAttemptLimit,
+  maximumAlternativeCount,
   routeOptionVariants,
   type DetourPoint,
+  type LoopRequestPayload,
   type RouteKey,
-  type RouteAlternativeCandidate,
+  type RouteAlternativeOption,
+  type RouteAlternativeAssessment,
+  type RouteRequestPayload,
   type TripResult,
 } from './domain'
-import { requestDistinctAlternative } from './actions.alternative'
-import {
-  clearRouteErrors,
-  normalizeLoopResponseError,
-  normalizeRouteResponseError,
-  setLoopFailedError,
-  setLoopUnexpectedError,
-  setRouteMissingPlaceError,
-  setRouteUnexpectedError,
-} from './actions.errors'
+import { collectRelevantAlternatives } from './actions.alternative'
+import { clearRouteErrors, setLoopFailedError, setRouteMissingPlaceError } from './actions.errors'
 import {
   buildLoopRequestPayload,
   createLoopRequestAction,
@@ -30,6 +27,7 @@ import {
   resolveLoopStartLocation,
 } from './actions.loop'
 import {
+  buildRouteOptionsVariant,
   buildRouteRequestPayload,
   createRouteRequestAction,
   resolveRouteLocations,
@@ -66,9 +64,7 @@ type RoutingControllerActionsStoreSlice = Pick<
   | 'routeAlternativeIndex'
   | 'loopAlternativeIndex'
   | 'pendingAlternativeRoute'
-  | 'routeComparison'
-  | 'isRouteLoading'
-  | 'isAlternativeLoading'
+  | 'routeAlternatives'
   | 'setIsRouteLoading'
   | 'setIsAlternativeLoading'
   | 'lastRouteRequestRef'
@@ -85,6 +81,7 @@ type RoutingControllerActionsStoreSlice = Pick<
   | 'setLoopAlternativeIndex'
   | 'setRouteAlternativeIndex'
   | 'setPendingAlternativeRoute'
+  | 'setRouteAlternatives'
   | 'setRouteComparison'
   | 'setIsAlternativeComparisonOpen'
   | 'setMode'
@@ -106,9 +103,7 @@ type CreateRoutingControllerActionsParams = {
   t: TFunction
   onNavigate: (next: RouteKey, force?: boolean) => void
   markDirty: () => void
-  isAlternativeUnavailable: boolean
-  setIsAlternativeUnavailable: (value: boolean) => void
-  alternativeRouteHistoryRef: { current: TripResult[] }
+  alternativeCatalogGenerationRef: { current: number }
 }
 
 export const createRoutingControllerActions = ({
@@ -118,9 +113,7 @@ export const createRoutingControllerActions = ({
   t,
   onNavigate,
   markDirty,
-  isAlternativeUnavailable,
-  setIsAlternativeUnavailable,
-  alternativeRouteHistoryRef,
+  alternativeCatalogGenerationRef,
 }: CreateRoutingControllerActionsParams) => {
   const {
     mode,
@@ -135,9 +128,7 @@ export const createRoutingControllerActions = ({
     routeAlternativeIndex,
     loopAlternativeIndex,
     pendingAlternativeRoute,
-    routeComparison,
-    isRouteLoading,
-    isAlternativeLoading,
+    routeAlternatives,
     setIsRouteLoading,
     setIsAlternativeLoading,
     lastRouteRequestRef,
@@ -150,6 +141,7 @@ export const createRoutingControllerActions = ({
     setLoopAlternativeIndex,
     setRouteAlternativeIndex,
     setPendingAlternativeRoute,
+    setRouteAlternatives,
     setRouteComparison,
     setIsAlternativeComparisonOpen,
   } = store
@@ -157,10 +149,6 @@ export const createRoutingControllerActions = ({
   const errorSetters = {
     setRouteErrorMessage,
     setRouteErrorKey,
-  }
-
-  const clearAlternativeHistory = () => {
-    alternativeRouteHistoryRef.current = []
   }
 
   const requestRoute = createRouteRequestAction({
@@ -173,10 +161,7 @@ export const createRoutingControllerActions = ({
     setIsDirty,
     setDetourPoints,
     onNavigate,
-    onResultApplied: () => {
-      clearAlternativeHistory()
-      setIsAlternativeUnavailable(false)
-    },
+    onResultApplied: () => undefined,
   })
 
   const requestLoop = createLoopRequestAction({
@@ -189,10 +174,7 @@ export const createRoutingControllerActions = ({
     setIsDirty,
     setDetourPoints,
     onNavigate,
-    onResultApplied: () => {
-      clearAlternativeHistory()
-      setIsAlternativeUnavailable(false)
-    },
+    onResultApplied: () => undefined,
   })
 
   const { getNavigationRecalculationPlan, handleRecalculateFromCurrentPosition } =
@@ -327,235 +309,223 @@ export const createRoutingControllerActions = ({
     })
   }
 
-  const handleRecalculateAlternative = async () => {
-    if (!routeResult || isRouteLoading || isAlternativeLoading || isAlternativeUnavailable) {
-      return
-    }
-
-    const resolvedMode = mode ?? 'bike'
-    const excludedCandidates = [routeResult, ...alternativeRouteHistoryRef.current]
-    const areEquivalent = (excluded: TripResult, candidate: TripResult) =>
-      areRoutesEquivalentForComparison(
-        excluded,
-        candidate,
-        resolvedMode,
+  const buildAlternativeOptions = (
+    currentRoute: TripResult,
+    alternatives: {
+      nextIndex: number
+      candidate: TripResult
+      assessment: RouteAlternativeAssessment
+    }[],
+    kind: TripResult['kind'],
+  ): RouteAlternativeOption[] =>
+    alternatives.flatMap((alternative) => {
+      const comparison = createRouteComparisonSummary(
+        currentRoute,
+        alternative.candidate,
+        mode ?? 'bike',
         profileSettings.ebikeAssist,
       )
-
-    if (routeResult.kind === 'loop') {
-      const currentAlternativeIndex =
-        pendingAlternativeRoute?.loopAlternativeIndex ?? loopAlternativeIndex
-
-      clearRouteErrors(errorSetters)
-      setPendingAlternativeRoute(null)
-      setRouteComparison(null)
-      setIsAlternativeComparisonOpen(true)
-
-      const startLocation = resolveLoopStartLocation({
-        loopStartPlace,
-        mapStartCoordinate: map.mapStartCoordinate,
-        startLabel: map.startLabel,
-        getStartFallbackLabel: () => t('poiStartFallback'),
-      })
-
-      const loopDistance = resolveLoopDistanceKm(targetDistanceKm, routeResult.distance_m)
-
-      if (!startLocation) {
-        setLoopFailedError(errorSetters)
-        return
+      if (!comparison) {
+        return []
       }
 
-      setIsAlternativeLoading(true)
-      try {
-        const alternative = await requestDistinctAlternative({
-          excludedCandidates,
-          currentIndex: currentAlternativeIndex,
-          attemptCount: loopAlternativeAttemptLimit,
-          areEquivalent,
-          load: async (variation) => {
-            const requestBody = buildLoopRequestPayload({
-              start: startLocation,
-              targetDistanceKm: loopDistance,
-              mode: resolvedMode,
-              speedKmh: profileSettings.speeds[resolvedMode],
-              ebikeAssist: profileSettings.ebikeAssist,
-              variation,
-              detourPoints,
-            })
-            lastRouteRequestRef.current = {
-              type: 'loop',
-              payload: requestBody,
-            }
-
-            const result = await fetchLoop(requestBody)
-            return result.ok
-              ? { ok: true as const, candidate: result.result }
-              : { ok: false as const, failure: result.response }
+      return [
+        {
+          id: `${kind}:${alternative.nextIndex}`,
+          candidate: {
+            route: alternative.candidate,
+            routeAlternativeIndex: kind === 'route' ? alternative.nextIndex : null,
+            loopAlternativeIndex: kind === 'loop' ? alternative.nextIndex : null,
           },
-        })
-
-        if (alternative.status === 'failed') {
-          await normalizeLoopResponseError(alternative.failure, errorSetters)
-          return
-        }
-
-        if (alternative.status === 'unavailable') {
-          setIsAlternativeUnavailable(true)
-          setIsAlternativeComparisonOpen(false)
-          return
-        }
-
-        const candidate: RouteAlternativeCandidate = {
-          route: alternative.candidate,
-          routeAlternativeIndex: null,
-          loopAlternativeIndex: alternative.nextIndex,
-        }
-        alternativeRouteHistoryRef.current = [
-          ...alternativeRouteHistoryRef.current,
-          alternative.candidate,
-        ]
-        setPendingAlternativeRoute(candidate)
-        setRouteComparison(
-          createRouteComparisonSummary(
-            routeResult,
-            candidate.route,
-            resolvedMode,
-            profileSettings.ebikeAssist,
-          ),
-        )
-      } catch {
-        setLoopUnexpectedError(errorSetters)
-      } finally {
-        setIsAlternativeLoading(false)
-      }
-
-      return
-    }
-
-    const currentAlternativeIndex =
-      pendingAlternativeRoute?.routeAlternativeIndex ?? routeAlternativeIndex
-
-    clearRouteErrors(errorSetters)
-    setPendingAlternativeRoute(null)
-    setRouteComparison(null)
-    setIsAlternativeComparisonOpen(true)
-
-    const { fromLocation, toLocation } = resolveRouteLocations({
-      onewayStartPlace,
-      endPlace,
-      mapStartCoordinate: map.mapStartCoordinate,
-      mapEndCoordinate: map.mapEndCoordinate,
-      startLabel: map.startLabel,
-      endLabel: map.endLabel,
-      getStartFallbackLabel: () => t('poiStartFallback'),
-      getEndFallbackLabel: () => t('poiEndFallback'),
+          comparison,
+          assessment: alternative.assessment,
+        },
+      ]
     })
 
-    if (!fromLocation || !toLocation) {
-      setRouteMissingPlaceError(errorSetters)
-      return
+  const resolveStoredRouteRequest = (
+    currentRoute: TripResult,
+    resolvedMode: NonNullable<typeof mode>,
+  ): RouteRequestPayload => {
+    if (lastRouteRequestRef.current?.type === 'route') {
+      return lastRouteRequestRef.current.payload
     }
 
-    setIsAlternativeLoading(true)
-    try {
-      const alternative = await requestDistinctAlternative({
-        excludedCandidates,
-        currentIndex: currentAlternativeIndex,
-        attemptCount: routeOptionVariants.length,
-        areEquivalent,
-        load: async (variantIndex) => {
-          const requestBody = buildRouteRequestPayload({
-            from: fromLocation,
-            to: toLocation,
-            mode: resolvedMode,
-            speedKmh: profileSettings.speeds[resolvedMode],
-            ebikeAssist: profileSettings.ebikeAssist,
-            variantIndex,
-            detourPoints,
-          })
-          lastRouteRequestRef.current = {
-            type: 'route',
-            payload: requestBody,
-          }
+    const [startLongitude, startLatitude] = currentRoute.geometry.coordinates[0]
+    const [endLongitude, endLatitude] =
+      currentRoute.geometry.coordinates[currentRoute.geometry.coordinates.length - 1]
+    return buildRouteRequestPayload({
+      from: {
+        lat: startLatitude,
+        lon: startLongitude,
+        label: map.startLabel || t('poiStartFallback'),
+      },
+      to: {
+        lat: endLatitude,
+        lon: endLongitude,
+        label: map.endLabel || t('poiEndFallback'),
+      },
+      mode: resolvedMode,
+      speedKmh: profileSettings.speeds[resolvedMode],
+      ebikeAssist: profileSettings.ebikeAssist,
+      variantIndex: routeAlternativeIndex,
+      detourPoints,
+    })
+  }
 
-          const result = await fetchRoute(requestBody)
-          return result.ok
-            ? { ok: true as const, candidate: result.result }
-            : { ok: false as const, failure: result.response }
-        },
-      })
+  const resolveStoredLoopRequest = (
+    currentRoute: TripResult,
+    resolvedMode: NonNullable<typeof mode>,
+  ): LoopRequestPayload => {
+    if (lastRouteRequestRef.current?.type === 'loop') {
+      return lastRouteRequestRef.current.payload
+    }
 
-      if (alternative.status === 'failed') {
-        await normalizeRouteResponseError(alternative.failure, errorSetters)
-        return
-      }
+    const [startLongitude, startLatitude] = currentRoute.geometry.coordinates[0]
+    return buildLoopRequestPayload({
+      start: {
+        lat: startLatitude,
+        lon: startLongitude,
+        label: map.startLabel || t('poiStartFallback'),
+      },
+      targetDistanceKm: resolveLoopDistanceKm(targetDistanceKm, currentRoute.distance_m),
+      mode: resolvedMode,
+      speedKmh: profileSettings.speeds[resolvedMode],
+      ebikeAssist: profileSettings.ebikeAssist,
+      variation: loopAlternativeIndex,
+      detourPoints,
+    })
+  }
 
-      if (alternative.status === 'unavailable') {
-        setIsAlternativeUnavailable(true)
-        setIsAlternativeComparisonOpen(false)
-        return
-      }
+  const handlePreloadAlternativeCatalog = async (currentRoute: TripResult | null) => {
+    const generation = alternativeCatalogGenerationRef.current + 1
+    alternativeCatalogGenerationRef.current = generation
+    setRouteAlternatives([])
+    setPendingAlternativeRoute(null)
+    setRouteComparison(null)
+    setIsAlternativeComparisonOpen(false)
 
-      const candidate: RouteAlternativeCandidate = {
-        route: alternative.candidate,
-        routeAlternativeIndex: alternative.nextIndex,
-        loopAlternativeIndex: null,
-      }
-      alternativeRouteHistoryRef.current = [
-        ...alternativeRouteHistoryRef.current,
-        alternative.candidate,
-      ]
-      setPendingAlternativeRoute(candidate)
-      setRouteComparison(
-        createRouteComparisonSummary(
-          routeResult,
-          candidate.route,
-          resolvedMode,
-          profileSettings.ebikeAssist,
-        ),
-      )
-    } catch {
-      setRouteUnexpectedError(errorSetters)
-    } finally {
+    if (!currentRoute || !mode || currentRoute.geometry.coordinates.length < 2) {
       setIsAlternativeLoading(false)
-    }
-  }
-
-  const handleOpenAlternativeComparison = async () => {
-    if (pendingAlternativeRoute && routeComparison) {
-      setIsAlternativeComparisonOpen(true)
       return
     }
 
-    await handleRecalculateAlternative()
+    const resolvedMode = mode
+    const assess = (candidate: TripResult) =>
+      assessRouteAlternative(currentRoute, candidate, resolvedMode, profileSettings.ebikeAssist)
+    setIsAlternativeLoading(true)
+
+    try {
+      const alternatives =
+        currentRoute.kind === 'loop'
+          ? await collectRelevantAlternatives({
+              candidateIndexes: Array.from(
+                { length: loopAlternativeAttemptLimit },
+                (_, index) => loopAlternativeIndex + index + 1,
+              ),
+              maximumCount: maximumAlternativeCount,
+              assess,
+              isRelevant: (assessment) => assessment.isRelevant,
+              isDuplicate: areRoutesNearDuplicate,
+              load: async (variation) => {
+                try {
+                  const baseRequest = resolveStoredLoopRequest(currentRoute, resolvedMode)
+                  const result = await fetchLoop({
+                    ...baseRequest,
+                    variation,
+                  })
+                  return result.ok
+                    ? { ok: true as const, candidate: result.result }
+                    : { ok: false as const }
+                } catch {
+                  return { ok: false as const }
+                }
+              },
+            })
+          : await collectRelevantAlternatives({
+              candidateIndexes: Array.from(
+                { length: Math.max(0, routeOptionVariants.length - 1) },
+                (_, index) => routeAlternativeIndex + index + 1,
+              ),
+              maximumCount: maximumAlternativeCount,
+              assess,
+              isRelevant: (assessment) => assessment.isRelevant,
+              isDuplicate: areRoutesNearDuplicate,
+              load: async (variantIndex) => {
+                try {
+                  const baseRequest = resolveStoredRouteRequest(currentRoute, resolvedMode)
+                  const result = await fetchRoute({
+                    ...baseRequest,
+                    options: buildRouteOptionsVariant(variantIndex),
+                  })
+                  return result.ok
+                    ? { ok: true as const, candidate: result.result }
+                    : { ok: false as const }
+                } catch {
+                  return { ok: false as const }
+                }
+              },
+            })
+
+      if (alternativeCatalogGenerationRef.current !== generation) {
+        return
+      }
+
+      const options = buildAlternativeOptions(currentRoute, alternatives, currentRoute.kind)
+      const firstOption = options[0] ?? null
+      setRouteAlternatives(options)
+      setPendingAlternativeRoute(firstOption?.candidate ?? null)
+      setRouteComparison(firstOption?.comparison ?? null)
+    } catch {
+      if (alternativeCatalogGenerationRef.current === generation) {
+        setRouteAlternatives([])
+        setPendingAlternativeRoute(null)
+        setRouteComparison(null)
+      }
+    } finally {
+      if (alternativeCatalogGenerationRef.current === generation) {
+        setIsAlternativeLoading(false)
+      }
+    }
   }
 
-  const handleApplyAlternativeRoute = () => {
-    if (!pendingAlternativeRoute) {
+  const handleOpenAlternativeComparison = () => {
+    if (routeAlternatives.length === 0 || !pendingAlternativeRoute) {
       return
     }
 
-    setRouteResult(pendingAlternativeRoute.route)
+    setIsAlternativeComparisonOpen(true)
+  }
+
+  const handleSelectAlternativeRoute = (alternativeId: string) => {
+    const option = routeAlternatives.find((alternative) => alternative.id === alternativeId)
+    if (!option) {
+      return
+    }
+
+    setPendingAlternativeRoute(option.candidate)
+    setRouteComparison(option.comparison)
+  }
+
+  const handleApplyAlternativeRoute = (alternativeId?: string) => {
+    const selectedAlternative =
+      routeAlternatives.find((alternative) => alternative.id === alternativeId)?.candidate ??
+      pendingAlternativeRoute
+    if (!selectedAlternative) {
+      return
+    }
+
+    setRouteResult(selectedAlternative.route)
     setHasResult(true)
     setIsDirty(false)
-    if (pendingAlternativeRoute.routeAlternativeIndex !== null) {
-      setRouteAlternativeIndex(pendingAlternativeRoute.routeAlternativeIndex)
+    if (selectedAlternative.routeAlternativeIndex !== null) {
+      setRouteAlternativeIndex(selectedAlternative.routeAlternativeIndex)
     }
-    if (pendingAlternativeRoute.loopAlternativeIndex !== null) {
-      setLoopAlternativeIndex(pendingAlternativeRoute.loopAlternativeIndex)
+    if (selectedAlternative.loopAlternativeIndex !== null) {
+      setLoopAlternativeIndex(selectedAlternative.loopAlternativeIndex)
     }
-    clearAlternativeHistory()
-    setPendingAlternativeRoute(null)
-    setRouteComparison(null)
     setIsAlternativeComparisonOpen(false)
     onNavigate('carte', true)
-  }
-
-  const handleKeepCurrentRoute = () => {
-    clearAlternativeHistory()
-    setPendingAlternativeRoute(null)
-    setRouteComparison(null)
-    setIsAlternativeComparisonOpen(false)
   }
 
   const handleCloseAlternativeComparison = () => {
@@ -587,10 +557,10 @@ export const createRoutingControllerActions = ({
     recalculateWithDetours,
     addDetourPointAndRecalculate,
     removeDetourPointAndRecalculate,
-    handleRecalculateAlternative,
+    handlePreloadAlternativeCatalog,
     handleOpenAlternativeComparison,
+    handleSelectAlternativeRoute,
     handleApplyAlternativeRoute,
-    handleKeepCurrentRoute,
     handleCloseAlternativeComparison,
     handleModeChange,
     handleTypeChange,

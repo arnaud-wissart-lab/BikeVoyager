@@ -41,11 +41,12 @@ const baseProps: MapSummaryPanelProps = {
   detourSummary: null,
   hasRoute: true,
   isRouteLoading: false,
-  alternativeRouteLabel: 'Proposer un autre trajet',
+  alternativeCount: 0,
+  isAlternativeComparisonActive: false,
   isExporting: false,
   exportError: null,
   routeErrorMessage: null,
-  onRecalculateAlternative: vi.fn(),
+  onOpenAlternativeComparison: vi.fn(),
   onOpenNavigationSetup: vi.fn(),
   onExportGpx: vi.fn(),
   onOpenSaveTripDialog: vi.fn(),
@@ -59,6 +60,7 @@ describe('MapSummaryPanel roadbook', () => {
     const user = userEvent.setup()
 
     renderPanel({
+      alternativeCount: 1,
       routeResult: {
         ...baseRoute,
         turn_by_turn: [
@@ -126,6 +128,7 @@ describe('MapSummaryPanel roadbook', () => {
     }))
 
     renderPanel({
+      alternativeCount: 1,
       routeResult: {
         ...baseRoute,
         turn_by_turn: steps,
@@ -134,7 +137,7 @@ describe('MapSummaryPanel roadbook', () => {
 
     const roadbookButton = screen.getByRole('button', { name: 'Feuille de route' })
     expect(roadbookButton).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.getByRole('button', { name: 'Proposer un autre trajet' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Consulter 1 alternative' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Suivi / Simu GPS' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Exporter GPX' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sauvegarder ce trajet' })).toBeInTheDocument()
@@ -150,7 +153,7 @@ describe('MapSummaryPanel roadbook', () => {
       overflowY: 'auto',
       overscrollBehavior: 'contain',
     })
-    expect(screen.getByRole('button', { name: 'Proposer un autre trajet' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Consulter 1 alternative' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Suivi / Simu GPS' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Exporter GPX' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sauvegarder ce trajet' })).toBeInTheDocument()

@@ -14,6 +14,7 @@ import {
   type PoiItem,
   type ProfileSettings,
   type RouteAlternativeCandidate,
+  type RouteAlternativeOption,
   type RouteComparisonSummary,
   type RouteRequestPayload,
   type TripResult,
@@ -113,6 +114,7 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
   const [loopAlternativeIndex, setLoopAlternativeIndex] = useState(0)
   const [pendingAlternativeRoute, setPendingAlternativeRoute] =
     useState<RouteAlternativeCandidate | null>(null)
+  const [routeAlternatives, setRouteAlternatives] = useState<RouteAlternativeOption[]>([])
   const [routeComparison, setRouteComparison] = useState<RouteComparisonSummary | null>(null)
   const [isAlternativeComparisonOpen, setIsAlternativeComparisonOpen] = useState(false)
   const [isAlternativeLoading, setIsAlternativeLoading] = useState(false)
@@ -312,6 +314,8 @@ export const useMapSlice = ({ initialPlannerDraft, initialAppPreferences }: UseM
     setLoopAlternativeIndex,
     pendingAlternativeRoute,
     setPendingAlternativeRoute,
+    routeAlternatives,
+    setRouteAlternatives,
     routeComparison,
     setRouteComparison,
     isAlternativeComparisonOpen,

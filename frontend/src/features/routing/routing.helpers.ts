@@ -47,14 +47,6 @@ export const resolveRouteErrorDisplayMessage = (
   serviceStatusMessage?: string | null,
 ) => routeErrorMessage ?? (routeErrorKey ? t(routeErrorKey) : (serviceStatusMessage ?? null))
 
-export const resolveAlternativeRouteLabel = (routeResult: TripResult | null, t: TFunction) =>
-  routeResult?.kind === 'loop' ? t('mapRegenerateLoopVariant') : t('mapRecalculateRouteVariant')
-
-export const resolveAlternativeUnavailableLabel = (routeResult: TripResult | null, t: TFunction) =>
-  routeResult?.kind === 'loop'
-    ? t('mapLoopAlternativeUnavailable')
-    : t('mapRouteAlternativeUnavailable')
-
 export const toRouteLocation = (place: PlaceCandidate) => ({
   lat: place.lat,
   lon: place.lon,

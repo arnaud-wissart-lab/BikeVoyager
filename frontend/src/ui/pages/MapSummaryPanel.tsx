@@ -1,11 +1,11 @@
-import { Box, Button, Group, Stack, Text } from '@mantine/core'
+import { ActionIcon, Box, Button, Group, Stack, Text, Tooltip } from '@mantine/core'
 import {
   IconChevronDown,
   IconChevronUp,
   IconDeviceFloppy,
   IconDownload,
   IconPlayerPlay,
-  IconRefresh,
+  IconRouteAltLeft,
 } from '@tabler/icons-react'
 import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -34,9 +34,7 @@ type MapSummaryPanelProps = {
   detourSummary: string | null
   hasRoute: boolean
   isRouteLoading: boolean
-  alternativeRouteLabel: string
-  alternativeUnavailableLabel: string
-  isAlternativeUnavailable: boolean
+  alternativeCount: number
   isAlternativeComparisonActive: boolean
   isExporting: boolean
   exportError: string | null
@@ -65,9 +63,7 @@ export default function MapSummaryPanel({
   detourSummary,
   hasRoute,
   isRouteLoading,
-  alternativeRouteLabel,
-  alternativeUnavailableLabel,
-  isAlternativeUnavailable,
+  alternativeCount,
   isAlternativeComparisonActive,
   isExporting,
   exportError,
@@ -233,49 +229,57 @@ export default function MapSummaryPanel({
           {t('roadbookLoopUnavailable')}
         </Text>
       )}
-      {isAlternativeUnavailable ? (
-        <Text size="xs" c="dimmed" role="status" data-testid="route-alternative-unavailable">
-          {alternativeUnavailableLabel}
-        </Text>
-      ) : (
-        <Button
-          variant="default"
-          onClick={onOpenAlternativeComparison}
-          fullWidth={isCompact}
-          disabled={!hasRoute || isRouteLoading}
-          leftSection={<IconRefresh size={16} />}
-        >
-          {alternativeRouteLabel}
-        </Button>
-      )}
-      <Button
-        onClick={onOpenNavigationSetup}
-        fullWidth={isCompact}
-        disabled={!hasRoute || isRouteLoading}
-        data-testid="nav-setup-open"
-        leftSection={<IconPlayerPlay size={16} />}
-      >
-        {t('navigationSetupOpen')}
-      </Button>
-      <Button
-        variant="light"
-        onClick={onExportGpx}
-        fullWidth={isCompact}
-        disabled={!hasRoute || isRouteLoading || isExporting}
-        loading={isExporting}
-        leftSection={<IconDownload size={16} />}
-      >
-        {t(isAlternativeComparisonActive ? 'mapExportCurrentGpx' : 'mapExportGpx')}
-      </Button>
-      <Button
-        variant="outline"
-        onClick={onOpenSaveTripDialog}
-        fullWidth={isCompact}
-        disabled={!hasRoute || isRouteLoading}
-        leftSection={<IconDeviceFloppy size={16} />}
-      >
-        {t(isAlternativeComparisonActive ? 'dataSaveCurrentTrip' : 'dataSaveTrip')}
-      </Button>
+      <Group gap="xs" wrap="nowrap" aria-label={t('mapRouteActions')}>
+        {alternativeCount > 0 && (
+          <Button
+            variant="default"
+            size={isCompact ? 'xs' : 'sm'}
+            onClick={onOpenAlternativeComparison}
+            disabled={!hasRoute || isRouteLoading}
+            leftSection={<IconRouteAltLeft size={16} />}
+            aria-label={t('routeAlternativesButton', { count: alternativeCount })}
+            style={{ flex: 1, minWidth: 0 }}
+          >
+            {t('routeAlternativesShort', { count: alternativeCount })}
+          </Button>
+        )}
+        <Tooltip label={t('navigationSetupOpen')}>
+          <Button
+            size={isCompact ? 'xs' : 'sm'}
+            onClick={onOpenNavigationSetup}
+            disabled={!hasRoute || isRouteLoading}
+            data-testid="nav-setup-open"
+            leftSection={<IconPlayerPlay size={16} />}
+            aria-label={t('navigationSetupOpen')}
+            style={{ flex: 1, minWidth: 0 }}
+          >
+            {t('navigationOpenShort')}
+          </Button>
+        </Tooltip>
+        <Tooltip label={t(isAlternativeComparisonActive ? 'mapExportCurrentGpx' : 'mapExportGpx')}>
+          <ActionIcon
+            variant="light"
+            size={isCompact ? 30 : 36}
+            onClick={onExportGpx}
+            disabled={!hasRoute || isRouteLoading || isExporting}
+            loading={isExporting}
+            aria-label={t(isAlternativeComparisonActive ? 'mapExportCurrentGpx' : 'mapExportGpx')}
+          >
+            <IconDownload size={17} />
+          </ActionIcon>
+        </Tooltip>
+        <Tooltip label={t(isAlternativeComparisonActive ? 'dataSaveCurrentTrip' : 'dataSaveTrip')}>
+          <ActionIcon
+            variant="default"
+            size={isCompact ? 30 : 36}
+            onClick={onOpenSaveTripDialog}
+            disabled={!hasRoute || isRouteLoading}
+            aria-label={t(isAlternativeComparisonActive ? 'dataSaveCurrentTrip' : 'dataSaveTrip')}
+          >
+            <IconDeviceFloppy size={17} />
+          </ActionIcon>
+        </Tooltip>
+      </Group>
       {exportError && (
         <Text size="xs" c="red.6">
           {exportError}

@@ -65,6 +65,9 @@ const createCesiumMock = () =>
         withAlpha: vi.fn((alpha: number) => ({ color, alpha })),
       })),
     },
+    PolylineDashMaterialProperty: vi.fn(function PolylineDashMaterialProperty(options: unknown) {
+      return options
+    }),
     Rectangle: {
       fromDegrees: vi.fn((minLon: number, minLat: number, maxLon: number, maxLat: number) => ({
         minLon,
@@ -179,8 +182,11 @@ describe('useRouteEntities', () => {
       width: 4,
       clampToGround: true,
       material: {
-        color: '#1971c2',
-        alpha: 0.9,
+        color: {
+          color: '#862e9c',
+          alpha: 0.95,
+        },
+        dashLength: 18,
       },
     })
   })

@@ -15,14 +15,11 @@ import {
   parseContentDispositionFileName,
   plannerDraftStorageKey,
   routeStorageKey,
-  type TripResult,
 } from './domain'
 import {
   computeCanSubmitFeedback,
   createPlannerPanelStyles,
   exportRouteAsGpxAction,
-  resolveAlternativeRouteLabel,
-  resolveAlternativeUnavailableLabel,
   resolveRouteErrorDisplayMessage,
   submitDeveloperFeedbackAction,
 } from './routing.helpers'
@@ -81,13 +78,9 @@ export const useRoutingController = ({
     setIsValhallaStatusLoading,
     setValhallaStatusError,
     setProfileSettings,
-    setPendingAlternativeRoute,
-    setRouteComparison,
-    setIsAlternativeComparisonOpen,
   } = store
   const [apiHealthStatus, setApiHealthStatus] = useState<ApiHealthStatus | null>(null)
-  const [isAlternativeUnavailable, setIsAlternativeUnavailable] = useState(false)
-  const alternativeRouteHistoryRef = useRef<TripResult[]>([])
+  const alternativeCatalogGenerationRef = useRef(0)
 
   const activeStartPlace = tripType === 'loop' ? loopStartPlace : onewayStartPlace
   const hasStartSelection = Boolean(activeStartPlace)
@@ -123,10 +116,10 @@ export const useRoutingController = ({
     recalculateWithDetours,
     addDetourPointAndRecalculate,
     removeDetourPointAndRecalculate,
-    handleRecalculateAlternative,
+    handlePreloadAlternativeCatalog,
     handleOpenAlternativeComparison,
+    handleSelectAlternativeRoute,
     handleApplyAlternativeRoute,
-    handleKeepCurrentRoute,
     handleCloseAlternativeComparison,
     handleModeChange,
     handleTypeChange,
@@ -145,10 +138,10 @@ export const useRoutingController = ({
     t,
     onNavigate,
     markDirty,
-    isAlternativeUnavailable,
-    setIsAlternativeUnavailable,
-    alternativeRouteHistoryRef,
+    alternativeCatalogGenerationRef,
   })
+  const preloadAlternativeCatalogRef = useRef(handlePreloadAlternativeCatalog)
+  preloadAlternativeCatalogRef.current = handlePreloadAlternativeCatalog
 
   const navigationAutoRecalculation = useNavigationAutoRecalculation({
     enabled: automaticNavigationRecalculationEnabled,
@@ -323,11 +316,25 @@ export const useRoutingController = ({
   }, [routeResult, setExportError, setIsExporting])
 
   useEffect(() => {
-    alternativeRouteHistoryRef.current = []
-    setPendingAlternativeRoute(null)
-    setRouteComparison(null)
-    setIsAlternativeComparisonOpen(false)
-  }, [routeResult, setIsAlternativeComparisonOpen, setPendingAlternativeRoute, setRouteComparison])
+    let isCancelled = false
+    const timeoutId = window.setTimeout(() => {
+      if (!isCancelled) {
+        const canPreloadAlternatives =
+          !isDirty && !isNavigationActive && routeResult?.kind === 'route'
+            ? Boolean(onewayStartPlace && endPlace)
+            : !isDirty && !isNavigationActive && routeResult?.kind === 'loop'
+              ? Boolean(loopStartPlace)
+              : false
+        void preloadAlternativeCatalogRef.current(canPreloadAlternatives ? routeResult : null)
+      }
+    }, 0)
+
+    return () => {
+      isCancelled = true
+      window.clearTimeout(timeoutId)
+      alternativeCatalogGenerationRef.current += 1
+    }
+  }, [endPlace, isDirty, isNavigationActive, loopStartPlace, onewayStartPlace, routeResult])
 
   useEffect(() => {
     if (route !== 'planifier' && route !== 'carte' && route !== 'aide') {
@@ -446,9 +453,6 @@ export const useRoutingController = ({
   )
   const isValhallaBuildRunning = valhallaStatus?.build?.state === 'running'
   const valhallaUpdateAvailable = valhallaStatus?.update?.update_available === true
-  const alternativeRouteLabel = resolveAlternativeRouteLabel(routeResult, t)
-  const alternativeUnavailableLabel = resolveAlternativeUnavailableLabel(routeResult, t)
-
   return {
     showLocationInputs,
     helperItems,
@@ -481,10 +485,9 @@ export const useRoutingController = ({
     addDetourPointAndRecalculate,
     removeDetourPointAndRecalculate,
     recalculateWithDetours,
-    handleRecalculateAlternative,
     handleOpenAlternativeComparison,
+    handleSelectAlternativeRoute,
     handleApplyAlternativeRoute,
-    handleKeepCurrentRoute,
     handleCloseAlternativeComparison,
     handleSpeedChange,
     handleResetProfiles,
@@ -495,8 +498,5 @@ export const useRoutingController = ({
     loadValhallaStatus,
     isValhallaBuildRunning,
     valhallaUpdateAvailable,
-    alternativeRouteLabel,
-    alternativeUnavailableLabel,
-    isAlternativeUnavailable,
   }
 }

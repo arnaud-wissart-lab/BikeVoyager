@@ -1,38 +1,58 @@
-import type { TripResult } from './domain'
+type LoadAlternativeResult<TCandidate> = { ok: true; candidate: TCandidate } | { ok: false }
 
-type LoadAlternativeResult<TCandidate, TFailure> =
-  { ok: true; candidate: TCandidate } | { ok: false; failure: TFailure }
-
-type RequestDistinctAlternativeParams<TCandidate extends TripResult, TFailure> = {
-  excludedCandidates: readonly TripResult[]
-  currentIndex: number
-  attemptCount: number
-  load: (nextIndex: number) => Promise<LoadAlternativeResult<TCandidate, TFailure>>
-  areEquivalent: (excluded: TripResult, candidate: TCandidate) => boolean
+type CollectRelevantAlternativesParams<TCandidate, TAssessment> = {
+  candidateIndexes: readonly number[]
+  maximumCount: number
+  load: (nextIndex: number) => Promise<LoadAlternativeResult<TCandidate>>
+  assess: (candidate: TCandidate) => TAssessment | null
+  isRelevant: (assessment: TAssessment) => boolean
+  isDuplicate: (accepted: TCandidate, candidate: TCandidate) => boolean
 }
 
-export const requestDistinctAlternative = async <TCandidate extends TripResult, TFailure>({
-  excludedCandidates,
-  currentIndex,
-  attemptCount,
+export const collectRelevantAlternatives = async <TCandidate, TAssessment>({
+  candidateIndexes,
+  maximumCount,
   load,
-  areEquivalent,
-}: RequestDistinctAlternativeParams<TCandidate, TFailure>) => {
-  for (let offset = 1; offset <= attemptCount; offset += 1) {
-    const nextIndex = currentIndex + offset
-    const result = await load(nextIndex)
+  assess,
+  isRelevant,
+  isDuplicate,
+}: CollectRelevantAlternativesParams<TCandidate, TAssessment>) => {
+  const loadedCandidates = await Promise.all(
+    candidateIndexes.map(async (nextIndex) => ({
+      nextIndex,
+      result: await load(nextIndex),
+    })),
+  )
+  const alternatives: {
+    nextIndex: number
+    candidate: TCandidate
+    assessment: TAssessment
+  }[] = []
 
-    if (!result.ok) {
-      return { status: 'failed' as const, failure: result.failure }
+  for (const loaded of loadedCandidates) {
+    if (!loaded.result.ok) {
+      continue
     }
 
-    const wasAlreadyProposed = excludedCandidates.some((excluded) =>
-      areEquivalent(excluded, result.candidate),
-    )
-    if (!wasAlreadyProposed) {
-      return { status: 'success' as const, nextIndex, candidate: result.candidate }
+    const candidate = loaded.result.candidate
+    const assessment = assess(candidate)
+    if (
+      !assessment ||
+      !isRelevant(assessment) ||
+      alternatives.some((alternative) => isDuplicate(alternative.candidate, candidate))
+    ) {
+      continue
+    }
+
+    alternatives.push({
+      nextIndex: loaded.nextIndex,
+      candidate,
+      assessment,
+    })
+    if (alternatives.length >= maximumCount) {
+      break
     }
   }
 
-  return { status: 'unavailable' as const }
+  return alternatives
 }

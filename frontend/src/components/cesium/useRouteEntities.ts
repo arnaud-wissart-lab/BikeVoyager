@@ -5,6 +5,7 @@ import type {
   RouteElevationPoint,
   RouteGeometry,
 } from '../../features/routing/domain'
+import { alternativeRouteColor, currentRouteColor } from '../../features/routing/routePresentation'
 import { buildRouteHeights, buildRouteSignature, haversineDistanceMeters } from './math'
 import { isViewerUsable } from './lifecycle'
 import type { CesiumModule, CesiumStatus, NavigationProgress, PoiMarker } from './types'
@@ -113,7 +114,7 @@ export default function useRouteEntities({
         positions: routePolyline.positions,
         width: 6,
         clampToGround: !routePolyline.hasAltitude,
-        material: Cesium.Color.fromCssColorString('#2b8a3e'),
+        material: Cesium.Color.fromCssColorString(currentRouteColor),
       },
     })
 
@@ -193,7 +194,10 @@ export default function useRouteEntities({
         positions: alternativePolyline.positions,
         width: 4,
         clampToGround: !alternativePolyline.hasAltitude,
-        material: Cesium.Color.fromCssColorString('#1971c2').withAlpha(0.9),
+        material: new Cesium.PolylineDashMaterialProperty({
+          color: Cesium.Color.fromCssColorString(alternativeRouteColor).withAlpha(0.95),
+          dashLength: 18,
+        }),
       },
     })
 

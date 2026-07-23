@@ -105,6 +105,10 @@ export default function MapRoute({
     t,
     onSave: dataController.handleSaveCurrentTrip,
   })
+  const selectedAlternativeId =
+    store.routeAlternatives.find(
+      (alternative) => alternative.candidate === store.pendingAlternativeRoute,
+    )?.id ?? null
 
   const renderPoiLoadIndicator = (size: 'xs' | 'sm' = 'xs') => {
     if (store.isPoiLoading) {
@@ -150,13 +154,10 @@ export default function MapRoute({
     elevationProfile,
     detourSummary: mapController.detourSummary,
     hasRoute: mapController.hasRoute,
-    isRouteLoading: store.isRouteLoading || store.isAlternativeLoading,
-    alternativeRouteLabel: store.pendingAlternativeRoute
-      ? t('routeComparisonOpen')
-      : routingController.alternativeRouteLabel,
-    alternativeUnavailableLabel: routingController.alternativeUnavailableLabel,
-    isAlternativeUnavailable: routingController.isAlternativeUnavailable,
-    isAlternativeComparisonActive: Boolean(store.pendingAlternativeRoute),
+    isRouteLoading: store.isRouteLoading,
+    alternativeCount: store.routeAlternatives.length,
+    isAlternativeComparisonActive:
+      store.isAlternativeComparisonOpen && Boolean(store.pendingAlternativeRoute),
     isExporting: store.isExporting,
     exportError: store.exportError,
     routeErrorMessage: routingController.routeErrorDisplayMessage,
@@ -290,7 +291,9 @@ export default function MapRoute({
         setupOverlayColor={isDarkTheme ? 'rgba(10, 12, 16, 0.62)' : 'rgba(255, 255, 255, 0.62)'}
         loadingSpinnerColor={theme.colors.blue[6]}
         routeResult={store.routeResult}
-        pendingAlternativeRoute={store.pendingAlternativeRoute?.route ?? null}
+        pendingAlternativeRoute={
+          store.isAlternativeComparisonOpen ? (store.pendingAlternativeRoute?.route ?? null) : null
+        }
         expandedRouteBounds={mapController.expandedRouteBounds}
         mapViewMode={mapController.mapViewMode}
         mapCommand={mapController.mapCommand}
@@ -398,14 +401,10 @@ export default function MapRoute({
       <RouteAlternativeComparisonDialog
         opened={store.isAlternativeComparisonOpen}
         isCompact={!isDesktop}
-        isLoading={store.isAlternativeLoading}
-        comparison={store.routeComparison}
-        routeErrorMessage={routingController.routeErrorDisplayMessage}
+        alternatives={store.routeAlternatives}
+        selectedAlternativeId={selectedAlternativeId}
+        onSelectAlternative={routingController.handleSelectAlternativeRoute}
         onApplyAlternative={routingController.handleApplyAlternativeRoute}
-        onKeepCurrentRoute={routingController.handleKeepCurrentRoute}
-        onRecalculateAlternative={() => {
-          void routingController.handleRecalculateAlternative()
-        }}
         onClose={routingController.handleCloseAlternativeComparison}
       />
     </>

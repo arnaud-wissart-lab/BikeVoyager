@@ -45,6 +45,7 @@ export default function ProfilesPage({
 }: ProfilesPageProps) {
   const { t } = useTranslation()
   const activePresetKey = getActiveProfilePresetKey(profileSettings)
+  const activePreset = profilePresets.find((preset) => preset.key === activePresetKey) ?? null
 
   return (
     <Container size={contentSize} py="lg">
@@ -65,6 +66,15 @@ export default function ProfilesPage({
                   {t('profilePresetsSubtitle')}
                 </Text>
               </Stack>
+              <Badge
+                variant={activePreset ? 'light' : 'outline'}
+                color={activePreset ? 'teal' : 'gray'}
+                leftSection={activePreset ? <IconCheck size={12} /> : undefined}
+              >
+                {activePreset
+                  ? t('profileCurrentPreset', { name: t(activePreset.labelKey) })
+                  : t('profileCurrentCustom')}
+              </Badge>
             </Group>
 
             <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="sm" verticalSpacing="sm">

@@ -8,7 +8,7 @@ import {
 
 describe('profilePresets', () => {
   it('respecte les plages de vitesse disponibles', () => {
-    expect(profilePresets).toHaveLength(7)
+    expect(profilePresets).toHaveLength(8)
 
     for (const preset of profilePresets) {
       expect(isProfileSettingsWithinSpeedRanges(preset.settings)).toBe(true)
@@ -34,6 +34,13 @@ describe('profilePresets', () => {
     expect(efficient).toBeDefined()
     expect(efficient ? isProfilePresetActive(efficient, efficient.settings) : false).toBe(true)
     expect(getActiveProfilePresetKey(efficient?.settings as ProfileSettings)).toBe('efficient')
+  })
+
+  it('associe les valeurs par défaut au profil Standard', () => {
+    const standard = profilePresets.find((preset) => preset.key === 'standard')
+
+    expect(standard).toBeDefined()
+    expect(getActiveProfilePresetKey(standard?.settings as ProfileSettings)).toBe('standard')
   })
 
   it('ne détecte aucun préréglage actif après une modification manuelle', () => {

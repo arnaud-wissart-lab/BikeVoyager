@@ -58,6 +58,7 @@ describe('ProfilesPage', () => {
     renderWithProviders(<ProfilesPageHarness />)
 
     expect(screen.getByText('Préréglages')).toBeInTheDocument()
+    expect(screen.getByText('Standard')).toBeInTheDocument()
     expect(screen.getByText('Balade tranquille')).toBeInTheDocument()
     expect(screen.getByText('Vélo équilibré')).toBeInTheDocument()
     expect(screen.getByText('Vélo efficace')).toBeInTheDocument()
@@ -65,6 +66,10 @@ describe('ProfilesPage', () => {
     expect(screen.getByText('VAE autonomie')).toBeInTheDocument()
     expect(screen.getByText('VAE confort')).toBeInTheDocument()
     expect(screen.getByText('VAE assistance forte')).toBeInTheDocument()
+    expect(screen.getByText('Profil actuel : Standard')).toBeInTheDocument()
+    expect(
+      within(screen.getByTestId('profile-preset-standard')).getByText('Préréglage actif'),
+    ).toBeInTheDocument()
   })
 
   it('applique le préréglage VAE autonomie', async () => {
@@ -114,5 +119,6 @@ describe('ProfilesPage', () => {
 
     expect(screen.queryByText('Préréglage actif')).not.toBeInTheDocument()
     expect(screen.queryByText('Préréglage appliqué')).not.toBeInTheDocument()
+    expect(screen.getByText('Profil actuel : personnalisé')).toBeInTheDocument()
   })
 })

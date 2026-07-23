@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Alert,
   Badge,
   Button,
   Group,
@@ -9,7 +10,7 @@ import {
   Stack,
   Text,
 } from '@mantine/core'
-import { IconMapPinPlus } from '@tabler/icons-react'
+import { IconAlertTriangle, IconMapPinPlus } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
 import type { PoiCategory, PoiItem } from '../../../features/routing/domain'
 
@@ -69,9 +70,19 @@ export default function PoiResultsList({
         )}
 
         {!isPoiLoading && poiError && (
-          <Text size="xs" c="red.6">
+          <Alert
+            color="red"
+            variant="light"
+            title={t('poiErrorTitle')}
+            icon={<IconAlertTriangle size={18} />}
+            role="alert"
+            styles={{
+              body: { minWidth: 0 },
+              message: { overflowWrap: 'anywhere' },
+            }}
+          >
             {poiErrorMessage ?? t('poiError')}
-          </Text>
+          </Alert>
         )}
 
         {!isPoiLoading && !poiError && poiItems.length === 0 && hasPoiCategories && (

@@ -115,7 +115,7 @@
   "mapRouteActions": "Route actions",
   "routeExportFormatLabel": "File format",
   "routeExportGpxDescription": "Broadest compatibility with apps and GPS devices",
-  "routeExportTcxDescription": "Alternative compatible with Garmin and Wahoo",
+  "routeExportTcxDescription": "Course format compatible with Garmin and Wahoo",
   "exportRouteFailed": "Unable to export the route right now.",
   "exportRouteDefaultName": "BikeVoyager",
   "exportGpxFailed": "Unable to export GPX right now.",

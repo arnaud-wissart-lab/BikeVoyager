@@ -5,8 +5,7 @@ type AlternativeCandidate = {
 }
 
 type LoadAlternativeResult<TCandidate, TFailure> =
-  | { ok: true; candidate: TCandidate }
-  | { ok: false; failure: TFailure }
+  { ok: true; candidate: TCandidate } | { ok: false; failure: TFailure }
 
 type RequestDistinctAlternativeParams<TCandidate extends AlternativeCandidate, TFailure> = {
   currentGeometry: RouteGeometry

@@ -4,6 +4,7 @@ set -eu
 valhalla_dir="${VALHALLA_DATA_DIR:-/custom_files}"
 data_dir="$valhalla_dir/data"
 active_dir="$valhalla_dir/live"
+active_elevation_dir="$active_dir/elevation"
 releases_dir="$valhalla_dir/releases"
 legacy_tiles_dir="$valhalla_dir/tiles"
 legacy_config_path="$valhalla_dir/valhalla.json"
@@ -17,6 +18,14 @@ update_marker_path="$valhalla_dir/.valhalla_update_available"
 build_lock_path="$valhalla_dir/.build.lock"
 france_url="${VALHALLA_SOURCE_URL:-https://download.geofabrik.de/europe/france-latest.osm.pbf}"
 stale_lock_minutes="${VALHALLA_STALE_LOCK_MINUTES:-30}"
+elevation_parallelism="${VALHALLA_ELEVATION_PARALLELISM:-4}"
+
+case "$elevation_parallelism" in
+  ''|*[!0-9]*) elevation_parallelism=4 ;;
+esac
+if [ "$elevation_parallelism" -lt 1 ]; then
+  elevation_parallelism=1
+fi
 
 mkdir -p "$data_dir"
 mkdir -p "$logs_dir"
@@ -102,6 +111,34 @@ validate_artifacts_dir() {
   fi
 
   return 0
+}
+
+validate_elevation_artifacts_dir() {
+  base_dir="$1"
+  elevation_dir="$base_dir/elevation"
+
+  if [ ! -d "$elevation_dir" ]; then
+    return 1
+  fi
+
+  find "$elevation_dir" -type f \
+    \( -name '*.hgt' -o -name '*.hgt.gz' -o -name '*.hgt.lz4' \) \
+    -print -quit 2>/dev/null | grep -q .
+}
+
+configure_elevation_path() {
+  config_path="$1"
+  elevation_path="$2"
+
+  if [ ! -f "$config_path" ]; then
+    return 1
+  fi
+
+  sed -i \
+    -e "s#\"elevation\"[[:space:]]*:[[:space:]]*\"[^\"]*\"#\"elevation\": \"$elevation_path\"#" \
+    "$config_path"
+
+  grep -Fq "\"elevation\": \"$elevation_path\"" "$config_path"
 }
 
 migrate_legacy_to_live() {
@@ -257,8 +294,33 @@ force_download_value="${VALHALLA_FORCE_DOWNLOAD:-}"
 
 migrate_legacy_to_live
 
+if validate_artifacts_dir "$active_dir" && [ -f "$active_dir/tiles/.valhalla_ready" ]; then
+  if ! validate_elevation_artifacts_dir "$active_dir"; then
+    mkdir -p "$active_elevation_dir"
+    run_step \
+      "elevation" \
+      "15" \
+      "Téléchargement des tuiles d’altitude couvertes par le graphe." \
+      "téléchargement des tuiles d’altitude" \
+      "05-elevation" \
+      "valhalla_build_elevation -c $active_dir/valhalla.json -t -o $active_elevation_dir -p $elevation_parallelism -v"
+  fi
+
+  if ! validate_elevation_artifacts_dir "$active_dir"; then
+    echo "Valhalla bootstrap: aucune tuile d’altitude exploitable n’a été téléchargée."
+    exit 1
+  fi
+
+  configure_elevation_path "$active_dir/valhalla.json" "/custom_files/live/elevation"
+  touch "$active_elevation_dir/.valhalla_elevation_ready"
+fi
+
 already_ready=false
-if validate_artifacts_dir "$active_dir" && [ -f "$active_dir/tiles/.valhalla_ready" ] && [ -f "$pbf_path" ]; then
+if validate_artifacts_dir "$active_dir" &&
+  validate_elevation_artifacts_dir "$active_dir" &&
+  [ -f "$active_dir/tiles/.valhalla_ready" ] &&
+  [ -f "$active_elevation_dir/.valhalla_elevation_ready" ] &&
+  [ -f "$pbf_path" ]; then
   already_ready=true
 fi
 
@@ -295,11 +357,13 @@ release_id="$(date -u +%Y%m%dT%H%M%SZ)"
 candidate_name="candidate-$release_id"
 candidate_dir="$releases_dir/$candidate_name"
 candidate_tiles="$candidate_dir/tiles"
+candidate_elevation="$candidate_dir/elevation"
 candidate_ready="$candidate_tiles/.valhalla_ready"
 candidate_container_dir="/custom_files/releases/$candidate_name"
 
 rm -rf "$candidate_dir"
 mkdir -p "$candidate_tiles"
+mkdir -p "$candidate_elevation"
 
 echo "Valhalla bootstrap: generation des tuiles et bases dans candidate."
 
@@ -309,7 +373,7 @@ run_step \
   "Generation de la configuration Valhalla." \
   "generation configuration" \
   "10-config" \
-  "valhalla_build_config --mjolnir-tile-dir $candidate_container_dir/tiles --mjolnir-admin $candidate_container_dir/admins.sqlite --mjolnir-timezone $candidate_container_dir/timezones.sqlite > $candidate_container_dir/valhalla.json"
+  "valhalla_build_config --mjolnir-tile-dir $candidate_container_dir/tiles --mjolnir-admin $candidate_container_dir/admins.sqlite --mjolnir-timezone $candidate_container_dir/timezones.sqlite --additional-data-elevation $candidate_container_dir/elevation > $candidate_container_dir/valhalla.json"
 
 run_step \
   "tiles" \
@@ -320,8 +384,16 @@ run_step \
   "valhalla_build_tiles -c $candidate_container_dir/valhalla.json /custom_files/data/osm.pbf"
 
 run_step \
+  "elevation" \
+  "75" \
+  "Téléchargement des tuiles d’altitude couvertes par le graphe." \
+  "téléchargement des tuiles d’altitude" \
+  "25-elevation" \
+  "valhalla_build_elevation -c $candidate_container_dir/valhalla.json -t -o $candidate_container_dir/elevation -p $elevation_parallelism -v"
+
+run_step \
   "admins" \
-  "80" \
+  "85" \
   "Generation de admins.sqlite." \
   "generation admins" \
   "30-admins" \
@@ -329,7 +401,7 @@ run_step \
 
 run_step \
   "timezones" \
-  "90" \
+  "92" \
   "Generation de timezones.sqlite." \
   "generation timezones" \
   "40-timezones" \
@@ -340,10 +412,16 @@ if ! validate_artifacts_dir "$candidate_dir"; then
   exit 1
 fi
 
+if ! validate_elevation_artifacts_dir "$candidate_dir"; then
+  echo "Valhalla bootstrap: build terminé mais tuiles d’altitude absentes."
+  exit 1
+fi
+
 # Nettoyage minimal des fichiers temporaires produits pendant le build.
 write_status "running" "cleanup" "95" "Nettoyage des artefacts temporaires."
 find "$candidate_tiles" -name '*.tmp' -delete 2>/dev/null || true
 touch "$candidate_ready"
+touch "$candidate_elevation/.valhalla_elevation_ready"
 
 # Promotion atomique pour conserver une bascule propre en cas d'echec.
 write_status "running" "promotion" "97" "Promotion atomique des donnees Valhalla."

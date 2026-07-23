@@ -264,7 +264,20 @@ fi
 chmod 600 "$HOME_ENV_PATH"
 
 log "Build et démarrage de la stack home via docker compose"
+"${compose_cmd[@]}" -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE_PATH" up \
+  -d --build --no-deps valhalla-bootstrap
+
+log "Préparation des données Valhalla et des tuiles d’altitude"
+docker logs --follow --since 1m bikevoyager-valhalla-bootstrap || true
+valhalla_bootstrap_exit_code="$(docker inspect \
+  --format '{{.State.ExitCode}}' bikevoyager-valhalla-bootstrap)"
+if [ "$valhalla_bootstrap_exit_code" != "0" ]; then
+  log "Le bootstrap Valhalla a échoué (code ${valhalla_bootstrap_exit_code})."
+  exit 1
+fi
+
 "${compose_cmd[@]}" -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE_PATH" up -d --build --remove-orphans
+"${compose_cmd[@]}" -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE_PATH" restart valhalla
 
 log "Attente de santé API/Valhalla via ${API_HEALTH_URL} (timeout: ${VALHALLA_WAIT_SECONDS}s)"
 valhalla_attempts=$((VALHALLA_WAIT_SECONDS / VALHALLA_POLL_SECONDS))

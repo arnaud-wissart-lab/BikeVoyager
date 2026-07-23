@@ -32,6 +32,7 @@ sed -i \
   -e "s#\"tile_dir\"[[:space:]]*:[[:space:]]*\"[^\"]*\"#\"tile_dir\": \"$DATA_DIR/tiles\"#" \
   -e "s#\"admin\"[[:space:]]*:[[:space:]]*\"[^\"]*\"#\"admin\": \"$DATA_DIR/admins.sqlite\"#" \
   -e "s#\"timezone\"[[:space:]]*:[[:space:]]*\"[^\"]*\"#\"timezone\": \"$DATA_DIR/timezones.sqlite\"#" \
+  -e "s#\"elevation\"[[:space:]]*:[[:space:]]*\"[^\"]*\"#\"elevation\": \"$DATA_DIR/elevation\"#" \
   "$RUNTIME_CONFIG"
 
 echo "Valhalla: demarrage du service (data: $DATA_DIR, config: $RUNTIME_CONFIG)."

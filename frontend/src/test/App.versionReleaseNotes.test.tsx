@@ -4,7 +4,7 @@ import App from '../App'
 import { releaseNotes } from '../features/app/releaseNotes'
 import { appDisplayName, appVersion } from '../features/app/versionInfo'
 import ReleaseNotesDialog from '../ui/app/ReleaseNotesDialog'
-import { createAppFetchMock, resetAppTestEnvironment } from './app-test-utils'
+import { createAppFetchMock, resetAppTestEnvironment, setDesktopMatchMedia } from './app-test-utils'
 import { renderWithProviders } from './test-utils'
 
 describe('App version et nouveautés', () => {
@@ -17,10 +17,11 @@ describe('App version et nouveautés', () => {
   it('conserve un historique de versions cohérent et ordonné', () => {
     const versions = releaseNotes.map((note) => note.version)
 
-    expect(appVersion).toBe('0.2.0')
-    expect(releaseNotes[0]).toMatchObject({ version: appVersion, date: '2026-07-11' })
-    expect(releaseNotes[1]).toMatchObject({ version: '0.1.0', date: '2026-07-08' })
-    expect(versions).toEqual(['0.2.0', '0.1.0'])
+    expect(appVersion).toBe('0.3.0')
+    expect(releaseNotes[0]).toMatchObject({ version: appVersion, date: '2026-07-23' })
+    expect(releaseNotes[1]).toMatchObject({ version: '0.2.0', date: '2026-07-11' })
+    expect(releaseNotes[2]).toMatchObject({ version: '0.1.0', date: '2026-07-08' })
+    expect(versions).toEqual(['0.3.0', '0.2.0', '0.1.0'])
     expect(new Set(versions).size).toBe(versions.length)
   })
 
@@ -35,6 +36,8 @@ describe('App version et nouveautés', () => {
 
     const dialog = await screen.findByRole('dialog', { name: 'Nouveautés' })
 
+    expect(within(dialog).getByText('v0.3.0')).toBeInTheDocument()
+    expect(within(dialog).getByText('23 juillet 2026')).toBeInTheDocument()
     expect(within(dialog).getByText('v0.2.0')).toBeInTheDocument()
     expect(within(dialog).getByText('11 juillet 2026')).toBeInTheDocument()
     expect(within(dialog).getByText('v0.1.0')).toBeInTheDocument()
@@ -53,6 +56,32 @@ describe('App version et nouveautés', () => {
     })
   })
 
+  it('ouvre les nouveautés depuis l’icône de version de l’en-tête', async () => {
+    const user = userEvent.setup()
+
+    renderWithProviders(<App />)
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'BikeVoyager v0.3.0 : voir les nouveautés',
+      }),
+    )
+
+    expect(await screen.findByRole('dialog', { name: 'Nouveautés' })).toBeVisible()
+  })
+
+  it('présente les langues et les thèmes sous forme de choix accessibles', async () => {
+    setDesktopMatchMedia()
+
+    renderWithProviders(<App />)
+
+    expect(await screen.findByRole('radio', { name: 'Français' })).toBeChecked()
+    expect(screen.getByRole('radio', { name: 'Anglais' })).not.toBeChecked()
+    expect(screen.getByRole('radio', { name: 'Auto' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Jour' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Nuit' })).toBeInTheDocument()
+  })
+
   it('affiche les notes de la version 0.2.0 en anglais', () => {
     renderWithProviders(<ReleaseNotesDialog opened onClose={() => {}} isDesktop isFrench={false} />)
 
@@ -62,6 +91,7 @@ describe('App version et nouveautés', () => {
     expect(
       within(dialog).getByText('Detailed roadbook with each step of the journey.'),
     ).toBeInTheDocument()
+    expect(within(dialog).getByText('July 23, 2026')).toBeInTheDocument()
     expect(within(dialog).getByText('July 11, 2026')).toBeInTheDocument()
   })
 

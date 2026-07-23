@@ -1,15 +1,26 @@
 import {
   ActionIcon,
   AppShell,
+  Badge,
   Container,
   Group,
   SegmentedControl,
   Stack,
   Tabs,
   Text,
+  Tooltip,
   UnstyledButton,
+  VisuallyHidden,
 } from '@mantine/core'
-import { IconMoon, IconSun, type TablerIcon } from '@tabler/icons-react'
+import {
+  IconDeviceDesktop,
+  IconInfoCircle,
+  IconMoon,
+  IconSun,
+  type TablerIcon,
+} from '@tabler/icons-react'
+import englishFlagUrl from 'flag-icons/flags/4x3/gb.svg'
+import frenchFlagUrl from 'flag-icons/flags/4x3/fr.svg'
 import type { ReactNode } from 'react'
 import type { MapViewMode, RouteKey } from '../../features/routing/domain'
 
@@ -19,6 +30,21 @@ export type ShellNavItem = {
   icon: TablerIcon
   disabled: boolean
 }
+
+const LanguageFlag = ({ src }: { src: string }) => (
+  <img
+    src={src}
+    alt=""
+    aria-hidden
+    width={20}
+    height={15}
+    style={{
+      display: 'block',
+      borderRadius: 2,
+      boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.12)',
+    }}
+  />
+)
 
 type ShellLayoutProps = {
   isDesktop: boolean
@@ -42,7 +68,10 @@ type ShellLayoutProps = {
   mobileHeaderTitle: string
   mapHeaderTitle: string
   appNameLabel: string
+  appVersionLabel: string
   appTaglineLabel: string
+  releaseNotesLabel: string
+  onOpenReleaseNotes: () => void
   language: 'fr' | 'en'
   onLanguageChange: (language: 'fr' | 'en') => void
   mapViewMode: MapViewMode
@@ -56,6 +85,8 @@ type ShellLayoutProps = {
   nextThemeMode: 'light' | 'dark' | 'auto'
   mobileThemeActionLabel: string
   settingsLanguageLabel: string
+  languageFrenchLabel: string
+  languageEnglishLabel: string
   themeAutoLabel: string
   themeLightLabel: string
   themeDarkLabel: string
@@ -87,7 +118,10 @@ export default function ShellLayout({
   mobileHeaderTitle,
   mapHeaderTitle,
   appNameLabel,
+  appVersionLabel,
   appTaglineLabel,
+  releaseNotesLabel,
+  onOpenReleaseNotes,
   language,
   onLanguageChange,
   mapViewMode,
@@ -101,6 +135,8 @@ export default function ShellLayout({
   nextThemeMode,
   mobileThemeActionLabel,
   settingsLanguageLabel,
+  languageFrenchLabel,
+  languageEnglishLabel,
   themeAutoLabel,
   themeLightLabel,
   themeDarkLabel,
@@ -133,6 +169,19 @@ export default function ShellLayout({
                     {mobileHeaderTitle}
                   </Text>
                   <Group gap={6} align="center" wrap="nowrap">
+                    <Tooltip label={releaseNotesLabel} withArrow>
+                      <ActionIcon
+                        variant="light"
+                        color="teal"
+                        radius="xl"
+                        size="lg"
+                        onClick={onOpenReleaseNotes}
+                        aria-label={releaseNotesLabel}
+                        title={releaseNotesLabel}
+                      >
+                        <IconInfoCircle size={18} />
+                      </ActionIcon>
+                    </Tooltip>
                     <ActionIcon
                       variant="light"
                       color="cyan"
@@ -142,9 +191,7 @@ export default function ShellLayout({
                       aria-label={settingsLanguageLabel}
                       title={settingsLanguageLabel}
                     >
-                      <Text span fz={17} lh={1}>
-                        {language === 'fr' ? '🇫🇷' : '🇬🇧'}
-                      </Text>
+                      <LanguageFlag src={language === 'fr' ? frenchFlagUrl : englishFlagUrl} />
                     </ActionIcon>
                     <ActionIcon
                       variant="light"
@@ -155,7 +202,13 @@ export default function ShellLayout({
                       aria-label={mobileThemeActionLabel}
                       title={mobileThemeActionLabel}
                     >
-                      {isDarkTheme ? <IconMoon size={18} /> : <IconSun size={18} />}
+                      {themeMode === 'auto' ? (
+                        <IconDeviceDesktop size={18} />
+                      ) : isDarkTheme ? (
+                        <IconMoon size={18} />
+                      ) : (
+                        <IconSun size={18} />
+                      )}
                     </ActionIcon>
                   </Group>
                 </>
@@ -167,14 +220,34 @@ export default function ShellLayout({
                         {mapHeaderTitle}
                       </Text>
                     ) : (
-                      <Stack gap={2} style={{ minWidth: 0 }}>
-                        <Text fw={600}>{appNameLabel}</Text>
-                        {isDesktop && (
-                          <Text size="xs" c="dimmed">
-                            {appTaglineLabel}
-                          </Text>
-                        )}
-                      </Stack>
+                      <Group gap={6} wrap="nowrap">
+                        <Stack gap={2} style={{ minWidth: 0 }}>
+                          <Group gap={6} wrap="nowrap">
+                            <Text fw={600}>{appNameLabel}</Text>
+                            <Badge size="xs" variant="light" color="teal" radius="sm">
+                              {appVersionLabel}
+                            </Badge>
+                          </Group>
+                          {isDesktop && (
+                            <Text size="xs" c="dimmed">
+                              {appTaglineLabel}
+                            </Text>
+                          )}
+                        </Stack>
+                        <Tooltip label={releaseNotesLabel} withArrow>
+                          <ActionIcon
+                            variant="subtle"
+                            color="teal"
+                            radius="xl"
+                            size="sm"
+                            onClick={onOpenReleaseNotes}
+                            aria-label={releaseNotesLabel}
+                            title={releaseNotesLabel}
+                          >
+                            <IconInfoCircle size={16} />
+                          </ActionIcon>
+                        </Tooltip>
+                      </Group>
                     )}
                     {isDesktop && (
                       <Tabs
@@ -196,37 +269,104 @@ export default function ShellLayout({
 
                   <Group gap="xs" align="center" wrap="nowrap">
                     {showDesktopMapHeader && (
-                      <SegmentedControl
-                        size="xs"
-                        radius="xl"
-                        aria-label={mapViewLabel}
-                        value={mapViewMode}
-                        onChange={(value) => onMapViewModeChange(value as MapViewMode)}
-                        data={[
-                          { label: mapView2dLabel, value: '2d' },
-                          { label: mapView3dLabel, value: '3d' },
-                        ]}
-                      />
+                      <>
+                        <Tooltip label={releaseNotesLabel} withArrow>
+                          <ActionIcon
+                            variant="light"
+                            color="teal"
+                            radius="xl"
+                            size="lg"
+                            onClick={onOpenReleaseNotes}
+                            aria-label={releaseNotesLabel}
+                            title={releaseNotesLabel}
+                          >
+                            <IconInfoCircle size={18} />
+                          </ActionIcon>
+                        </Tooltip>
+                        <SegmentedControl
+                          size="xs"
+                          radius="xl"
+                          aria-label={mapViewLabel}
+                          value={mapViewMode}
+                          onChange={(value) => onMapViewModeChange(value as MapViewMode)}
+                          data={[
+                            { label: mapView2dLabel, value: '2d' },
+                            { label: mapView3dLabel, value: '3d' },
+                          ]}
+                        />
+                      </>
                     )}
                     <SegmentedControl
                       size="xs"
                       radius="xl"
+                      aria-label={settingsLanguageLabel}
                       value={language}
                       onChange={(value) => onLanguageChange(value as 'fr' | 'en')}
                       data={[
-                        { label: 'FR', value: 'fr' },
-                        { label: 'EN', value: 'en' },
+                        {
+                          label: (
+                            <Tooltip label={languageFrenchLabel} withArrow>
+                              <span>
+                                <LanguageFlag src={frenchFlagUrl} />
+                                <VisuallyHidden>{languageFrenchLabel}</VisuallyHidden>
+                              </span>
+                            </Tooltip>
+                          ),
+                          value: 'fr',
+                        },
+                        {
+                          label: (
+                            <Tooltip label={languageEnglishLabel} withArrow>
+                              <span>
+                                <LanguageFlag src={englishFlagUrl} />
+                                <VisuallyHidden>{languageEnglishLabel}</VisuallyHidden>
+                              </span>
+                            </Tooltip>
+                          ),
+                          value: 'en',
+                        },
                       ]}
                     />
                     <SegmentedControl
                       size="xs"
                       radius="xl"
+                      aria-label={mobileThemeActionLabel}
                       value={themeMode}
                       onChange={(value) => onThemeModeChange(value as 'light' | 'dark' | 'auto')}
                       data={[
-                        { label: themeAutoLabel, value: 'auto' },
-                        { label: themeLightLabel, value: 'light' },
-                        { label: themeDarkLabel, value: 'dark' },
+                        {
+                          label: (
+                            <Tooltip label={themeAutoLabel} withArrow>
+                              <span>
+                                <IconDeviceDesktop size={16} aria-hidden />
+                                <VisuallyHidden>{themeAutoLabel}</VisuallyHidden>
+                              </span>
+                            </Tooltip>
+                          ),
+                          value: 'auto',
+                        },
+                        {
+                          label: (
+                            <Tooltip label={themeLightLabel} withArrow>
+                              <span>
+                                <IconSun size={16} aria-hidden />
+                                <VisuallyHidden>{themeLightLabel}</VisuallyHidden>
+                              </span>
+                            </Tooltip>
+                          ),
+                          value: 'light',
+                        },
+                        {
+                          label: (
+                            <Tooltip label={themeDarkLabel} withArrow>
+                              <span>
+                                <IconMoon size={16} aria-hidden />
+                                <VisuallyHidden>{themeDarkLabel}</VisuallyHidden>
+                              </span>
+                            </Tooltip>
+                          ),
+                          value: 'dark',
+                        },
                       ]}
                     />
                   </Group>

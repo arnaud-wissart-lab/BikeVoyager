@@ -1,9 +1,10 @@
 import { useComputedColorScheme, useMantineColorScheme, useMantineTheme } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { useDisclosure, useMediaQuery } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
 import { IconDatabase, IconHelpCircle, IconMap2, IconRoute, IconUser } from '@tabler/icons-react'
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { appDisplayVersion } from '../features/app/versionInfo'
 import { useCloudController } from '../features/cloud/useCloudController'
 import { useDataController } from '../features/data/useDataController'
 import { loadAppPreferences } from '../features/data/dataPortability'
@@ -16,6 +17,7 @@ import { useRoutingController } from '../features/routing/useRoutingController'
 import { useAppStore } from '../state/appStore'
 import ShellLayout, { type ShellNavItem } from '../ui/shell/ShellLayout'
 import ShellModals from '../ui/shell/ShellModals'
+import ReleaseNotesDialog from '../ui/app/ReleaseNotesDialog'
 import AppPages from './AppPages'
 import { useAppDetourHandlers } from './useAppDetourHandlers'
 
@@ -25,6 +27,8 @@ export default function AppRoot() {
   const { colorScheme, setColorScheme } = useMantineColorScheme()
   const computedColorScheme = useComputedColorScheme('light')
   const isDesktop = useMediaQuery('(min-width: 60em)')
+  const [releaseNotesOpened, { open: openReleaseNotes, close: closeReleaseNotes }] =
+    useDisclosure(false)
 
   const initialPlannerDraft = useMemo(() => loadPlannerDraft(), [])
   const initialAppPreferences = useMemo(() => loadAppPreferences(), [])
@@ -240,7 +244,10 @@ export default function AppRoot() {
         mobileHeaderTitle={mapController.mobileHeaderTitle}
         mapHeaderTitle={mapController.mapHeaderTitle}
         appNameLabel={t('appName')}
+        appVersionLabel={appDisplayVersion}
         appTaglineLabel={t('tagline')}
+        releaseNotesLabel={t('appVersionAction', { version: appDisplayVersion })}
+        onOpenReleaseNotes={openReleaseNotes}
         language={language}
         onLanguageChange={(value) => {
           void i18n.changeLanguage(value)
@@ -256,6 +263,8 @@ export default function AppRoot() {
         nextThemeMode={nextThemeMode}
         mobileThemeActionLabel={mobileThemeActionLabel}
         settingsLanguageLabel={t('settingsLanguageLabel')}
+        languageFrenchLabel={t('languageFrench')}
+        languageEnglishLabel={t('languageEnglish')}
         themeAutoLabel={t('themeAuto')}
         themeLightLabel={t('themeLight')}
         themeDarkLabel={t('themeDark')}
@@ -271,6 +280,13 @@ export default function AppRoot() {
         isFrench={isFrench}
         onCancelPendingCloudRestore={cloudController.handleCancelPendingCloudRestore}
         onApplyPendingCloudRestore={cloudController.applyPendingCloudRestore}
+      />
+
+      <ReleaseNotesDialog
+        opened={releaseNotesOpened}
+        onClose={closeReleaseNotes}
+        isDesktop={isDesktop}
+        isFrench={isFrench}
       />
     </>
   )

@@ -26,6 +26,70 @@ export type ReleaseNote = {
 export const releaseNotes: ReleaseNote[] = [
   {
     version: appVersion,
+    date: '2026-07-23',
+    sections: [
+      {
+        title: {
+          fr: 'Choix et actions du trajet',
+          en: 'Route selection and actions',
+        },
+        items: [
+          {
+            type: 'improved',
+            text: {
+              fr: 'Catalogue limité aux alternatives réellement distinctes, avec comparaison de la distance et du profil d’altitude.',
+              en: 'Catalog limited to genuinely distinct alternatives, with distance and elevation profile comparison.',
+            },
+          },
+          {
+            type: 'added',
+            text: {
+              fr: 'Tri des alternatives par pertinence, distance ou dénivelé.',
+              en: 'Sort alternatives by relevance, distance, or elevation gain.',
+            },
+          },
+          {
+            type: 'improved',
+            text: {
+              fr: 'Actions du trajet plus compactes sur téléphone, avec compteur d’alternatives et pictogramme GPS.',
+              en: 'More compact route actions on phones, with an alternative counter and GPS icon.',
+            },
+          },
+        ],
+      },
+      {
+        title: {
+          fr: 'Exports et interface',
+          en: 'Exports and interface',
+        },
+        items: [
+          {
+            type: 'added',
+            text: {
+              fr: 'Choix entre les formats GPX et TCX pour exporter le trajet courant.',
+              en: 'Choose between GPX and TCX when exporting the current route.',
+            },
+          },
+          {
+            type: 'improved',
+            text: {
+              fr: 'Accès à la version et à son historique depuis l’en-tête de chaque page.',
+              en: 'Access the version and its history from every page header.',
+            },
+          },
+          {
+            type: 'improved',
+            text: {
+              fr: 'Sélecteurs de langue et de thème remplacés par des pictogrammes accessibles.',
+              en: 'Language and theme selectors replaced with accessible icons.',
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    version: '0.2.0',
     date: '2026-07-11',
     sections: [
       {

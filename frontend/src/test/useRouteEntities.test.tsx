@@ -172,15 +172,15 @@ describe('useRouteEntities', () => {
     const alternativePolyline = viewer.entities.add.mock.calls[1][0].polyline
 
     expect(primaryPolyline).toMatchObject({
-      width: 4,
+      width: 6,
       clampToGround: true,
     })
     expect(alternativePolyline).toMatchObject({
-      width: 3,
+      width: 4,
       clampToGround: true,
       material: {
         color: '#1971c2',
-        alpha: 0.58,
+        alpha: 0.9,
       },
     })
   })

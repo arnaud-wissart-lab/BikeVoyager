@@ -37,10 +37,11 @@ type MapSummaryPanelProps = {
   alternativeRouteLabel: string
   alternativeUnavailableLabel: string
   isAlternativeUnavailable: boolean
+  isAlternativeComparisonActive: boolean
   isExporting: boolean
   exportError: string | null
   routeErrorMessage: string | null
-  onRecalculateAlternative: () => void
+  onOpenAlternativeComparison: () => void
   onOpenNavigationSetup: () => void
   onExportGpx: () => void
   onOpenSaveTripDialog: () => void
@@ -67,10 +68,11 @@ export default function MapSummaryPanel({
   alternativeRouteLabel,
   alternativeUnavailableLabel,
   isAlternativeUnavailable,
+  isAlternativeComparisonActive,
   isExporting,
   exportError,
   routeErrorMessage,
-  onRecalculateAlternative,
+  onOpenAlternativeComparison,
   onOpenNavigationSetup,
   onExportGpx,
   onOpenSaveTripDialog,
@@ -238,7 +240,7 @@ export default function MapSummaryPanel({
       ) : (
         <Button
           variant="default"
-          onClick={onRecalculateAlternative}
+          onClick={onOpenAlternativeComparison}
           fullWidth={isCompact}
           disabled={!hasRoute || isRouteLoading}
           leftSection={<IconRefresh size={16} />}
@@ -263,7 +265,7 @@ export default function MapSummaryPanel({
         loading={isExporting}
         leftSection={<IconDownload size={16} />}
       >
-        {t('mapExportGpx')}
+        {t(isAlternativeComparisonActive ? 'mapExportCurrentGpx' : 'mapExportGpx')}
       </Button>
       <Button
         variant="outline"
@@ -272,7 +274,7 @@ export default function MapSummaryPanel({
         disabled={!hasRoute || isRouteLoading}
         leftSection={<IconDeviceFloppy size={16} />}
       >
-        {t('dataSaveTrip')}
+        {t(isAlternativeComparisonActive ? 'dataSaveCurrentTrip' : 'dataSaveTrip')}
       </Button>
       {exportError && (
         <Text size="xs" c="red.6">

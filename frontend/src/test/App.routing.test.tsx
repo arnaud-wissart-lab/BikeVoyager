@@ -1530,6 +1530,33 @@ describe('App routing', () => {
     expect(screen.getAllByText('2.4 km').length).toBeGreaterThan(0)
   })
 
+  it('rouvre la comparaison existante sans recalculer après sa fermeture', async () => {
+    const user = userEvent.setup()
+    const mockFetch = setupRouteComparisonTest(createJsonResponse(alternativeComparisonRoute))
+
+    renderWithProviders(<App />)
+
+    await user.click(await screen.findByRole('button', { name: 'Proposer un autre trajet' }))
+    await screen.findByText('Comparer les trajets')
+
+    await user.keyboard('{Escape}')
+
+    await waitFor(() => {
+      expect(screen.queryByText('Comparer les trajets')).not.toBeInTheDocument()
+    })
+    expect(screen.getByRole('button', { name: 'Voir la comparaison' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Exporter le trajet actuel en GPX' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sauvegarder le trajet actuel' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Voir la comparaison' }))
+
+    expect(await screen.findByText('Comparer les trajets')).toBeInTheDocument()
+    expect(screen.getAllByText('2.4 km').length).toBeGreaterThan(0)
+    expect(getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)).toHaveLength(1)
+  })
+
   it('garde le trajet courant quand l’utilisateur conserve le trajet actuel', async () => {
     const user = userEvent.setup()
     setupRouteComparisonTest(createJsonResponse(alternativeComparisonRoute))

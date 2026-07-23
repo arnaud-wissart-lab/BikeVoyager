@@ -151,14 +151,17 @@ export default function MapRoute({
     detourSummary: mapController.detourSummary,
     hasRoute: mapController.hasRoute,
     isRouteLoading: store.isRouteLoading || store.isAlternativeLoading,
-    alternativeRouteLabel: routingController.alternativeRouteLabel,
+    alternativeRouteLabel: store.pendingAlternativeRoute
+      ? t('routeComparisonOpen')
+      : routingController.alternativeRouteLabel,
     alternativeUnavailableLabel: routingController.alternativeUnavailableLabel,
     isAlternativeUnavailable: routingController.isAlternativeUnavailable,
+    isAlternativeComparisonActive: Boolean(store.pendingAlternativeRoute),
     isExporting: store.isExporting,
     exportError: store.exportError,
     routeErrorMessage: routingController.routeErrorDisplayMessage,
-    onRecalculateAlternative: () => {
-      void routingController.handleRecalculateAlternative()
+    onOpenAlternativeComparison: () => {
+      void routingController.handleOpenAlternativeComparison()
     },
     onOpenNavigationSetup: mapController.handleOpenNavigationSetup,
     onExportGpx: () => {

@@ -1,10 +1,10 @@
 import {
   Alert,
   Badge,
+  Box,
   Button,
   Drawer,
   Group,
-  Modal,
   ScrollArea,
   Stack,
   Table,
@@ -44,6 +44,9 @@ const difficultyTranslationKeys: Record<RouteDifficulty, string> = {
   demanding: 'routeDifficultyDemanding',
   hard: 'routeDifficultyHard',
 }
+
+const currentRouteColor = '#2b8a3e'
+const alternativeRouteColor = '#1971c2'
 
 export default function RouteAlternativeComparisonDialog({
   opened,
@@ -200,6 +203,24 @@ export default function RouteAlternativeComparisonDialog({
       ].filter((label): label is string => Boolean(label))
     : []
 
+  const renderRouteHeader = (label: string, color: string) => (
+    <Group gap={6} wrap="nowrap">
+      <Box
+        aria-hidden
+        style={{
+          width: 20,
+          height: 4,
+          borderRadius: 2,
+          backgroundColor: color,
+          flexShrink: 0,
+        }}
+      />
+      <Text component="span" size="sm" fw={600}>
+        {label}
+      </Text>
+    </Group>
+  )
+
   const content = (
     <Stack gap="md">
       {isLoading && (
@@ -235,8 +256,12 @@ export default function RouteAlternativeComparisonDialog({
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>{t('routeComparisonMetric')}</Table.Th>
-                <Table.Th>{t('routeComparisonCurrent')}</Table.Th>
-                <Table.Th>{t('routeComparisonAlternative')}</Table.Th>
+                <Table.Th>
+                  {renderRouteHeader(t('routeComparisonCurrent'), currentRouteColor)}
+                </Table.Th>
+                <Table.Th>
+                  {renderRouteHeader(t('routeComparisonAlternative'), alternativeRouteColor)}
+                </Table.Th>
                 <Table.Th>{t('routeComparisonDelta')}</Table.Th>
               </Table.Tr>
             </Table.Thead>
@@ -289,23 +314,25 @@ export default function RouteAlternativeComparisonDialog({
     </Stack>
   )
 
-  return isCompact ? (
+  return (
     <Drawer
       opened={opened}
       onClose={onClose}
       title={t('routeComparisonTitle')}
-      position="bottom"
-      size="92%"
+      position={isCompact ? 'bottom' : 'right'}
+      size={isCompact ? '78%' : 'min(42rem, 48vw)'}
+      withOverlay={false}
+      closeOnClickOutside={false}
+      trapFocus={false}
+      lockScroll={false}
+      data-testid="route-comparison-panel"
     >
-      <ScrollArea.Autosize mah="calc(92dvh - 5rem)" offsetScrollbars>
+      <ScrollArea.Autosize
+        mah={isCompact ? 'calc(78dvh - 5rem)' : 'calc(100dvh - 5rem)'}
+        offsetScrollbars
+      >
         {content}
       </ScrollArea.Autosize>
     </Drawer>
-  ) : (
-    <Modal opened={opened} onClose={onClose} title={t('routeComparisonTitle')} size="xl">
-      <ScrollArea.Autosize mah="72vh" offsetScrollbars>
-        {content}
-      </ScrollArea.Autosize>
-    </Modal>
   )
 }

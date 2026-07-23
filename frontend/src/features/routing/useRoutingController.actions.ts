@@ -66,6 +66,7 @@ type RoutingControllerActionsStoreSlice = Pick<
   | 'routeAlternativeIndex'
   | 'loopAlternativeIndex'
   | 'pendingAlternativeRoute'
+  | 'routeComparison'
   | 'isRouteLoading'
   | 'isAlternativeLoading'
   | 'setIsRouteLoading'
@@ -134,6 +135,7 @@ export const createRoutingControllerActions = ({
     routeAlternativeIndex,
     loopAlternativeIndex,
     pendingAlternativeRoute,
+    routeComparison,
     isRouteLoading,
     isAlternativeLoading,
     setIsRouteLoading,
@@ -519,6 +521,15 @@ export const createRoutingControllerActions = ({
     }
   }
 
+  const handleOpenAlternativeComparison = async () => {
+    if (pendingAlternativeRoute && routeComparison) {
+      setIsAlternativeComparisonOpen(true)
+      return
+    }
+
+    await handleRecalculateAlternative()
+  }
+
   const handleApplyAlternativeRoute = () => {
     if (!pendingAlternativeRoute) {
       return
@@ -577,6 +588,7 @@ export const createRoutingControllerActions = ({
     addDetourPointAndRecalculate,
     removeDetourPointAndRecalculate,
     handleRecalculateAlternative,
+    handleOpenAlternativeComparison,
     handleApplyAlternativeRoute,
     handleKeepCurrentRoute,
     handleCloseAlternativeComparison,

@@ -26,7 +26,10 @@ type CreateRouteRequestActionParams = RouteErrorSetters & {
   setIsDirty: (value: boolean) => void
   setDetourPoints: (value: DetourPoint[]) => void
   onNavigate: (next: RouteKey, force?: boolean) => void
+  onResultApplied: () => void
 }
+
+type AcceptRouteResult = (result: TripResult) => boolean
 
 type ResolveRouteLocationsParams = {
   onewayStartPlace: RouteLocation | null
@@ -132,13 +135,18 @@ export const createRouteRequestAction = ({
   setIsDirty,
   setDetourPoints,
   onNavigate,
+  onResultApplied,
 }: CreateRouteRequestActionParams) => {
   const errorSetters: RouteErrorSetters = {
     setRouteErrorMessage,
     setRouteErrorKey,
   }
 
-  return async (requestBody: RouteRequestPayload, nextDetours: DetourPoint[] = []) => {
+  return async (
+    requestBody: RouteRequestPayload,
+    nextDetours: DetourPoint[] = [],
+    acceptResult?: AcceptRouteResult,
+  ) => {
     setIsRouteLoading(true)
     lastRouteRequestRef.current = {
       type: 'route',
@@ -152,10 +160,15 @@ export const createRouteRequestAction = ({
         return false
       }
 
+      if (acceptResult && !acceptResult(result.result)) {
+        return false
+      }
+
       setRouteResult(result.result)
       setHasResult(true)
       setIsDirty(false)
       setDetourPoints(nextDetours)
+      onResultApplied()
       onNavigate('carte', true)
       return true
     } catch {

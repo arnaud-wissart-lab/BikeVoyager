@@ -1,6 +1,22 @@
 import { mapPaddingRatio, minimumMapSpan } from './constants'
 import type { RouteBounds, RouteGeometry } from './types'
 
+const routeCoordinateTolerance = 0.00001
+
+export const areRouteGeometriesEquivalent = (current: RouteGeometry, candidate: RouteGeometry) => {
+  if (current.coordinates.length !== candidate.coordinates.length) {
+    return false
+  }
+
+  return current.coordinates.every(([currentLon, currentLat], index) => {
+    const [candidateLon, candidateLat] = candidate.coordinates[index]
+    return (
+      Math.abs(currentLon - candidateLon) <= routeCoordinateTolerance &&
+      Math.abs(currentLat - candidateLat) <= routeCoordinateTolerance
+    )
+  })
+}
+
 export const computeRouteBounds = (geometry: RouteGeometry | null): RouteBounds | null => {
   if (!geometry || geometry.type !== 'LineString' || geometry.coordinates.length === 0) {
     return null

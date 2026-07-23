@@ -21,6 +21,7 @@ import {
   createPlannerPanelStyles,
   exportRouteAsGpxAction,
   resolveAlternativeRouteLabel,
+  resolveAlternativeUnavailableLabel,
   resolveRouteErrorDisplayMessage,
   submitDeveloperFeedbackAction,
 } from './routing.helpers'
@@ -84,6 +85,7 @@ export const useRoutingController = ({
     setIsAlternativeComparisonOpen,
   } = store
   const [apiHealthStatus, setApiHealthStatus] = useState<ApiHealthStatus | null>(null)
+  const [isAlternativeUnavailable, setIsAlternativeUnavailable] = useState(false)
 
   const activeStartPlace = tripType === 'loop' ? loopStartPlace : onewayStartPlace
   const hasStartSelection = Boolean(activeStartPlace)
@@ -140,6 +142,8 @@ export const useRoutingController = ({
     t,
     onNavigate,
     markDirty,
+    isAlternativeUnavailable,
+    setIsAlternativeUnavailable,
   })
 
   const navigationAutoRecalculation = useNavigationAutoRecalculation({
@@ -438,6 +442,7 @@ export const useRoutingController = ({
   const isValhallaBuildRunning = valhallaStatus?.build?.state === 'running'
   const valhallaUpdateAvailable = valhallaStatus?.update?.update_available === true
   const alternativeRouteLabel = resolveAlternativeRouteLabel(routeResult, t)
+  const alternativeUnavailableLabel = resolveAlternativeUnavailableLabel(routeResult, t)
 
   return {
     showLocationInputs,
@@ -485,5 +490,7 @@ export const useRoutingController = ({
     isValhallaBuildRunning,
     valhallaUpdateAvailable,
     alternativeRouteLabel,
+    alternativeUnavailableLabel,
+    isAlternativeUnavailable,
   }
 }

@@ -25,7 +25,10 @@ type CreateLoopRequestActionParams = RouteErrorSetters & {
   setIsDirty: (value: boolean) => void
   setDetourPoints: (value: DetourPoint[]) => void
   onNavigate: (next: RouteKey, force?: boolean) => void
+  onResultApplied: () => void
 }
+
+type AcceptLoopResult = (result: TripResult) => boolean
 
 type ResolveLoopStartLocationParams = {
   loopStartPlace: RouteLocation | null
@@ -111,13 +114,18 @@ export const createLoopRequestAction = ({
   setIsDirty,
   setDetourPoints,
   onNavigate,
+  onResultApplied,
 }: CreateLoopRequestActionParams) => {
   const errorSetters: RouteErrorSetters = {
     setRouteErrorMessage,
     setRouteErrorKey,
   }
 
-  return async (requestBody: LoopRequestPayload, nextDetours: DetourPoint[] = []) => {
+  return async (
+    requestBody: LoopRequestPayload,
+    nextDetours: DetourPoint[] = [],
+    acceptResult?: AcceptLoopResult,
+  ) => {
     setIsRouteLoading(true)
     lastRouteRequestRef.current = {
       type: 'loop',
@@ -131,10 +139,15 @@ export const createLoopRequestAction = ({
         return false
       }
 
+      if (acceptResult && !acceptResult(result.result)) {
+        return false
+      }
+
       setRouteResult(result.result)
       setHasResult(true)
       setIsDirty(false)
       setDetourPoints(nextDetours)
+      onResultApplied()
       onNavigate('carte', true)
       return true
     } catch {

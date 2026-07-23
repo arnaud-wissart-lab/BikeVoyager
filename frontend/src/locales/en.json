@@ -210,6 +210,8 @@
   "routeComparisonClimbsLess": "This alternative climbs less",
   "routeComparisonClimbsMore": "This alternative climbs more",
   "routeComparisonDifficultyChanged": "Different difficulty",
+  "mapRouteAlternativeUnavailable": "No other distinct route was found.",
+  "mapLoopAlternativeUnavailable": "No other distinct loop was found.",
   "mapHeaderRoute": "{{start}} → {{end}}",
   "mapHeaderLoop": "Loop • start: {{start}}",
   "mapLabelDistance": "Distance",

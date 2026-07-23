@@ -152,6 +152,8 @@ export default function MapRoute({
     hasRoute: mapController.hasRoute,
     isRouteLoading: store.isRouteLoading || store.isAlternativeLoading,
     alternativeRouteLabel: routingController.alternativeRouteLabel,
+    alternativeUnavailableLabel: routingController.alternativeUnavailableLabel,
+    isAlternativeUnavailable: routingController.isAlternativeUnavailable,
     isExporting: store.isExporting,
     exportError: store.exportError,
     routeErrorMessage: routingController.routeErrorDisplayMessage,

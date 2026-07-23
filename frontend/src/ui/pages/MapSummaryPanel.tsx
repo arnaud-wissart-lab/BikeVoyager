@@ -35,6 +35,8 @@ type MapSummaryPanelProps = {
   hasRoute: boolean
   isRouteLoading: boolean
   alternativeRouteLabel: string
+  alternativeUnavailableLabel: string
+  isAlternativeUnavailable: boolean
   isExporting: boolean
   exportError: string | null
   routeErrorMessage: string | null
@@ -63,6 +65,8 @@ export default function MapSummaryPanel({
   hasRoute,
   isRouteLoading,
   alternativeRouteLabel,
+  alternativeUnavailableLabel,
+  isAlternativeUnavailable,
   isExporting,
   exportError,
   routeErrorMessage,
@@ -227,15 +231,21 @@ export default function MapSummaryPanel({
           {t('roadbookLoopUnavailable')}
         </Text>
       )}
-      <Button
-        variant="default"
-        onClick={onRecalculateAlternative}
-        fullWidth={isCompact}
-        disabled={!hasRoute || isRouteLoading}
-        leftSection={<IconRefresh size={16} />}
-      >
-        {alternativeRouteLabel}
-      </Button>
+      {isAlternativeUnavailable ? (
+        <Text size="xs" c="dimmed" role="status" data-testid="route-alternative-unavailable">
+          {alternativeUnavailableLabel}
+        </Text>
+      ) : (
+        <Button
+          variant="default"
+          onClick={onRecalculateAlternative}
+          fullWidth={isCompact}
+          disabled={!hasRoute || isRouteLoading}
+          leftSection={<IconRefresh size={16} />}
+        >
+          {alternativeRouteLabel}
+        </Button>
+      )}
       <Button
         onClick={onOpenNavigationSetup}
         fullWidth={isCompact}

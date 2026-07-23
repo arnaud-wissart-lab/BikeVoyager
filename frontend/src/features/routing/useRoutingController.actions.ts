@@ -4,10 +4,13 @@ import { fetchLoop, fetchRoute } from './api'
 import {
   buildLoopRequest,
   createRouteComparisonSummary,
+  loopAlternativeAttemptLimit,
+  routeOptionVariants,
   type DetourPoint,
   type RouteKey,
   type RouteAlternativeCandidate,
 } from './domain'
+import { requestDistinctAlternative } from './actions.alternative'
 import {
   clearRouteErrors,
   normalizeLoopResponseError,
@@ -100,6 +103,8 @@ type CreateRoutingControllerActionsParams = {
   t: TFunction
   onNavigate: (next: RouteKey, force?: boolean) => void
   markDirty: () => void
+  isAlternativeUnavailable: boolean
+  setIsAlternativeUnavailable: (value: boolean) => void
 }
 
 export const createRoutingControllerActions = ({
@@ -109,6 +114,8 @@ export const createRoutingControllerActions = ({
   t,
   onNavigate,
   markDirty,
+  isAlternativeUnavailable,
+  setIsAlternativeUnavailable,
 }: CreateRoutingControllerActionsParams) => {
   const {
     mode,
@@ -156,6 +163,7 @@ export const createRoutingControllerActions = ({
     setIsDirty,
     setDetourPoints,
     onNavigate,
+    onResultApplied: () => setIsAlternativeUnavailable(false),
   })
 
   const requestLoop = createLoopRequestAction({
@@ -168,6 +176,7 @@ export const createRoutingControllerActions = ({
     setIsDirty,
     setDetourPoints,
     onNavigate,
+    onResultApplied: () => setIsAlternativeUnavailable(false),
   })
 
   const { getNavigationRecalculationPlan, handleRecalculateFromCurrentPosition } =
@@ -303,14 +312,14 @@ export const createRoutingControllerActions = ({
   }
 
   const handleRecalculateAlternative = async () => {
-    if (!routeResult || isRouteLoading || isAlternativeLoading) {
+    if (!routeResult || isRouteLoading || isAlternativeLoading || isAlternativeUnavailable) {
       return
     }
 
     const resolvedMode = mode ?? 'bike'
     if (routeResult.kind === 'loop') {
-      const nextVariation =
-        (pendingAlternativeRoute?.loopAlternativeIndex ?? loopAlternativeIndex) + 1
+      const currentAlternativeIndex =
+        pendingAlternativeRoute?.loopAlternativeIndex ?? loopAlternativeIndex
 
       clearRouteErrors(errorSetters)
       setPendingAlternativeRoute(null)
@@ -331,33 +340,49 @@ export const createRoutingControllerActions = ({
         return
       }
 
-      const requestBody = buildLoopRequestPayload({
-        start: startLocation,
-        targetDistanceKm: loopDistance,
-        mode: resolvedMode,
-        speedKmh: profileSettings.speeds[resolvedMode],
-        ebikeAssist: profileSettings.ebikeAssist,
-        variation: nextVariation,
-        detourPoints,
-      })
-
       setIsAlternativeLoading(true)
-      lastRouteRequestRef.current = {
-        type: 'loop',
-        payload: requestBody,
-      }
-
       try {
-        const result = await fetchLoop(requestBody)
-        if (!result.ok) {
-          await normalizeLoopResponseError(result.response, errorSetters)
+        const alternative = await requestDistinctAlternative({
+          currentGeometry: routeResult.geometry,
+          currentIndex: currentAlternativeIndex,
+          attemptCount: loopAlternativeAttemptLimit,
+          load: async (variation) => {
+            const requestBody = buildLoopRequestPayload({
+              start: startLocation,
+              targetDistanceKm: loopDistance,
+              mode: resolvedMode,
+              speedKmh: profileSettings.speeds[resolvedMode],
+              ebikeAssist: profileSettings.ebikeAssist,
+              variation,
+              detourPoints,
+            })
+            lastRouteRequestRef.current = {
+              type: 'loop',
+              payload: requestBody,
+            }
+
+            const result = await fetchLoop(requestBody)
+            return result.ok
+              ? { ok: true as const, candidate: result.result }
+              : { ok: false as const, failure: result.response }
+          },
+        })
+
+        if (alternative.status === 'failed') {
+          await normalizeLoopResponseError(alternative.failure, errorSetters)
+          return
+        }
+
+        if (alternative.status === 'unavailable') {
+          setIsAlternativeUnavailable(true)
+          setIsAlternativeComparisonOpen(false)
           return
         }
 
         const candidate: RouteAlternativeCandidate = {
-          route: result.result,
+          route: alternative.candidate,
           routeAlternativeIndex: null,
-          loopAlternativeIndex: nextVariation,
+          loopAlternativeIndex: alternative.nextIndex,
         }
         setPendingAlternativeRoute(candidate)
         setRouteComparison(
@@ -373,11 +398,12 @@ export const createRoutingControllerActions = ({
       } finally {
         setIsAlternativeLoading(false)
       }
+
       return
     }
 
-    const nextVariant =
-      (pendingAlternativeRoute?.routeAlternativeIndex ?? routeAlternativeIndex) + 1
+    const currentAlternativeIndex =
+      pendingAlternativeRoute?.routeAlternativeIndex ?? routeAlternativeIndex
 
     clearRouteErrors(errorSetters)
     setPendingAlternativeRoute(null)
@@ -400,32 +426,48 @@ export const createRoutingControllerActions = ({
       return
     }
 
-    const requestBody = buildRouteRequestPayload({
-      from: fromLocation,
-      to: toLocation,
-      mode: resolvedMode,
-      speedKmh: profileSettings.speeds[resolvedMode],
-      ebikeAssist: profileSettings.ebikeAssist,
-      variantIndex: nextVariant,
-      detourPoints,
-    })
-
     setIsAlternativeLoading(true)
-    lastRouteRequestRef.current = {
-      type: 'route',
-      payload: requestBody,
-    }
-
     try {
-      const result = await fetchRoute(requestBody)
-      if (!result.ok) {
-        await normalizeRouteResponseError(result.response, errorSetters)
+      const alternative = await requestDistinctAlternative({
+        currentGeometry: routeResult.geometry,
+        currentIndex: currentAlternativeIndex,
+        attemptCount: routeOptionVariants.length,
+        load: async (variantIndex) => {
+          const requestBody = buildRouteRequestPayload({
+            from: fromLocation,
+            to: toLocation,
+            mode: resolvedMode,
+            speedKmh: profileSettings.speeds[resolvedMode],
+            ebikeAssist: profileSettings.ebikeAssist,
+            variantIndex,
+            detourPoints,
+          })
+          lastRouteRequestRef.current = {
+            type: 'route',
+            payload: requestBody,
+          }
+
+          const result = await fetchRoute(requestBody)
+          return result.ok
+            ? { ok: true as const, candidate: result.result }
+            : { ok: false as const, failure: result.response }
+        },
+      })
+
+      if (alternative.status === 'failed') {
+        await normalizeRouteResponseError(alternative.failure, errorSetters)
+        return
+      }
+
+      if (alternative.status === 'unavailable') {
+        setIsAlternativeUnavailable(true)
+        setIsAlternativeComparisonOpen(false)
         return
       }
 
       const candidate: RouteAlternativeCandidate = {
-        route: result.result,
-        routeAlternativeIndex: nextVariant,
+        route: alternative.candidate,
+        routeAlternativeIndex: alternative.nextIndex,
         loopAlternativeIndex: null,
       }
       setPendingAlternativeRoute(candidate)

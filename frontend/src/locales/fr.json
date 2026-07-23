@@ -210,6 +210,8 @@
   "routeComparisonClimbsLess": "Cette alternative monte moins",
   "routeComparisonClimbsMore": "Cette alternative monte plus",
   "routeComparisonDifficultyChanged": "Difficulté différente",
+  "mapRouteAlternativeUnavailable": "Aucun autre trajet distinct n’a été trouvé.",
+  "mapLoopAlternativeUnavailable": "Aucune autre boucle distincte n’a été trouvée.",
   "mapHeaderRoute": "{{start}} → {{end}}",
   "mapHeaderLoop": "Boucle • départ : {{start}}",
   "mapLabelDistance": "Distance",

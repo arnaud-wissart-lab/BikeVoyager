@@ -33,6 +33,7 @@ export const routeOptionVariants: RouteOptions[] = [
   { preferCycleways: true, avoidHills: true },
   { preferCycleways: false, avoidHills: true },
 ]
+export const loopAlternativeAttemptLimit = 4
 
 export const defaultPoiCategories: PoiCategory[] = [
   'monuments',

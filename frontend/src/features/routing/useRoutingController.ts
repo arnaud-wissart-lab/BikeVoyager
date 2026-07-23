@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   fetchApiHealth,
   fetchValhallaStatus,
@@ -15,6 +15,7 @@ import {
   parseContentDispositionFileName,
   plannerDraftStorageKey,
   routeStorageKey,
+  type TripResult,
 } from './domain'
 import {
   computeCanSubmitFeedback,
@@ -86,6 +87,7 @@ export const useRoutingController = ({
   } = store
   const [apiHealthStatus, setApiHealthStatus] = useState<ApiHealthStatus | null>(null)
   const [isAlternativeUnavailable, setIsAlternativeUnavailable] = useState(false)
+  const alternativeRouteHistoryRef = useRef<TripResult[]>([])
 
   const activeStartPlace = tripType === 'loop' ? loopStartPlace : onewayStartPlace
   const hasStartSelection = Boolean(activeStartPlace)
@@ -144,6 +146,7 @@ export const useRoutingController = ({
     markDirty,
     isAlternativeUnavailable,
     setIsAlternativeUnavailable,
+    alternativeRouteHistoryRef,
   })
 
   const navigationAutoRecalculation = useNavigationAutoRecalculation({
@@ -319,6 +322,7 @@ export const useRoutingController = ({
   }, [routeResult, setExportError, setIsExporting])
 
   useEffect(() => {
+    alternativeRouteHistoryRef.current = []
     setPendingAlternativeRoute(null)
     setRouteComparison(null)
     setIsAlternativeComparisonOpen(false)

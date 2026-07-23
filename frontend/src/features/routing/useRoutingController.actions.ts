@@ -2,6 +2,7 @@ import type { TFunction } from 'i18next'
 import type { AppStore } from '../../state/appStore'
 import { fetchLoop, fetchRoute } from './api'
 import {
+  areRoutesEquivalentForComparison,
   buildLoopRequest,
   createRouteComparisonSummary,
   loopAlternativeAttemptLimit,
@@ -9,6 +10,7 @@ import {
   type DetourPoint,
   type RouteKey,
   type RouteAlternativeCandidate,
+  type TripResult,
 } from './domain'
 import { requestDistinctAlternative } from './actions.alternative'
 import {
@@ -105,6 +107,7 @@ type CreateRoutingControllerActionsParams = {
   markDirty: () => void
   isAlternativeUnavailable: boolean
   setIsAlternativeUnavailable: (value: boolean) => void
+  alternativeRouteHistoryRef: { current: TripResult[] }
 }
 
 export const createRoutingControllerActions = ({
@@ -116,6 +119,7 @@ export const createRoutingControllerActions = ({
   markDirty,
   isAlternativeUnavailable,
   setIsAlternativeUnavailable,
+  alternativeRouteHistoryRef,
 }: CreateRoutingControllerActionsParams) => {
   const {
     mode,
@@ -153,6 +157,10 @@ export const createRoutingControllerActions = ({
     setRouteErrorKey,
   }
 
+  const clearAlternativeHistory = () => {
+    alternativeRouteHistoryRef.current = []
+  }
+
   const requestRoute = createRouteRequestAction({
     setIsRouteLoading,
     lastRouteRequestRef,
@@ -163,7 +171,10 @@ export const createRoutingControllerActions = ({
     setIsDirty,
     setDetourPoints,
     onNavigate,
-    onResultApplied: () => setIsAlternativeUnavailable(false),
+    onResultApplied: () => {
+      clearAlternativeHistory()
+      setIsAlternativeUnavailable(false)
+    },
   })
 
   const requestLoop = createLoopRequestAction({
@@ -176,7 +187,10 @@ export const createRoutingControllerActions = ({
     setIsDirty,
     setDetourPoints,
     onNavigate,
-    onResultApplied: () => setIsAlternativeUnavailable(false),
+    onResultApplied: () => {
+      clearAlternativeHistory()
+      setIsAlternativeUnavailable(false)
+    },
   })
 
   const { getNavigationRecalculationPlan, handleRecalculateFromCurrentPosition } =
@@ -317,6 +331,15 @@ export const createRoutingControllerActions = ({
     }
 
     const resolvedMode = mode ?? 'bike'
+    const excludedCandidates = [routeResult, ...alternativeRouteHistoryRef.current]
+    const areEquivalent = (excluded: TripResult, candidate: TripResult) =>
+      areRoutesEquivalentForComparison(
+        excluded,
+        candidate,
+        resolvedMode,
+        profileSettings.ebikeAssist,
+      )
+
     if (routeResult.kind === 'loop') {
       const currentAlternativeIndex =
         pendingAlternativeRoute?.loopAlternativeIndex ?? loopAlternativeIndex
@@ -343,9 +366,10 @@ export const createRoutingControllerActions = ({
       setIsAlternativeLoading(true)
       try {
         const alternative = await requestDistinctAlternative({
-          currentGeometry: routeResult.geometry,
+          excludedCandidates,
           currentIndex: currentAlternativeIndex,
           attemptCount: loopAlternativeAttemptLimit,
+          areEquivalent,
           load: async (variation) => {
             const requestBody = buildLoopRequestPayload({
               start: startLocation,
@@ -384,6 +408,10 @@ export const createRoutingControllerActions = ({
           routeAlternativeIndex: null,
           loopAlternativeIndex: alternative.nextIndex,
         }
+        alternativeRouteHistoryRef.current = [
+          ...alternativeRouteHistoryRef.current,
+          alternative.candidate,
+        ]
         setPendingAlternativeRoute(candidate)
         setRouteComparison(
           createRouteComparisonSummary(
@@ -429,9 +457,10 @@ export const createRoutingControllerActions = ({
     setIsAlternativeLoading(true)
     try {
       const alternative = await requestDistinctAlternative({
-        currentGeometry: routeResult.geometry,
+        excludedCandidates,
         currentIndex: currentAlternativeIndex,
         attemptCount: routeOptionVariants.length,
+        areEquivalent,
         load: async (variantIndex) => {
           const requestBody = buildRouteRequestPayload({
             from: fromLocation,
@@ -470,6 +499,10 @@ export const createRoutingControllerActions = ({
         routeAlternativeIndex: alternative.nextIndex,
         loopAlternativeIndex: null,
       }
+      alternativeRouteHistoryRef.current = [
+        ...alternativeRouteHistoryRef.current,
+        alternative.candidate,
+      ]
       setPendingAlternativeRoute(candidate)
       setRouteComparison(
         createRouteComparisonSummary(
@@ -500,6 +533,7 @@ export const createRoutingControllerActions = ({
     if (pendingAlternativeRoute.loopAlternativeIndex !== null) {
       setLoopAlternativeIndex(pendingAlternativeRoute.loopAlternativeIndex)
     }
+    clearAlternativeHistory()
     setPendingAlternativeRoute(null)
     setRouteComparison(null)
     setIsAlternativeComparisonOpen(false)
@@ -507,6 +541,7 @@ export const createRoutingControllerActions = ({
   }
 
   const handleKeepCurrentRoute = () => {
+    clearAlternativeHistory()
     setPendingAlternativeRoute(null)
     setRouteComparison(null)
     setIsAlternativeComparisonOpen(false)

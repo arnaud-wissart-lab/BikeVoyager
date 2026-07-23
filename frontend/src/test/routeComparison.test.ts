@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  areRoutesEquivalentForComparison,
   createRouteComparisonMetrics,
   createRouteComparisonSummary,
   type TripResult,
@@ -120,5 +121,36 @@ describe('route comparison', () => {
 
   it('retourne null si l’alternative est absente', () => {
     expect(createRouteComparisonSummary(createRoute(), null, 'bike', 'medium')).toBeNull()
+  })
+
+  it('considère comme équivalents deux trajets dont toutes les métriques affichées sont identiques', () => {
+    const current = createRoute()
+    const candidate = createRoute({
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [2.3522, 48.8566],
+          [2.38, 48.87],
+        ],
+      },
+    })
+
+    expect(areRoutesEquivalentForComparison(current, candidate, 'bike', 'medium')).toBe(true)
+  })
+
+  it('conserve une alternative dont au moins une métrique affichée diffère', () => {
+    const current = createRoute()
+    const candidate = createRoute({
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [2.3522, 48.8566],
+          [2.38, 48.87],
+        ],
+      },
+      distance_m: 10100,
+    })
+
+    expect(areRoutesEquivalentForComparison(current, candidate, 'bike', 'medium')).toBe(false)
   })
 })

@@ -121,6 +121,25 @@ const alternativeComparisonLoop: TripResult = {
   ],
 }
 
+const secondAlternativeComparisonLoop: TripResult = {
+  ...alternativeComparisonLoop,
+  geometry: {
+    type: 'LineString',
+    coordinates: [
+      [2.3522, 48.8566],
+      [2.38, 48.87],
+      [2.3522, 48.8566],
+    ],
+  },
+  distance_m: 6000,
+  eta_s: 1500,
+  elevation_profile: [
+    { distance_m: 0, elevation_m: 100 },
+    { distance_m: 3000, elevation_m: 155 },
+    { distance_m: 6000, elevation_m: 105 },
+  ],
+}
+
 const originalWakeLockDescriptor = Object.getOwnPropertyDescriptor(navigator, 'wakeLock')
 const originalGeolocationDescriptor = Object.getOwnPropertyDescriptor(navigator, 'geolocation')
 
@@ -1430,6 +1449,69 @@ describe('App routing', () => {
     expect(routeBodies[1].options).toEqual(routeOptionVariants[2])
   })
 
+  it('ignore une géométrie différente quand toutes les métriques affichées sont identiques', async () => {
+    const user = userEvent.setup()
+    const sameMetricsWithDifferentGeometry = {
+      ...currentComparisonRoute,
+      geometry: alternativeComparisonRoute.geometry,
+    }
+    const routeResponses = [
+      createJsonResponse(sameMetricsWithDifferentGeometry),
+      createJsonResponse(alternativeComparisonRoute),
+    ]
+    const mockFetch = setupRouteComparisonTest(
+      () => routeResponses.shift() ?? createJsonResponse(alternativeComparisonRoute),
+    )
+
+    renderWithProviders(<App />)
+
+    await user.click(await screen.findByRole('button', { name: 'Proposer un autre trajet' }))
+
+    expect(await screen.findByText('Comparer les trajets')).toBeInTheDocument()
+    expect(screen.getAllByText('1.2 km').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('2.4 km').length).toBeGreaterThan(0)
+
+    const routeBodies = getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)
+    expect(routeBodies).toHaveLength(2)
+    expect(routeBodies[0].options).toEqual(routeOptionVariants[1])
+    expect(routeBodies[1].options).toEqual(routeOptionVariants[2])
+  })
+
+  it('ne repropose pas une alternative déjà vue pendant la même comparaison', async () => {
+    const user = userEvent.setup()
+    const routeResponses = [
+      createJsonResponse(alternativeComparisonRoute),
+      createJsonResponse(currentComparisonRoute),
+      createJsonResponse(alternativeComparisonRoute),
+      createJsonResponse(currentComparisonRoute),
+      createJsonResponse(alternativeComparisonRoute),
+    ]
+    const mockFetch = setupRouteComparisonTest(
+      () => routeResponses.shift() ?? createJsonResponse(currentComparisonRoute),
+    )
+
+    renderWithProviders(<App />)
+
+    await user.click(await screen.findByRole('button', { name: 'Proposer un autre trajet' }))
+    await screen.findByText('2.4 km')
+    await user.click(screen.getByRole('button', { name: 'Proposer une autre alternative' }))
+
+    expect(await screen.findByTestId('route-alternative-unavailable')).toHaveTextContent(
+      'Aucun autre trajet distinct n’a été trouvé.',
+    )
+    expect(screen.queryByText('Comparer les trajets')).not.toBeInTheDocument()
+
+    const routeBodies = getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)
+    expect(routeBodies).toHaveLength(5)
+    expect(routeBodies.map((body) => body.options)).toEqual([
+      routeOptionVariants[1],
+      routeOptionVariants[2],
+      routeOptionVariants[3],
+      routeOptionVariants[0],
+      routeOptionVariants[1],
+    ])
+  })
+
   it('ouvre une comparaison quand un autre trajet est proposé sans écraser le trajet courant', async () => {
     const user = userEvent.setup()
     setupRouteComparisonTest(createJsonResponse(alternativeComparisonRoute))
@@ -1532,11 +1614,7 @@ describe('App routing', () => {
     const user = userEvent.setup()
     const loopResponses = [
       createJsonResponse(alternativeComparisonLoop),
-      createJsonResponse({
-        ...alternativeComparisonLoop,
-        distance_m: 6000,
-        eta_s: 1500,
-      }),
+      createJsonResponse(secondAlternativeComparisonLoop),
     ]
     const mockFetch = setupLoopComparisonTest(() => loopResponses.shift() ?? loopResponses[0])
 

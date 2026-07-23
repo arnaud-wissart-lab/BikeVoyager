@@ -4,6 +4,7 @@ import {
   type ElevationMinMax,
   type RouteDifficulty,
 } from './elevation'
+import { areRouteGeometriesEquivalent } from './map'
 import type { AssistLevel, Mode, TripResult } from './types'
 
 export type RouteComparisonMetrics = {
@@ -86,6 +87,63 @@ export const createRouteComparisonMetrics = (
     difficulty,
     hasElevationProfile: elevationStats.isAvailable,
   }
+}
+
+const resolveDisplayedDistanceKey = (distanceMeters: number | null) => {
+  if (distanceMeters === null || !Number.isFinite(distanceMeters)) {
+    return null
+  }
+
+  return Math.abs(distanceMeters) < 1000
+    ? `m:${Math.round(distanceMeters)}`
+    : `km:${(distanceMeters / 1000).toFixed(1)}`
+}
+
+const resolveDisplayedDurationKey = (durationSeconds: number | null) =>
+  durationSeconds !== null && Number.isFinite(durationSeconds) && durationSeconds > 0
+    ? Math.round(durationSeconds / 60)
+    : null
+
+const resolveRoundedKey = (value: number | null) =>
+  value !== null && Number.isFinite(value) ? Math.round(value) : null
+
+const resolveSlopeKey = (value: number | null) =>
+  value !== null && Number.isFinite(value) ? Number(value.toFixed(1)) : null
+
+const resolveElevationRangeKey = (value: ElevationMinMax | null) =>
+  value ? `${Math.round(value.min)}:${Math.round(value.max)}` : null
+
+const haveEquivalentDisplayedMetrics = (
+  current: RouteComparisonMetrics,
+  candidate: RouteComparisonMetrics,
+) =>
+  resolveDisplayedDistanceKey(current.distanceMeters) ===
+    resolveDisplayedDistanceKey(candidate.distanceMeters) &&
+  resolveDisplayedDurationKey(current.durationSeconds) ===
+    resolveDisplayedDurationKey(candidate.durationSeconds) &&
+  resolveRoundedKey(current.elevationGainMeters) ===
+    resolveRoundedKey(candidate.elevationGainMeters) &&
+  resolveRoundedKey(current.elevationLossMeters) ===
+    resolveRoundedKey(candidate.elevationLossMeters) &&
+  resolveElevationRangeKey(current.elevationMinMax) ===
+    resolveElevationRangeKey(candidate.elevationMinMax) &&
+  resolveSlopeKey(current.maxSlopePercent) === resolveSlopeKey(candidate.maxSlopePercent) &&
+  current.difficulty === candidate.difficulty
+
+export const areRoutesEquivalentForComparison = (
+  currentRoute: TripResult,
+  candidateRoute: TripResult,
+  mode: Mode | null | undefined,
+  ebikeAssist: AssistLevel | null | undefined,
+) => {
+  if (areRouteGeometriesEquivalent(currentRoute.geometry, candidateRoute.geometry)) {
+    return true
+  }
+
+  return haveEquivalentDisplayedMetrics(
+    createRouteComparisonMetrics(currentRoute, mode, ebikeAssist),
+    createRouteComparisonMetrics(candidateRoute, mode, ebikeAssist),
+  )
 }
 
 const computeNullableDelta = (current: number | null, alternative: number | null) =>

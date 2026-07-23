@@ -17,13 +17,14 @@ describe('App version et nouveautés', () => {
   it('conserve un historique de versions cohérent et ordonné', () => {
     const versions = releaseNotes.map((note) => note.version)
 
-    expect(appVersion).toBe('0.4.0')
+    expect(appVersion).toBe('0.4.1')
     expect(releaseNotes[0]).toMatchObject({ version: appVersion, date: '2026-07-23' })
-    expect(releaseNotes[1]).toMatchObject({ version: '0.3.1', date: '2026-07-23' })
-    expect(releaseNotes[2]).toMatchObject({ version: '0.3.0', date: '2026-07-23' })
-    expect(releaseNotes[3]).toMatchObject({ version: '0.2.0', date: '2026-07-11' })
-    expect(releaseNotes[4]).toMatchObject({ version: '0.1.0', date: '2026-07-08' })
-    expect(versions).toEqual(['0.4.0', '0.3.1', '0.3.0', '0.2.0', '0.1.0'])
+    expect(releaseNotes[1]).toMatchObject({ version: '0.4.0', date: '2026-07-23' })
+    expect(releaseNotes[2]).toMatchObject({ version: '0.3.1', date: '2026-07-23' })
+    expect(releaseNotes[3]).toMatchObject({ version: '0.3.0', date: '2026-07-23' })
+    expect(releaseNotes[4]).toMatchObject({ version: '0.2.0', date: '2026-07-11' })
+    expect(releaseNotes[5]).toMatchObject({ version: '0.1.0', date: '2026-07-08' })
+    expect(versions).toEqual(['0.4.1', '0.4.0', '0.3.1', '0.3.0', '0.2.0', '0.1.0'])
     expect(new Set(versions).size).toBe(versions.length)
   })
 
@@ -38,8 +39,9 @@ describe('App version et nouveautés', () => {
 
     const dialog = await screen.findByRole('dialog', { name: 'Nouveautés' })
 
+    expect(within(dialog).getByText('v0.4.1')).toBeInTheDocument()
     expect(within(dialog).getByText('v0.4.0')).toBeInTheDocument()
-    expect(within(dialog).getAllByText('23 juillet 2026')).toHaveLength(3)
+    expect(within(dialog).getAllByText('23 juillet 2026')).toHaveLength(4)
     expect(within(dialog).getByText('v0.3.1')).toBeInTheDocument()
     expect(within(dialog).getByText('v0.3.0')).toBeInTheDocument()
     expect(within(dialog).getByText('v0.2.0')).toBeInTheDocument()
@@ -65,7 +67,7 @@ describe('App version et nouveautés', () => {
 
     expect(
       screen.queryByRole('button', {
-        name: 'BikeVoyager v0.4.0 : voir les nouveautés',
+        name: 'BikeVoyager v0.4.1 : voir les nouveautés',
       }),
     ).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Voir les nouveautés' })).toBeInTheDocument()
@@ -95,7 +97,7 @@ describe('App version et nouveautés', () => {
     expect(
       within(dialog).getByText('Detailed roadbook with each step of the journey.'),
     ).toBeInTheDocument()
-    expect(within(dialog).getAllByText('July 23, 2026')).toHaveLength(3)
+    expect(within(dialog).getAllByText('July 23, 2026')).toHaveLength(4)
     expect(within(dialog).getByText('July 11, 2026')).toBeInTheDocument()
   })
 

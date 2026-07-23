@@ -30,6 +30,56 @@ export const releaseNotes: ReleaseNote[] = [
     sections: [
       {
         title: {
+          fr: 'Carte et comparaison',
+          en: 'Map and comparison',
+        },
+        items: [
+          {
+            type: 'improved',
+            text: {
+              fr: 'Le comparateur réduit désormais la carte sur ordinateur au lieu de masquer le trajet.',
+              en: 'The comparison panel now resizes the desktop map instead of covering the route.',
+            },
+          },
+          {
+            type: 'improved',
+            text: {
+              fr: 'La carte se recadre automatiquement pour conserver les trajets comparés dans le champ de vision.',
+              en: 'The map automatically reframes to keep compared routes in view.',
+            },
+          },
+          {
+            type: 'improved',
+            text: {
+              fr: 'Les tracés utilisent des couleurs plus vives et des épaisseurs renforcées pour mieux distinguer les variantes.',
+              en: 'Routes use brighter colors and stronger line weights to make alternatives easier to distinguish.',
+            },
+          },
+        ],
+      },
+      {
+        title: {
+          fr: 'Navigation',
+          en: 'Navigation',
+        },
+        items: [
+          {
+            type: 'improved',
+            text: {
+              fr: 'Le nom de l’application est retiré de l’en-tête et chaque rubrique du menu dispose de son pictogramme.',
+              en: 'The application name is removed from the header and each navigation item now has an icon.',
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    version: '0.4.0',
+    date: '2026-07-23',
+    sections: [
+      {
+        title: {
           fr: 'Profils de trajet',
           en: 'Route profiles',
         },

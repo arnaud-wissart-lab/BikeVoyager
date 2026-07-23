@@ -30,6 +30,77 @@ export const releaseNotes: ReleaseNote[] = [
     sections: [
       {
         title: {
+          fr: 'Profils de trajet',
+          en: 'Route profiles',
+        },
+        items: [
+          {
+            type: 'added',
+            text: {
+              fr: 'Création, modification et suppression de profils personnalisés nommés, sans limite prédéfinie.',
+              en: 'Create, edit, and delete named custom profiles, without a predefined limit.',
+            },
+          },
+          {
+            type: 'improved',
+            text: {
+              fr: 'Profil actif visible dans le résumé du trajet et accessible directement depuis la carte.',
+              en: 'Active profile visible in the route summary and directly accessible from the map.',
+            },
+          },
+          {
+            type: 'improved',
+            text: {
+              fr: 'Réglages de vitesse affichés uniquement pendant la création ou la modification d’un profil.',
+              en: 'Speed settings shown only while creating or editing a profile.',
+            },
+          },
+          {
+            type: 'improved',
+            text: {
+              fr: 'Profils personnalisés inclus dans les exports et restaurés lors de l’import.',
+              en: 'Custom profiles included in exports and restored during import.',
+            },
+          },
+        ],
+      },
+      {
+        title: {
+          fr: 'En-tête et stabilité',
+          en: 'Header and stability',
+        },
+        items: [
+          {
+            type: 'improved',
+            text: {
+              fr: 'Départ et arrivée restent lisibles sur deux lignes dans la carte, avec une infobulle soignée.',
+              en: 'Departure and arrival remain readable on two lines on the map, with a polished tooltip.',
+            },
+          },
+          {
+            type: 'fixed',
+            text: {
+              fr: 'Largeur des pages stabilisée lorsque la barre de défilement apparaît ou disparaît.',
+              en: 'Page width remains stable when the scrollbar appears or disappears.',
+            },
+          },
+          {
+            type: 'improved',
+            text: {
+              fr: 'Portée du stockage local et nécessité d’une sauvegarde clairement indiquées dans la page Données.',
+              en: 'Local storage scope and backup requirement clearly stated on the Data page.',
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    version: '0.3.1',
+    date: '2026-07-23',
+    sections: [
+      {
+        title: {
           fr: 'Interface et réglages',
           en: 'Interface and settings',
         },

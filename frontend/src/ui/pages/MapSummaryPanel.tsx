@@ -87,6 +87,7 @@ export default function MapSummaryPanel({
     [routeResult],
   )
   const metricTextSize = isCompact ? 'xs' : 'sm'
+  const actionIconSize = isCompact ? 30 : 36
   const hasRouteInstructions =
     routeResult?.kind === 'route' &&
     Array.isArray(routeResult.turn_by_turn) &&
@@ -280,7 +281,13 @@ export default function MapSummaryPanel({
           {t('roadbookLoopUnavailable')}
         </Text>
       )}
-      <Group gap="xs" wrap="nowrap" aria-label={t('mapRouteActions')}>
+      <Group
+        justify="space-between"
+        gap="md"
+        wrap="nowrap"
+        w="100%"
+        aria-label={t('mapRouteActions')}
+      >
         <Tooltip
           label={alternativeActionLabel}
           opened={isAlternativeActionDisabled && isAlternativeHintOpen}
@@ -335,74 +342,83 @@ export default function MapSummaryPanel({
             {alternativeCount}
           </Button>
         </Tooltip>
-        <Tooltip label={t('navigationSetupOpen')}>
-          <ActionIcon
-            variant="filled"
-            size={isCompact ? 30 : 36}
-            onClick={onOpenNavigationSetup}
-            disabled={!hasRoute || isRouteLoading}
-            data-testid="nav-setup-open"
-            aria-label={t('navigationSetupOpen')}
-          >
-            <IconGps size={18} />
-          </ActionIcon>
-        </Tooltip>
-        <Menu
-          position="bottom-end"
-          width={260}
-          withinPortal
-          opened={isExportMenuOpen}
-          onChange={setIsExportMenuOpen}
-        >
-          <Menu.Target>
-            <Tooltip
-              label={t(isAlternativeComparisonActive ? 'mapExportCurrentRoute' : 'mapExportRoute')}
-              disabled={isExportMenuOpen}
+        <Group gap="xs" wrap="nowrap" ml="auto">
+          <Tooltip label={t('navigationSetupOpen')}>
+            <ActionIcon
+              variant="light"
+              color="blue"
+              size={actionIconSize}
+              onClick={onOpenNavigationSetup}
+              disabled={!hasRoute || isRouteLoading}
+              data-testid="nav-setup-open"
+              aria-label={t('navigationSetupOpen')}
             >
-              <ActionIcon
-                variant="light"
-                size={isCompact ? 30 : 36}
-                disabled={!hasRoute || isRouteLoading || isExporting}
-                loading={isExporting}
-                aria-label={t(
+              <IconGps size={18} />
+            </ActionIcon>
+          </Tooltip>
+          <Menu
+            position="bottom-end"
+            width={260}
+            withinPortal
+            opened={isExportMenuOpen}
+            onChange={setIsExportMenuOpen}
+          >
+            <Menu.Target>
+              <Tooltip
+                label={t(
                   isAlternativeComparisonActive ? 'mapExportCurrentRoute' : 'mapExportRoute',
                 )}
+                disabled={isExportMenuOpen}
               >
-                <IconDownload size={17} />
-              </ActionIcon>
-            </Tooltip>
-          </Menu.Target>
-          <Menu.Dropdown>
-            <Menu.Label>{t('routeExportFormatLabel')}</Menu.Label>
-            <Menu.Item onClick={() => onExportRoute('gpx')}>
-              <Text size="sm" fw={600}>
-                GPX
-              </Text>
-              <Text size="xs" c="dimmed">
-                {t('routeExportGpxDescription')}
-              </Text>
-            </Menu.Item>
-            <Menu.Item onClick={() => onExportRoute('tcx')}>
-              <Text size="sm" fw={600}>
-                TCX
-              </Text>
-              <Text size="xs" c="dimmed">
-                {t('routeExportTcxDescription')}
-              </Text>
-            </Menu.Item>
-          </Menu.Dropdown>
-        </Menu>
-        <Tooltip label={t(isAlternativeComparisonActive ? 'dataSaveCurrentTrip' : 'dataSaveTrip')}>
-          <ActionIcon
-            variant="default"
-            size={isCompact ? 30 : 36}
-            onClick={onOpenSaveTripDialog}
-            disabled={!hasRoute || isRouteLoading}
-            aria-label={t(isAlternativeComparisonActive ? 'dataSaveCurrentTrip' : 'dataSaveTrip')}
+                <ActionIcon
+                  variant="light"
+                  color="cyan"
+                  size={actionIconSize}
+                  disabled={!hasRoute || isRouteLoading || isExporting}
+                  loading={isExporting}
+                  aria-label={t(
+                    isAlternativeComparisonActive ? 'mapExportCurrentRoute' : 'mapExportRoute',
+                  )}
+                >
+                  <IconDownload size={18} />
+                </ActionIcon>
+              </Tooltip>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Label>{t('routeExportFormatLabel')}</Menu.Label>
+              <Menu.Item onClick={() => onExportRoute('gpx')}>
+                <Text size="sm" fw={600}>
+                  GPX
+                </Text>
+                <Text size="xs" c="dimmed">
+                  {t('routeExportGpxDescription')}
+                </Text>
+              </Menu.Item>
+              <Menu.Item onClick={() => onExportRoute('tcx')}>
+                <Text size="sm" fw={600}>
+                  TCX
+                </Text>
+                <Text size="xs" c="dimmed">
+                  {t('routeExportTcxDescription')}
+                </Text>
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+          <Tooltip
+            label={t(isAlternativeComparisonActive ? 'dataSaveCurrentTrip' : 'dataSaveTrip')}
           >
-            <IconDeviceFloppy size={17} />
-          </ActionIcon>
-        </Tooltip>
+            <ActionIcon
+              variant="light"
+              color="teal"
+              size={actionIconSize}
+              onClick={onOpenSaveTripDialog}
+              disabled={!hasRoute || isRouteLoading}
+              aria-label={t(isAlternativeComparisonActive ? 'dataSaveCurrentTrip' : 'dataSaveTrip')}
+            >
+              <IconDeviceFloppy size={18} />
+            </ActionIcon>
+          </Tooltip>
+        </Group>
       </Group>
       {exportError && (
         <Text size="xs" c="red.6">

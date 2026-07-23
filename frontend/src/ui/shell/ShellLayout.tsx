@@ -1,24 +1,17 @@
 import {
   ActionIcon,
   AppShell,
-  Badge,
+  Box,
   Container,
   Group,
   SegmentedControl,
-  Stack,
   Tabs,
   Text,
   Tooltip,
   UnstyledButton,
   VisuallyHidden,
 } from '@mantine/core'
-import {
-  IconDeviceDesktop,
-  IconInfoCircle,
-  IconMoon,
-  IconSun,
-  type TablerIcon,
-} from '@tabler/icons-react'
+import { IconDeviceDesktop, IconMoon, IconSun, type TablerIcon } from '@tabler/icons-react'
 import englishFlagUrl from 'flag-icons/flags/4x3/gb.svg'
 import frenchFlagUrl from 'flag-icons/flags/4x3/fr.svg'
 import type { ReactNode } from 'react'
@@ -46,6 +39,38 @@ const LanguageFlag = ({ src }: { src: string }) => (
   />
 )
 
+const segmentedControlStyles = {
+  root: {
+    flexShrink: 0,
+    padding: 2,
+  },
+  control: {
+    width: 34,
+  },
+  label: {
+    alignItems: 'center',
+    display: 'flex',
+    height: 30,
+    justifyContent: 'center',
+    minHeight: 30,
+    padding: 0,
+  },
+} as const
+
+const ControlGlyph = ({ children }: { children: ReactNode }) => (
+  <span
+    style={{
+      alignItems: 'center',
+      display: 'inline-flex',
+      height: 20,
+      justifyContent: 'center',
+      width: 20,
+    }}
+  >
+    {children}
+  </span>
+)
+
 type ShellLayoutProps = {
   isDesktop: boolean
   route: RouteKey
@@ -68,10 +93,6 @@ type ShellLayoutProps = {
   mobileHeaderTitle: string
   mapHeaderTitle: string
   appNameLabel: string
-  appVersionLabel: string
-  appTaglineLabel: string
-  releaseNotesLabel: string
-  onOpenReleaseNotes: () => void
   language: 'fr' | 'en'
   onLanguageChange: (language: 'fr' | 'en') => void
   mapViewMode: MapViewMode
@@ -118,10 +139,6 @@ export default function ShellLayout({
   mobileHeaderTitle,
   mapHeaderTitle,
   appNameLabel,
-  appVersionLabel,
-  appTaglineLabel,
-  releaseNotesLabel,
-  onOpenReleaseNotes,
   language,
   onLanguageChange,
   mapViewMode,
@@ -169,24 +186,11 @@ export default function ShellLayout({
                     {mobileHeaderTitle}
                   </Text>
                   <Group gap={6} align="center" wrap="nowrap">
-                    <Tooltip label={releaseNotesLabel} withArrow>
-                      <ActionIcon
-                        variant="light"
-                        color="teal"
-                        radius="xl"
-                        size="lg"
-                        onClick={onOpenReleaseNotes}
-                        aria-label={releaseNotesLabel}
-                        title={releaseNotesLabel}
-                      >
-                        <IconInfoCircle size={18} />
-                      </ActionIcon>
-                    </Tooltip>
                     <ActionIcon
                       variant="light"
                       color="cyan"
                       radius="xl"
-                      size="lg"
+                      size={36}
                       onClick={() => onLanguageChange(language === 'fr' ? 'en' : 'fr')}
                       aria-label={settingsLanguageLabel}
                       title={settingsLanguageLabel}
@@ -195,19 +199,19 @@ export default function ShellLayout({
                     </ActionIcon>
                     <ActionIcon
                       variant="light"
-                      color={themeMode === 'auto' ? 'gray' : isDarkTheme ? 'indigo' : 'orange'}
+                      color={themeMode === 'auto' ? 'blue' : isDarkTheme ? 'indigo' : 'orange'}
                       radius="xl"
-                      size="lg"
+                      size={36}
                       onClick={() => onThemeModeChange(nextThemeMode)}
                       aria-label={mobileThemeActionLabel}
                       title={mobileThemeActionLabel}
                     >
                       {themeMode === 'auto' ? (
-                        <IconDeviceDesktop size={18} />
+                        <IconDeviceDesktop size={18} color="var(--mantine-color-blue-6)" />
                       ) : isDarkTheme ? (
-                        <IconMoon size={18} />
+                        <IconMoon size={18} color="var(--mantine-color-indigo-6)" />
                       ) : (
-                        <IconSun size={18} />
+                        <IconSun size={18} color="var(--mantine-color-orange-6)" />
                       )}
                     </ActionIcon>
                   </Group>
@@ -215,40 +219,14 @@ export default function ShellLayout({
               ) : (
                 <>
                   <Group gap="md" align="center" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
-                    {showDesktopMapHeader ? (
-                      <Text fw={600} lineClamp={1} style={{ minWidth: 0, flex: 1 }}>
-                        {mapHeaderTitle}
-                      </Text>
-                    ) : (
-                      <Group gap={6} wrap="nowrap">
-                        <Stack gap={2} style={{ minWidth: 0 }}>
-                          <Group gap={6} wrap="nowrap">
-                            <Text fw={600}>{appNameLabel}</Text>
-                            <Badge size="xs" variant="light" color="teal" radius="sm">
-                              {appVersionLabel}
-                            </Badge>
-                          </Group>
-                          {isDesktop && (
-                            <Text size="xs" c="dimmed">
-                              {appTaglineLabel}
-                            </Text>
-                          )}
-                        </Stack>
-                        <Tooltip label={releaseNotesLabel} withArrow>
-                          <ActionIcon
-                            variant="subtle"
-                            color="teal"
-                            radius="xl"
-                            size="sm"
-                            onClick={onOpenReleaseNotes}
-                            aria-label={releaseNotesLabel}
-                            title={releaseNotesLabel}
-                          >
-                            <IconInfoCircle size={16} />
-                          </ActionIcon>
-                        </Tooltip>
-                      </Group>
-                    )}
+                    <Text
+                      fw={600}
+                      lineClamp={1}
+                      title={showDesktopMapHeader ? mapHeaderTitle : appNameLabel}
+                      style={{ flex: '0 0 10rem', minWidth: 0, maxWidth: '10rem' }}
+                    >
+                      {showDesktopMapHeader ? mapHeaderTitle : appNameLabel}
+                    </Text>
                     {isDesktop && (
                       <Tabs
                         value={route}
@@ -265,36 +243,23 @@ export default function ShellLayout({
                         </Tabs.List>
                       </Tabs>
                     )}
+                    <Box style={{ flex: 1 }} />
                   </Group>
 
-                  <Group gap="xs" align="center" wrap="nowrap">
+                  <Group gap={6} align="center" wrap="nowrap">
                     {showDesktopMapHeader && (
-                      <>
-                        <Tooltip label={releaseNotesLabel} withArrow>
-                          <ActionIcon
-                            variant="light"
-                            color="teal"
-                            radius="xl"
-                            size="lg"
-                            onClick={onOpenReleaseNotes}
-                            aria-label={releaseNotesLabel}
-                            title={releaseNotesLabel}
-                          >
-                            <IconInfoCircle size={18} />
-                          </ActionIcon>
-                        </Tooltip>
-                        <SegmentedControl
-                          size="xs"
-                          radius="xl"
-                          aria-label={mapViewLabel}
-                          value={mapViewMode}
-                          onChange={(value) => onMapViewModeChange(value as MapViewMode)}
-                          data={[
-                            { label: mapView2dLabel, value: '2d' },
-                            { label: mapView3dLabel, value: '3d' },
-                          ]}
-                        />
-                      </>
+                      <SegmentedControl
+                        size="xs"
+                        radius="xl"
+                        aria-label={mapViewLabel}
+                        value={mapViewMode}
+                        onChange={(value) => onMapViewModeChange(value as MapViewMode)}
+                        data={[
+                          { label: mapView2dLabel, value: '2d' },
+                          { label: mapView3dLabel, value: '3d' },
+                        ]}
+                        styles={segmentedControlStyles}
+                      />
                     )}
                     <SegmentedControl
                       size="xs"
@@ -306,10 +271,10 @@ export default function ShellLayout({
                         {
                           label: (
                             <Tooltip label={languageFrenchLabel} withArrow>
-                              <span>
+                              <ControlGlyph>
                                 <LanguageFlag src={frenchFlagUrl} />
                                 <VisuallyHidden>{languageFrenchLabel}</VisuallyHidden>
-                              </span>
+                              </ControlGlyph>
                             </Tooltip>
                           ),
                           value: 'fr',
@@ -317,15 +282,16 @@ export default function ShellLayout({
                         {
                           label: (
                             <Tooltip label={languageEnglishLabel} withArrow>
-                              <span>
+                              <ControlGlyph>
                                 <LanguageFlag src={englishFlagUrl} />
                                 <VisuallyHidden>{languageEnglishLabel}</VisuallyHidden>
-                              </span>
+                              </ControlGlyph>
                             </Tooltip>
                           ),
                           value: 'en',
                         },
                       ]}
+                      styles={segmentedControlStyles}
                     />
                     <SegmentedControl
                       size="xs"
@@ -337,10 +303,14 @@ export default function ShellLayout({
                         {
                           label: (
                             <Tooltip label={themeAutoLabel} withArrow>
-                              <span>
-                                <IconDeviceDesktop size={16} aria-hidden />
+                              <ControlGlyph>
+                                <IconDeviceDesktop
+                                  size={18}
+                                  color="var(--mantine-color-blue-6)"
+                                  aria-hidden
+                                />
                                 <VisuallyHidden>{themeAutoLabel}</VisuallyHidden>
-                              </span>
+                              </ControlGlyph>
                             </Tooltip>
                           ),
                           value: 'auto',
@@ -348,10 +318,14 @@ export default function ShellLayout({
                         {
                           label: (
                             <Tooltip label={themeLightLabel} withArrow>
-                              <span>
-                                <IconSun size={16} aria-hidden />
+                              <ControlGlyph>
+                                <IconSun
+                                  size={18}
+                                  color="var(--mantine-color-orange-6)"
+                                  aria-hidden
+                                />
                                 <VisuallyHidden>{themeLightLabel}</VisuallyHidden>
-                              </span>
+                              </ControlGlyph>
                             </Tooltip>
                           ),
                           value: 'light',
@@ -359,15 +333,20 @@ export default function ShellLayout({
                         {
                           label: (
                             <Tooltip label={themeDarkLabel} withArrow>
-                              <span>
-                                <IconMoon size={16} aria-hidden />
+                              <ControlGlyph>
+                                <IconMoon
+                                  size={18}
+                                  color="var(--mantine-color-indigo-6)"
+                                  aria-hidden
+                                />
                                 <VisuallyHidden>{themeDarkLabel}</VisuallyHidden>
-                              </span>
+                              </ControlGlyph>
                             </Tooltip>
                           ),
                           value: 'dark',
                         },
                       ]}
+                      styles={segmentedControlStyles}
                     />
                   </Group>
                 </>

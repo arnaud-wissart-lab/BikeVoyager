@@ -1,17 +1,18 @@
-import { ActionIcon, Box, Button, Group, Stack, Text, Tooltip } from '@mantine/core'
+import { ActionIcon, Box, Button, Group, Menu, Stack, Text, Tooltip } from '@mantine/core'
 import {
   IconChevronDown,
   IconChevronUp,
   IconDeviceFloppy,
   IconDownload,
-  IconPlayerPlay,
+  IconGps,
   IconRouteAltLeft,
 } from '@tabler/icons-react'
-import { useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   normalizeRouteSteps,
   type RouteElevationPoint,
+  type RouteExportFormat,
   type TripResult,
 } from '../../features/routing/domain'
 import ElevationProfileChart from './ElevationProfileChart'
@@ -34,6 +35,7 @@ type MapSummaryPanelProps = {
   detourSummary: string | null
   hasRoute: boolean
   isRouteLoading: boolean
+  isAlternativeLoading: boolean
   alternativeCount: number
   isAlternativeComparisonActive: boolean
   isExporting: boolean
@@ -41,7 +43,7 @@ type MapSummaryPanelProps = {
   routeErrorMessage: string | null
   onOpenAlternativeComparison: () => void
   onOpenNavigationSetup: () => void
-  onExportGpx: () => void
+  onExportRoute: (format: RouteExportFormat) => void
   onOpenSaveTripDialog: () => void
 }
 
@@ -63,6 +65,7 @@ export default function MapSummaryPanel({
   detourSummary,
   hasRoute,
   isRouteLoading,
+  isAlternativeLoading,
   alternativeCount,
   isAlternativeComparisonActive,
   isExporting,
@@ -70,12 +73,15 @@ export default function MapSummaryPanel({
   routeErrorMessage,
   onOpenAlternativeComparison,
   onOpenNavigationSetup,
-  onExportGpx,
+  onExportRoute,
   onOpenSaveTripDialog,
 }: MapSummaryPanelProps) {
   const { t } = useTranslation()
   const roadbookPanelId = useId()
   const [isRoadbookOpen, setIsRoadbookOpen] = useState(false)
+  const [isAlternativeHintOpen, setIsAlternativeHintOpen] = useState(false)
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false)
+  const alternativeHintTimeoutRef = useRef<number | null>(null)
   const roadbookSteps = useMemo(
     () => (routeResult?.kind === 'route' ? normalizeRouteSteps(routeResult.turn_by_turn) : []),
     [routeResult],
@@ -85,6 +91,51 @@ export default function MapSummaryPanel({
     routeResult?.kind === 'route' &&
     Array.isArray(routeResult.turn_by_turn) &&
     routeResult.turn_by_turn.length > 0
+  const isAlternativeActionPending = isRouteLoading || isAlternativeLoading
+  const isAlternativeActionDisabled =
+    !hasRoute || isAlternativeActionPending || alternativeCount === 0
+  const alternativeActionLabel = isAlternativeActionPending
+    ? t('routeAlternativesLoading')
+    : alternativeCount > 0
+      ? t('routeAlternativesButton', { count: alternativeCount })
+      : t('routeAlternativesUnavailable')
+
+  const clearAlternativeHintTimeout = () => {
+    if (alternativeHintTimeoutRef.current !== null) {
+      window.clearTimeout(alternativeHintTimeoutRef.current)
+      alternativeHintTimeoutRef.current = null
+    }
+  }
+
+  const hideAlternativeHint = () => {
+    clearAlternativeHintTimeout()
+    setIsAlternativeHintOpen(false)
+  }
+
+  const showAlternativeHint = (autoClose: boolean) => {
+    if (!isAlternativeActionDisabled) {
+      return
+    }
+
+    clearAlternativeHintTimeout()
+    setIsAlternativeHintOpen(true)
+    if (autoClose) {
+      alternativeHintTimeoutRef.current = window.setTimeout(() => {
+        setIsAlternativeHintOpen(false)
+        alternativeHintTimeoutRef.current = null
+      }, 3500)
+    }
+  }
+
+  useEffect(
+    () => () => {
+      if (alternativeHintTimeoutRef.current !== null) {
+        window.clearTimeout(alternativeHintTimeoutRef.current)
+      }
+    },
+    [],
+  )
+
   const renderMetricRow = (label: string, value: string) => (
     <Group justify="space-between" align="baseline" gap="sm" wrap="nowrap">
       <Text size={metricTextSize} c="dimmed" style={{ minWidth: 0, flex: 1 }}>
@@ -230,44 +281,117 @@ export default function MapSummaryPanel({
         </Text>
       )}
       <Group gap="xs" wrap="nowrap" aria-label={t('mapRouteActions')}>
-        {alternativeCount > 0 && (
+        <Tooltip
+          label={alternativeActionLabel}
+          opened={isAlternativeActionDisabled && isAlternativeHintOpen}
+          disabled={!isAlternativeActionDisabled}
+          events={{ hover: false, focus: false, touch: false }}
+          withArrow
+          multiline
+        >
           <Button
             variant="default"
             size={isCompact ? 'xs' : 'sm'}
-            onClick={onOpenAlternativeComparison}
-            disabled={!hasRoute || isRouteLoading}
+            onClick={(event) => {
+              if (isAlternativeActionDisabled) {
+                event.preventDefault()
+                showAlternativeHint(true)
+                return
+              }
+
+              onOpenAlternativeComparison()
+            }}
+            onPointerEnter={(event) => {
+              if (event.pointerType === 'mouse') {
+                showAlternativeHint(false)
+              }
+            }}
+            onPointerLeave={(event) => {
+              if (event.pointerType === 'mouse') {
+                hideAlternativeHint()
+              }
+            }}
+            onPointerDown={(event) => {
+              if (event.pointerType !== 'mouse') {
+                showAlternativeHint(true)
+              }
+            }}
+            onKeyDown={(event) => {
+              if (isAlternativeActionDisabled && (event.key === 'Enter' || event.key === ' ')) {
+                showAlternativeHint(true)
+              }
+            }}
+            data-unavailable={isAlternativeActionDisabled || undefined}
+            aria-busy={isAlternativeActionPending}
             leftSection={<IconRouteAltLeft size={16} />}
-            aria-label={t('routeAlternativesButton', { count: alternativeCount })}
-            style={{ flex: 1, minWidth: 0 }}
+            aria-label={alternativeActionLabel}
+            style={{
+              flex: '0 0 auto',
+              minWidth: isCompact ? 54 : 60,
+              opacity: isAlternativeActionDisabled ? 0.55 : 1,
+              cursor: isAlternativeActionDisabled ? 'not-allowed' : 'pointer',
+            }}
           >
-            {t('routeAlternativesShort', { count: alternativeCount })}
+            {alternativeCount}
           </Button>
-        )}
+        </Tooltip>
         <Tooltip label={t('navigationSetupOpen')}>
-          <Button
-            size={isCompact ? 'xs' : 'sm'}
+          <ActionIcon
+            variant="filled"
+            size={isCompact ? 30 : 36}
             onClick={onOpenNavigationSetup}
             disabled={!hasRoute || isRouteLoading}
             data-testid="nav-setup-open"
-            leftSection={<IconPlayerPlay size={16} />}
             aria-label={t('navigationSetupOpen')}
-            style={{ flex: 1, minWidth: 0 }}
           >
-            {t('navigationOpenShort')}
-          </Button>
-        </Tooltip>
-        <Tooltip label={t(isAlternativeComparisonActive ? 'mapExportCurrentGpx' : 'mapExportGpx')}>
-          <ActionIcon
-            variant="light"
-            size={isCompact ? 30 : 36}
-            onClick={onExportGpx}
-            disabled={!hasRoute || isRouteLoading || isExporting}
-            loading={isExporting}
-            aria-label={t(isAlternativeComparisonActive ? 'mapExportCurrentGpx' : 'mapExportGpx')}
-          >
-            <IconDownload size={17} />
+            <IconGps size={18} />
           </ActionIcon>
         </Tooltip>
+        <Menu
+          position="bottom-end"
+          width={260}
+          withinPortal
+          opened={isExportMenuOpen}
+          onChange={setIsExportMenuOpen}
+        >
+          <Menu.Target>
+            <Tooltip
+              label={t(isAlternativeComparisonActive ? 'mapExportCurrentRoute' : 'mapExportRoute')}
+              disabled={isExportMenuOpen}
+            >
+              <ActionIcon
+                variant="light"
+                size={isCompact ? 30 : 36}
+                disabled={!hasRoute || isRouteLoading || isExporting}
+                loading={isExporting}
+                aria-label={t(
+                  isAlternativeComparisonActive ? 'mapExportCurrentRoute' : 'mapExportRoute',
+                )}
+              >
+                <IconDownload size={17} />
+              </ActionIcon>
+            </Tooltip>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Label>{t('routeExportFormatLabel')}</Menu.Label>
+            <Menu.Item onClick={() => onExportRoute('gpx')}>
+              <Text size="sm" fw={600}>
+                GPX
+              </Text>
+              <Text size="xs" c="dimmed">
+                {t('routeExportGpxDescription')}
+              </Text>
+            </Menu.Item>
+            <Menu.Item onClick={() => onExportRoute('tcx')}>
+              <Text size="sm" fw={600}>
+                TCX
+              </Text>
+              <Text size="xs" c="dimmed">
+                {t('routeExportTcxDescription')}
+              </Text>
+            </Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
         <Tooltip label={t(isAlternativeComparisonActive ? 'dataSaveCurrentTrip' : 'dataSaveTrip')}>
           <ActionIcon
             variant="default"

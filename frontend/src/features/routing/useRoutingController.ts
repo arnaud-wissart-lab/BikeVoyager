@@ -1,25 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   fetchApiHealth,
+  exportRoute,
   fetchValhallaStatus,
   readApiMessage,
   startValhallaUpdate,
   submitDeveloperFeedback,
-  exportRouteAsGpx,
 } from './api'
 import {
   type ApiHealthStatus,
-  buildGpxFileName,
+  buildRouteFileName,
   defaultProfileSettings,
   downloadBlob,
   parseContentDispositionFileName,
   plannerDraftStorageKey,
+  type RouteExportFormat,
   routeStorageKey,
 } from './domain'
 import {
   computeCanSubmitFeedback,
   createPlannerPanelStyles,
-  exportRouteAsGpxAction,
+  exportRouteAction,
   resolveRouteErrorDisplayMessage,
   submitDeveloperFeedbackAction,
 } from './routing.helpers'
@@ -427,16 +428,17 @@ export const useRoutingController = ({
     void triggerAutomaticValhallaUpdate()
   }, [loadValhallaStatus, route, valhallaStatus, valhallaAutoUpdateRequestedRef])
 
-  const handleExportGpx = async () => {
-    await exportRouteAsGpxAction({
+  const handleExportRoute = async (format: RouteExportFormat) => {
+    await exportRouteAction({
+      format,
       routeResult,
       mapHeaderTitle: map.mapHeaderTitle,
       t,
       setIsExporting,
       setExportError,
-      exportRouteAsGpx,
+      exportRoute,
       parseContentDispositionFileName,
-      buildGpxFileName,
+      buildRouteFileName,
       downloadBlob,
     })
   }
@@ -492,7 +494,7 @@ export const useRoutingController = ({
     handleSpeedChange,
     handleResetProfiles,
     routeErrorDisplayMessage,
-    handleExportGpx,
+    handleExportRoute,
     handleSubmitDeveloperFeedback,
     canSubmitFeedback,
     loadValhallaStatus,

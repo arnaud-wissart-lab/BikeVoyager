@@ -155,6 +155,7 @@ export default function MapRoute({
     detourSummary: mapController.detourSummary,
     hasRoute: mapController.hasRoute,
     isRouteLoading: store.isRouteLoading,
+    isAlternativeLoading: store.isAlternativeLoading,
     alternativeCount: store.routeAlternatives.length,
     isAlternativeComparisonActive:
       store.isAlternativeComparisonOpen && Boolean(store.pendingAlternativeRoute),
@@ -165,8 +166,8 @@ export default function MapRoute({
       void routingController.handleOpenAlternativeComparison()
     },
     onOpenNavigationSetup: mapController.handleOpenNavigationSetup,
-    onExportGpx: () => {
-      void routingController.handleExportGpx()
+    onExportRoute: (format: 'gpx' | 'tcx') => {
+      void routingController.handleExportRoute(format)
     },
     onOpenSaveTripDialog: saveTripDialog.open,
   }

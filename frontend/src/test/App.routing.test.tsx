@@ -1118,6 +1118,48 @@ describe('App routing', () => {
     })
   }, 10_000)
 
+  it('exporte le trajet courant dans le format choisi', async () => {
+    const user = userEvent.setup()
+    setDesktopMatchMedia()
+    window.location.hash = '/carte'
+    saveRouteResultToStorage(currentComparisonRoute)
+    const mockFetch = createAppFetchMock((url) => {
+      if (url === apiPaths.exportTcx) {
+        return {
+          ok: true,
+          headers: new Headers({
+            'content-disposition': 'attachment; filename="trajet-test.tcx"',
+          }),
+          blob: async () => new Blob(['<TrainingCenterDatabase />'], { type: 'application/xml' }),
+        } as Response
+      }
+
+      return undefined
+    })
+    vi.stubGlobal('fetch', mockFetch)
+    Object.defineProperty(window.URL, 'createObjectURL', {
+      writable: true,
+      value: vi.fn(() => 'blob:bikevoyager-tcx-test'),
+    })
+    Object.defineProperty(window.URL, 'revokeObjectURL', {
+      writable: true,
+      value: vi.fn(),
+    })
+
+    renderWithProviders(<App />)
+
+    await user.click(await screen.findByRole('button', { name: 'Exporter le trajet' }))
+    await user.click(await screen.findByText('TCX'))
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        apiPaths.exportTcx,
+        expect.objectContaining({ method: 'POST' }),
+      )
+    })
+    expect(getJsonRequestBodies(mockFetch, apiPaths.exportTcx)).toHaveLength(1)
+  })
+
   it('masque les POI paysages quand la catégorie est désélectionnée', async () => {
     const user = userEvent.setup()
 
@@ -1428,8 +1470,10 @@ describe('App routing', () => {
       expect(getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)).toHaveLength(3)
     })
     expect(
-      screen.queryByRole('button', { name: /Consulter .*alternative/ }),
-    ).not.toBeInTheDocument()
+      screen.getByRole('button', {
+        name: 'Aucune alternative disponible pour ce trajet.',
+      }),
+    ).toHaveAttribute('data-unavailable', 'true')
     expect(
       screen.queryByText('Aucun autre trajet distinct n’a été trouvé.'),
     ).not.toBeInTheDocument()
@@ -1612,8 +1656,10 @@ describe('App routing', () => {
       expect(getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)).toHaveLength(3)
     })
     expect(
-      screen.queryByRole('button', { name: /Consulter .*alternative/ }),
-    ).not.toBeInTheDocument()
+      screen.getByRole('button', {
+        name: 'Aucune alternative disponible pour ce trajet.',
+      }),
+    ).toHaveAttribute('data-unavailable', 'true')
     expect(screen.getAllByText('1.2 km').length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: 'Suivi / Simu GPS' })).toBeEnabled()
   })

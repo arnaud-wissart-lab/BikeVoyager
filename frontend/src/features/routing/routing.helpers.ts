@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next'
 import type { CSSProperties } from 'react'
 import { appendDetourPoint } from './actions.poi'
-import type { DetourPoint, PlaceCandidate, RouteKey, TripResult } from './domain'
+import type { DetourPoint, PlaceCandidate, RouteExportFormat, RouteKey, TripResult } from './domain'
 
 export const createPlannerPanelStyles = () => {
   const panelTransitionDuration = 220
@@ -153,19 +153,36 @@ export const submitDeveloperFeedbackAction = async (
   }
 }
 
-type ExportRouteAsGpxActionParams = {
+type ExportRouteActionParams = {
+  format: RouteExportFormat
   routeResult: TripResult | null
   mapHeaderTitle: string
   t: TFunction
   setIsExporting: (value: boolean) => void
   setExportError: (value: string | null) => void
-  exportRouteAsGpx: (payload: {
+  exportRoute: (
+    format: RouteExportFormat,
+    payload: {
+      geometry: TripResult['geometry']
+      elevation_profile: TripResult['elevation_profile'] | null
+      name: string
+    },
+  ) => Promise<Response>
+  parseContentDispositionFileName: (headerValue: string | null) => string | null
+  buildRouteFileName: (baseName: string, format: RouteExportFormat) => string
+  downloadBlob: (blob: Blob, fileName: string) => void
+}
+
+type ExportTripResultParams = {
+  routeResult: TripResult | null | undefined
+  name: string
+  fallbackFileName: string
+  exportRoute: (payload: {
     geometry: TripResult['geometry']
     elevation_profile: TripResult['elevation_profile'] | null
     name: string
   }) => Promise<Response>
   parseContentDispositionFileName: (headerValue: string | null) => string | null
-  buildGpxFileName: (baseName: string) => string
   downloadBlob: (blob: Blob, fileName: string) => void
 }
 
@@ -182,12 +199,12 @@ type ExportTripResultAsGpxParams = {
   downloadBlob: (blob: Blob, fileName: string) => void
 }
 
-export const exportTripResultAsGpx = async (params: ExportTripResultAsGpxParams) => {
+const exportTripResult = async (params: ExportTripResultParams) => {
   if (!params.routeResult || params.routeResult.geometry.coordinates.length < 2) {
     return false
   }
 
-  const response = await params.exportRouteAsGpx({
+  const response = await params.exportRoute({
     geometry: params.routeResult.geometry,
     elevation_profile:
       params.routeResult.elevation_profile.length > 1 ? params.routeResult.elevation_profile : null,
@@ -206,9 +223,15 @@ export const exportTripResultAsGpx = async (params: ExportTripResultAsGpxParams)
   return true
 }
 
-export const exportRouteAsGpxAction = async (params: ExportRouteAsGpxActionParams) => {
+export const exportTripResultAsGpx = async (params: ExportTripResultAsGpxParams) =>
+  exportTripResult({
+    ...params,
+    exportRoute: params.exportRouteAsGpx,
+  })
+
+export const exportRouteAction = async (params: ExportRouteActionParams) => {
   if (!params.routeResult || params.routeResult.geometry.coordinates.length < 2) {
-    params.setExportError(params.t('exportGpxFailed'))
+    params.setExportError(params.t('exportRouteFailed'))
     return
   }
 
@@ -216,21 +239,21 @@ export const exportRouteAsGpxAction = async (params: ExportRouteAsGpxActionParam
   params.setExportError(null)
 
   try {
-    const routeName = params.mapHeaderTitle || params.t('exportGpxDefaultName')
-    const didExport = await exportTripResultAsGpx({
+    const routeName = params.mapHeaderTitle || params.t('exportRouteDefaultName')
+    const didExport = await exportTripResult({
       routeResult: params.routeResult,
       name: routeName,
-      fallbackFileName: params.buildGpxFileName(routeName),
-      exportRouteAsGpx: params.exportRouteAsGpx,
+      fallbackFileName: params.buildRouteFileName(routeName, params.format),
+      exportRoute: (payload) => params.exportRoute(params.format, payload),
       parseContentDispositionFileName: params.parseContentDispositionFileName,
       downloadBlob: params.downloadBlob,
     })
 
     if (!didExport) {
-      params.setExportError(params.t('exportGpxFailed'))
+      params.setExportError(params.t('exportRouteFailed'))
     }
   } catch {
-    params.setExportError(params.t('exportGpxFailed'))
+    params.setExportError(params.t('exportRouteFailed'))
   } finally {
     params.setIsExporting(false)
   }

@@ -8,9 +8,15 @@ export const sanitizeFileName = (value: string, fallback = 'bikevoyager') => {
 }
 
 export const buildGpxFileName = (label: string) => {
+  return buildRouteFileName(label, 'gpx')
+}
+
+export type RouteExportFormat = 'gpx' | 'tcx'
+
+export const buildRouteFileName = (label: string, format: RouteExportFormat) => {
   const stamp = new Date().toISOString().slice(0, 10)
   const base = sanitizeFileName(label)
-  return `${base}-${stamp}.gpx`
+  return `${base}-${stamp}.${format}`
 }
 
 export const parseContentDispositionFileName = (header: string | null) => {

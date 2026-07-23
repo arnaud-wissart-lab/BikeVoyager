@@ -3,6 +3,7 @@ import type {
   ApiHealthStatus,
   LoopResult,
   LoopRequestPayload,
+  RouteExportFormat,
   RouteElevationPoint,
   RouteResult,
   RouteRequestPayload,
@@ -150,15 +151,19 @@ export const submitDeveloperFeedback = async (payload: {
     }),
   })
 
-export const exportRouteAsGpx = async (payload: {
+type ExportRoutePayload = {
   geometry: RouteResult['geometry']
   elevation_profile: RouteElevationPoint[] | null
   name: string
-}) =>
-  fetch(apiPaths.exportGpx, {
+}
+
+export const exportRoute = async (format: RouteExportFormat, payload: ExportRoutePayload) =>
+  fetch(format === 'tcx' ? apiPaths.exportTcx : apiPaths.exportGpx, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(payload),
   })
+
+export const exportRouteAsGpx = async (payload: ExportRoutePayload) => exportRoute('gpx', payload)

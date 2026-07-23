@@ -1,7 +1,7 @@
+using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace BikeVoyager.ApiTests;
 
@@ -42,11 +42,13 @@ public class ErrorContractEndpointsTests : IClassFixture<WebApplicationFactory<P
         Assert.Contains("geometry", root.GetProperty("message").GetString(), StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
-    public async Task Export_gpx_invalide_expose_un_message_coherent()
+    [Theory]
+    [InlineData("gpx")]
+    [InlineData("tcx")]
+    public async Task Export_invalide_expose_un_message_coherent(string format)
     {
         using var client = _factory.CreateClient();
-        using var response = await client.PostAsJsonAsync("/api/v1/export/gpx", new
+        using var response = await client.PostAsJsonAsync($"/api/v1/export/{format}", new
         {
             geometry = new
             {

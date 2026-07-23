@@ -11,7 +11,7 @@ public static class ExportEndpoints
         var exports = endpoints.MapGroup("/api/v1/export");
 
         exports.MapPost("/gpx",
-                (ExportGpxRequest request, ILogger<global::Program> logger) =>
+                (ExportRouteRequest request, ILogger<global::Program> logger) =>
                 {
                     if (!GpxExportBuilder.TryBuild(request, out var gpx, out var error))
                     {
@@ -27,6 +27,24 @@ public static class ExportEndpoints
                 })
             .RequireRateLimiting("export")
             .WithName("ExportGpx");
+
+        exports.MapPost("/tcx",
+                (ExportRouteRequest request, ILogger<global::Program> logger) =>
+                {
+                    if (!TcxExportBuilder.TryBuild(request, out var tcx, out var error))
+                    {
+                        logger.LogWarning("TcxExportInvalid {Error}", error);
+                        return ApiProblemResults.Message(
+                            StatusCodes.Status400BadRequest,
+                            error ?? "Requête invalide.");
+                    }
+
+                    var fileName = TcxExportBuilder.BuildFileName(request.Name);
+                    var payload = Encoding.UTF8.GetBytes(tcx);
+                    return Results.File(payload, "application/vnd.garmin.tcx+xml", fileName);
+                })
+            .RequireRateLimiting("export")
+            .WithName("ExportTcx");
 
         return endpoints;
     }

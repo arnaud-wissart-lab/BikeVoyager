@@ -41,6 +41,7 @@ const baseProps: MapSummaryPanelProps = {
   detourSummary: null,
   hasRoute: true,
   isRouteLoading: false,
+  isAlternativeLoading: false,
   alternativeCount: 0,
   isAlternativeComparisonActive: false,
   isExporting: false,
@@ -48,7 +49,7 @@ const baseProps: MapSummaryPanelProps = {
   routeErrorMessage: null,
   onOpenAlternativeComparison: vi.fn(),
   onOpenNavigationSetup: vi.fn(),
-  onExportGpx: vi.fn(),
+  onExportRoute: vi.fn(),
   onOpenSaveTripDialog: vi.fn(),
 }
 
@@ -56,6 +57,46 @@ const renderPanel = (props: Partial<MapSummaryPanelProps> = {}) =>
   renderWithProviders(<MapSummaryPanel {...baseProps} {...props} />)
 
 describe('MapSummaryPanel roadbook', () => {
+  it('affiche uniquement le compteur des alternatives distinctes', () => {
+    renderPanel({ alternativeCount: 1 })
+
+    const button = screen.getByRole('button', { name: 'Consulter 1 alternative' })
+
+    expect(button).toHaveTextContent(/^1$/)
+    expect(button).not.toHaveAttribute('data-unavailable')
+  })
+
+  it('conserve le compteur inactif et explique l’absence d’alternative', async () => {
+    const user = userEvent.setup()
+    const onOpenAlternativeComparison = vi.fn()
+
+    renderPanel({ alternativeCount: 0, onOpenAlternativeComparison })
+
+    const button = screen.getByRole('button', {
+      name: 'Aucune alternative disponible pour ce trajet.',
+    })
+    expect(button).toHaveTextContent(/^0$/)
+    expect(button).toHaveAttribute('data-unavailable', 'true')
+
+    await user.click(button)
+
+    expect(onOpenAlternativeComparison).not.toHaveBeenCalled()
+    expect(await screen.findByText('Aucune alternative disponible pour ce trajet.')).toBeVisible()
+  })
+
+  it('propose les formats GPX et TCX depuis le bouton d’export', async () => {
+    const user = userEvent.setup()
+    const onExportRoute = vi.fn()
+
+    renderPanel({ onExportRoute })
+
+    await user.click(screen.getByRole('button', { name: 'Exporter le trajet' }))
+    expect(await screen.findByText('Format du fichier')).toBeVisible()
+
+    await user.click(screen.getByText('TCX'))
+    expect(onExportRoute).toHaveBeenCalledWith('tcx')
+  })
+
   it('affiche les instructions dans le bon ordre avec distance et durée', async () => {
     const user = userEvent.setup()
 
@@ -139,7 +180,7 @@ describe('MapSummaryPanel roadbook', () => {
     expect(roadbookButton).toHaveAttribute('aria-expanded', 'false')
     expect(screen.getByRole('button', { name: 'Consulter 1 alternative' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Suivi / Simu GPS' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Exporter GPX' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Exporter le trajet' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sauvegarder ce trajet' })).toBeInTheDocument()
 
     await user.click(roadbookButton)
@@ -155,7 +196,7 @@ describe('MapSummaryPanel roadbook', () => {
     })
     expect(screen.getByRole('button', { name: 'Consulter 1 alternative' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Suivi / Simu GPS' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Exporter GPX' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Exporter le trajet' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sauvegarder ce trajet' })).toBeInTheDocument()
 
     await user.click(roadbookButton)

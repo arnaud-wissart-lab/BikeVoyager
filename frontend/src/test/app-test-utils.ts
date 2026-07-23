@@ -98,7 +98,12 @@ export const createDefaultApiResponse = (url: string): Response => {
     return createJsonResponse([])
   }
 
-  if (url === apiPaths.route || url === apiPaths.loop || url === apiPaths.exportGpx) {
+  if (
+    url === apiPaths.route ||
+    url === apiPaths.loop ||
+    url === apiPaths.exportGpx ||
+    url === apiPaths.exportTcx
+  ) {
     return createJsonResponse({}, 400)
   }
 

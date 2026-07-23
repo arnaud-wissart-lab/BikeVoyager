@@ -112,7 +112,7 @@ export default function useRouteEntities({
     routeEntityRef.current = viewer.entities.add({
       polyline: {
         positions: routePolyline.positions,
-        width: 6,
+        width: 8,
         clampToGround: !routePolyline.hasAltitude,
         material: Cesium.Color.fromCssColorString(currentRouteColor),
       },
@@ -192,11 +192,12 @@ export default function useRouteEntities({
     alternativeRouteEntityRef.current = viewer.entities.add({
       polyline: {
         positions: alternativePolyline.positions,
-        width: 4,
+        width: 7,
         clampToGround: !alternativePolyline.hasAltitude,
         material: new Cesium.PolylineDashMaterialProperty({
           color: Cesium.Color.fromCssColorString(alternativeRouteColor).withAlpha(0.95),
-          dashLength: 18,
+          gapColor: Cesium.Color.fromCssColorString('#111827').withAlpha(0.72),
+          dashLength: 14,
         }),
       },
     })

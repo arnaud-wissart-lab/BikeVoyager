@@ -1,9 +1,11 @@
 import {
+  ActionIcon,
   Badge,
   Box,
   Button,
   Drawer,
   Group,
+  Paper,
   ScrollArea,
   Stack,
   Table,
@@ -71,6 +73,21 @@ export default function RouteAlternativeComparisonDialog({
       : (alternatives[0]?.id ?? null)
     setLocalSelectedAlternativeId(nextSelectedId)
   }, [alternatives, opened, selectedAlternativeId])
+
+  useEffect(() => {
+    if (!opened || isCompact) {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isCompact, onClose, opened])
 
   const orderedAlternatives = [...alternatives].sort(
     (first, second) => second.assessment.relevanceScore - first.assessment.relevanceScore,
@@ -283,7 +300,7 @@ export default function RouteAlternativeComparisonDialog({
             {label}
           </Text>
           {isAlternative && routeId === localSelectedAlternativeId && (
-            <IconCheck size={15} color="var(--mantine-color-grape-6)" aria-hidden />
+            <IconCheck size={15} color="var(--mantine-color-cyan-7)" aria-hidden />
           )}
         </Group>
         {renderRouteBadges(routeId)}
@@ -338,7 +355,7 @@ export default function RouteAlternativeComparisonDialog({
                       key={alternative.id}
                       bg={
                         alternative.id === localSelectedAlternativeId
-                          ? 'var(--mantine-color-grape-light)'
+                          ? 'var(--mantine-color-cyan-light)'
                           : undefined
                       }
                     >
@@ -365,7 +382,7 @@ export default function RouteAlternativeComparisonDialog({
                       key={alternative.id}
                       bg={
                         alternative.id === localSelectedAlternativeId
-                          ? 'var(--mantine-color-grape-light)'
+                          ? 'var(--mantine-color-cyan-light)'
                           : undefined
                       }
                     >
@@ -397,7 +414,7 @@ export default function RouteAlternativeComparisonDialog({
                           key={alternative.id}
                           bg={
                             alternative.id === localSelectedAlternativeId
-                              ? 'var(--mantine-color-grape-light)'
+                              ? 'var(--mantine-color-cyan-light)'
                               : undefined
                           }
                         >
@@ -450,28 +467,76 @@ export default function RouteAlternativeComparisonDialog({
     </Stack>
   )
 
+  const panelTitle = (
+    <Group gap="xs">
+      <IconRouteAltLeft size={18} />
+      <Text fw={600}>{t('routeComparisonTitle')}</Text>
+    </Group>
+  )
+
+  if (!isCompact) {
+    if (!opened) {
+      return null
+    }
+
+    return (
+      <Paper
+        component="aside"
+        aria-label={t('routeComparisonTitle')}
+        withBorder
+        radius={0}
+        h="100%"
+        data-testid="route-comparison-panel"
+        data-display-mode="sidebar"
+        style={{
+          borderTop: 0,
+          borderRight: 0,
+          borderBottom: 0,
+          overflow: 'hidden',
+        }}
+      >
+        <Stack gap={0} h="100%">
+          <Group
+            justify="space-between"
+            gap="sm"
+            wrap="nowrap"
+            px="md"
+            py="sm"
+            style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}
+          >
+            {panelTitle}
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              onClick={onClose}
+              aria-label={t('routeComparisonClose')}
+            >
+              <IconX size={18} />
+            </ActionIcon>
+          </Group>
+          <ScrollArea style={{ flex: 1, minHeight: 0 }} offsetScrollbars>
+            <Box p="md">{content}</Box>
+          </ScrollArea>
+        </Stack>
+      </Paper>
+    )
+  }
+
   return (
     <Drawer
       opened={opened}
       onClose={onClose}
-      title={
-        <Group gap="xs">
-          <IconRouteAltLeft size={18} />
-          <Text fw={600}>{t('routeComparisonTitle')}</Text>
-        </Group>
-      }
-      position={isCompact ? 'bottom' : 'right'}
-      size={isCompact ? '82%' : 'min(52rem, 58vw)'}
+      title={panelTitle}
+      position="bottom"
+      size="82%"
       withOverlay={false}
       closeOnClickOutside
       trapFocus={false}
       lockScroll={false}
       data-testid="route-comparison-panel"
+      data-display-mode="drawer"
     >
-      <ScrollArea.Autosize
-        mah={isCompact ? 'calc(82dvh - 5rem)' : 'calc(100dvh - 5rem)'}
-        offsetScrollbars
-      >
+      <ScrollArea.Autosize mah="calc(82dvh - 5rem)" offsetScrollbars>
         {content}
       </ScrollArea.Autosize>
     </Drawer>

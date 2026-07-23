@@ -1,2 +1,2 @@
-export const currentRouteColor = '#e8590c'
-export const alternativeRouteColor = '#862e9c'
+export const currentRouteColor = '#ff1744'
+export const alternativeRouteColor = '#00b8ff'

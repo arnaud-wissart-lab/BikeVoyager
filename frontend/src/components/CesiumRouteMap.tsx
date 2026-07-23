@@ -5,7 +5,7 @@ import useCesiumViewer from './cesium/useCesiumViewer'
 import useInteractionHandlers from './cesium/useInteractionHandlers'
 import useMapLayers from './cesium/useMapLayers'
 import useRouteEntities from './cesium/useRouteEntities'
-import type { CesiumInteractionLifecycle } from './cesium/lifecycle'
+import { isViewerUsable, type CesiumInteractionLifecycle } from './cesium/lifecycle'
 import type {
   CesiumRouteMapProps,
   CesiumModule,
@@ -90,6 +90,38 @@ export default function CesiumRouteMap({
     poiClickHandlerRef,
     interactionLifecycleRef,
   })
+
+  useEffect(() => {
+    const container = containerRef.current
+    const viewer = viewerRef.current
+    if (status !== 'ready' || !container || !isViewerUsable(viewer)) {
+      return
+    }
+
+    let animationFrameId: number | null = null
+    const resizeObserver = new ResizeObserver(() => {
+      if (animationFrameId !== null) {
+        window.cancelAnimationFrame(animationFrameId)
+      }
+
+      animationFrameId = window.requestAnimationFrame(() => {
+        if (!isViewerUsable(viewer)) {
+          return
+        }
+
+        viewer.resize()
+        viewer.scene.requestRender()
+      })
+    })
+
+    resizeObserver.observe(container)
+    return () => {
+      resizeObserver.disconnect()
+      if (animationFrameId !== null) {
+        window.cancelAnimationFrame(animationFrameId)
+      }
+    }
+  }, [status, viewerRef])
 
   useMapLayers({
     status,
@@ -192,6 +224,8 @@ export default function CesiumRouteMap({
       data-testid="cesium-route-map"
       data-route-layer-count={routeLayerCount}
       data-alternative-route-visible={hasAlternativeRouteLayer ? 'true' : 'false'}
+      data-map-command={mapCommand ?? ''}
+      data-map-command-seq={mapCommandSeq}
       style={{ position: 'relative', width: '100%', height: '100%' }}
     >
       <div

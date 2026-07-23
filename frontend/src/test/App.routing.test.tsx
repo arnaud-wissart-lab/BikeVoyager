@@ -1592,17 +1592,29 @@ describe('App routing', () => {
     const alternativesButton = await screen.findByRole('button', {
       name: 'Consulter 1 alternative',
     })
+    const comparisonLayout = screen.getByTestId('map-comparison-layout')
+    expect(comparisonLayout).toHaveAttribute('data-comparison-open', 'false')
+
     await user.click(alternativesButton)
     expect(await screen.findByText('Comparer les trajets')).toBeInTheDocument()
+    expect(comparisonLayout).toHaveAttribute('data-comparison-open', 'true')
+    expect(screen.getByTestId('route-comparison-panel')).toHaveAttribute(
+      'data-display-mode',
+      'sidebar',
+    )
     const map = await screen.findByTestId('cesium-route-map')
     expect(map).toHaveAttribute('data-route-layer-count', '2')
     expect(map).toHaveAttribute('data-alternative-route-visible', 'true')
+    await waitFor(() => {
+      expect(map).toHaveAttribute('data-map-command', 'resetRoute')
+    })
 
     await user.keyboard('{Escape}')
 
     await waitFor(() => {
       expect(screen.queryByText('Comparer les trajets')).not.toBeInTheDocument()
     })
+    expect(comparisonLayout).toHaveAttribute('data-comparison-open', 'false')
     expect(screen.getByRole('button', { name: 'Consulter 1 alternative' })).toBeInTheDocument()
     expect(map).toHaveAttribute('data-alternative-route-visible', 'false')
 

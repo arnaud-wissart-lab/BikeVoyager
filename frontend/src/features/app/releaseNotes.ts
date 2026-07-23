@@ -30,6 +30,63 @@ export const releaseNotes: ReleaseNote[] = [
     sections: [
       {
         title: {
+          fr: 'Interface et réglages',
+          en: 'Interface and settings',
+        },
+        items: [
+          {
+            type: 'improved',
+            text: {
+              fr: 'En-tête stable entre les pages, avec contrôles uniformes et pictogrammes de thème colorés.',
+              en: 'Stable header across pages, with consistent controls and colored theme icons.',
+            },
+          },
+          {
+            type: 'improved',
+            text: {
+              fr: 'Profil Standard reconnu dès la première ouverture et profil courant indiqué explicitement.',
+              en: 'Standard profile recognized on first use and current profile shown explicitly.',
+            },
+          },
+          {
+            type: 'improved',
+            text: {
+              fr: 'Actions du trajet regroupées de façon cohérente, avec les alternatives isolées à gauche.',
+              en: 'Route actions grouped consistently, with alternatives kept separate on the left.',
+            },
+          },
+        ],
+      },
+      {
+        title: {
+          fr: 'Alternatives et POI',
+          en: 'Alternatives and POI',
+        },
+        items: [
+          {
+            type: 'improved',
+            text: {
+              fr: 'Comparateur simplifié : sélection directement dans le tableau et suppression du tri superflu.',
+              en: 'Simplified comparison: select directly in the table with unnecessary sorting removed.',
+            },
+          },
+          {
+            type: 'fixed',
+            text: {
+              fr: 'Messages d’erreur POI lisibles, y compris lors d’un délai d’attente du service.',
+              en: 'Readable POI error messages, including service timeouts.',
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    version: '0.3.0',
+    date: '2026-07-23',
+    sections: [
+      {
+        title: {
           fr: 'Choix et actions du trajet',
           en: 'Route selection and actions',
         },

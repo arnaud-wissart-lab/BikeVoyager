@@ -1,6 +1,6 @@
 import { screen, waitFor } from '@testing-library/react'
 import App from '../App'
-import { createAppFetchMock, resetAppTestEnvironment } from './app-test-utils'
+import { createAppFetchMock, resetAppTestEnvironment, setDesktopMatchMedia } from './app-test-utils'
 import { renderWithProviders } from './test-utils'
 
 describe('App smoke', () => {
@@ -9,12 +9,18 @@ describe('App smoke', () => {
     vi.stubGlobal('fetch', createAppFetchMock())
   })
 
-  it('affiche le nom du produit', async () => {
+  it('retire le nom visible et illustre chaque entrée du menu', async () => {
     const fetchMock = vi.mocked(fetch)
+    setDesktopMatchMedia()
 
     renderWithProviders(<App />)
 
-    expect(screen.getByText('BikeVoyager')).toBeInTheDocument()
+    expect(screen.queryByText('BikeVoyager')).not.toBeInTheDocument()
+
+    for (const label of ['Planifier', 'Carte', 'Profils', 'Données', 'Aide']) {
+      const tab = screen.getByRole('tab', { name: label })
+      expect(tab.querySelector('svg')).not.toBeNull()
+    }
 
     await waitFor(() => {
       expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2)

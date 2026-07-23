@@ -5,7 +5,6 @@ import type {
   Mode,
   NavigationProgress,
   ProfileSettings,
-  RouteKey,
   TripResult,
   TripType,
 } from '../routing/domain'
@@ -18,7 +17,6 @@ import {
 } from '../routing/domain'
 
 type UseMapRouteSummaryParams = {
-  route: RouteKey
   routeResult: TripResult | null
   mode: Mode | null
   loopStartPlace: PlaceCandidate | null
@@ -35,7 +33,6 @@ type UseMapRouteSummaryParams = {
 }
 
 export const useMapRouteSummary = ({
-  route,
   routeResult,
   mode,
   loopStartPlace,
@@ -169,8 +166,6 @@ export const useMapRouteSummary = ({
         })
     : ''
 
-  const mobileHeaderTitle = route === 'carte' && hasRoute ? mapHeaderTitle : t('appName')
-
   return {
     routeCoordinates,
     routeCumulativeDistances,
@@ -189,6 +184,5 @@ export const useMapRouteSummary = ({
     startLabel,
     endLabel,
     mapHeaderTitle,
-    mobileHeaderTitle,
   }
 }

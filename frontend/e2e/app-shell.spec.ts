@@ -134,7 +134,7 @@ test('navigation répétée entre Planifier et Carte sans trajet', async ({ page
 
     await getNavigationItem(/^Planifier$|^Plan$/i).click()
     await expect(page).toHaveURL(/#\/planifier$/)
-    await expect(page.getByText(/^BikeVoyager$/).first()).toBeVisible()
+    await expect(page.getByText(/^BikeVoyager$/)).toHaveCount(0)
     await expect(page.getByText(/Planifier un parcours|Plan a route/i)).toBeVisible()
   }
 

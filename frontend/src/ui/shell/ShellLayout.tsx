@@ -178,13 +178,11 @@ type ShellLayoutProps = {
   shellChromeFilter: string
   shellMainBackground: string
   isMapRoute: boolean
-  mobileHeaderTitle: string
   mapHeaderTitle: string
   mapStartLabel: string
   mapEndLabel: string
   mapTripType: TripType | null
   mapLoopLabel: string
-  appNameLabel: string
   language: 'fr' | 'en'
   onLanguageChange: (language: 'fr' | 'en') => void
   mapViewMode: MapViewMode
@@ -228,13 +226,11 @@ export default function ShellLayout({
   shellChromeFilter,
   shellMainBackground,
   isMapRoute,
-  mobileHeaderTitle,
   mapHeaderTitle,
   mapStartLabel,
   mapEndLabel,
   mapTripType,
   mapLoopLabel,
-  appNameLabel,
   language,
   onLanguageChange,
   mapViewMode,
@@ -288,11 +284,7 @@ export default function ShellLayout({
                         mapLoopLabel={mapLoopLabel}
                         withTooltip={false}
                       />
-                    ) : (
-                      <Text fw={700} size="lg" lineClamp={1}>
-                        {mobileHeaderTitle}
-                      </Text>
-                    )}
+                    ) : null}
                   </Box>
                   <Group gap={6} align="center" wrap="nowrap">
                     <ActionIcon
@@ -336,16 +328,25 @@ export default function ShellLayout({
                         radius="xl"
                       >
                         <Tabs.List>
-                          {navItems.map((item) => (
-                            <Tabs.Tab key={item.key} value={item.key} disabled={item.disabled}>
-                              {item.label}
-                            </Tabs.Tab>
-                          ))}
+                          {navItems.map((item) => {
+                            const Icon = item.icon
+
+                            return (
+                              <Tabs.Tab
+                                key={item.key}
+                                value={item.key}
+                                disabled={item.disabled}
+                                leftSection={<Icon size={16} stroke={1.8} aria-hidden />}
+                              >
+                                {item.label}
+                              </Tabs.Tab>
+                            )
+                          })}
                         </Tabs.List>
                       </Tabs>
                     )}
-                    <Box style={{ flex: 1, minWidth: '12rem' }}>
-                      {showDesktopMapHeader ? (
+                    {showDesktopMapHeader ? (
+                      <Box style={{ flex: 1, minWidth: 0 }}>
                         <RouteHeaderTitle
                           mapHeaderTitle={mapHeaderTitle}
                           mapStartLabel={mapStartLabel}
@@ -354,12 +355,8 @@ export default function ShellLayout({
                           mapLoopLabel={mapLoopLabel}
                           withTooltip
                         />
-                      ) : (
-                        <Text fw={700} size="lg" lineClamp={1}>
-                          {appNameLabel}
-                        </Text>
-                      )}
-                    </Box>
+                      </Box>
+                    ) : null}
                   </Group>
 
                   <Group gap={6} align="center" wrap="nowrap">

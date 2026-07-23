@@ -75,7 +75,7 @@ describe('Navigation du shell avec le cycle de vie Cesium', () => {
 
       await user.click(screen.getByText(/^Planifier$|^Plan$/i))
       await waitFor(() => expect(window.location.hash).toBe('#/planifier'))
-      expect(screen.getByText('BikeVoyager')).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: 'Planifier' })).toBeInTheDocument()
       expect(document.body.textContent?.trim()).not.toBe('')
     }
 

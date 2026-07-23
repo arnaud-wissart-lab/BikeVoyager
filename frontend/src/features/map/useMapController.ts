@@ -154,9 +154,7 @@ export const useMapController = ({
     startLabel,
     endLabel,
     mapHeaderTitle,
-    mobileHeaderTitle,
   } = useMapRouteSummary({
-    route,
     routeResult,
     mode,
     loopStartPlace,
@@ -434,7 +432,6 @@ export const useMapController = ({
     startLabel,
     endLabel,
     mapHeaderTitle,
-    mobileHeaderTitle,
     poiDetourIds,
     detourSummary,
     selectedPoiDisplayName,

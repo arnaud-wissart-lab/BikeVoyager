@@ -238,13 +238,11 @@ export default function AppRoot() {
         shellChromeFilter={shellChromeFilter}
         shellMainBackground={shellMainBackground}
         isMapRoute={route === 'carte'}
-        mobileHeaderTitle={mapController.mobileHeaderTitle}
         mapHeaderTitle={mapController.mapHeaderTitle}
         mapStartLabel={mapController.startLabel}
         mapEndLabel={mapController.endLabel}
         mapTripType={mapController.mapTripType}
         mapLoopLabel={t('typeLoop')}
-        appNameLabel={t('appName')}
         language={language}
         onLanguageChange={(value) => {
           void i18n.changeLanguage(value)

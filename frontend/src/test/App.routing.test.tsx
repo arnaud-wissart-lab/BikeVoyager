@@ -1528,7 +1528,7 @@ describe('App routing', () => {
     ).toBeInTheDocument()
   })
 
-  it('présente plusieurs alternatives triables dans un même tableau', async () => {
+  it('présente plusieurs alternatives sélectionnables dans un même tableau', async () => {
     const user = userEvent.setup()
     const routeResponses = [
       createJsonResponse(alternativeComparisonRoute),
@@ -1547,7 +1547,7 @@ describe('App routing', () => {
     expect(screen.getAllByText('Alternative 2').length).toBeGreaterThan(0)
     expect(screen.getAllByText('1.4 km').length).toBeGreaterThan(0)
     expect(screen.getAllByText('1.6 km').length).toBeGreaterThan(0)
-    expect(screen.getAllByLabelText('Trier les alternatives')[0]).toBeInTheDocument()
+    expect(screen.queryByLabelText('Trier les alternatives')).not.toBeInTheDocument()
 
     const routeBodies = getJsonRequestBodies<RouteRequestPayload>(mockFetch, apiPaths.route)
     expect(routeBodies).toHaveLength(3)
@@ -1601,9 +1601,9 @@ describe('App routing', () => {
     renderWithProviders(<App />)
 
     await user.click(await screen.findByRole('button', { name: 'Consulter 2 alternatives' }))
-    const firstAlternativeRadio = screen.getByRole('radio', { name: 'Alternative 1' })
-    await user.click(firstAlternativeRadio)
-    expect(firstAlternativeRadio).toBeChecked()
+    const firstAlternativeButton = screen.getByRole('button', { name: 'Alternative 1' })
+    await user.click(firstAlternativeButton)
+    expect(firstAlternativeButton).toHaveAttribute('aria-pressed', 'true')
     await user.click(screen.getByRole('button', { name: 'Utiliser cette alternative' }))
 
     await waitFor(() => {

@@ -5,14 +5,13 @@ import {
   Drawer,
   Group,
   ScrollArea,
-  SegmentedControl,
-  Select,
   Stack,
   Table,
   Text,
+  UnstyledButton,
 } from '@mantine/core'
 import { IconCheck, IconRouteAltLeft, IconX } from '@tabler/icons-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type {
   RouteAlternativeOption,
@@ -32,8 +31,6 @@ type RouteAlternativeComparisonDialogProps = {
   onClose: () => void
 }
 
-type AlternativeSort = 'relevance' | 'distance' | 'elevation_asc' | 'elevation_desc'
-
 type MetricRow = {
   key: keyof RouteComparisonMetrics
   labelKey: string
@@ -48,21 +45,6 @@ const difficultyTranslationKeys: Record<RouteDifficulty, string> = {
   hard: 'routeDifficultyHard',
 }
 
-const compareNullableNumbers = (
-  first: number | null,
-  second: number | null,
-  direction: 'ascending' | 'descending',
-) => {
-  if (first === null) {
-    return 1
-  }
-  if (second === null) {
-    return -1
-  }
-
-  return direction === 'ascending' ? first - second : second - first
-}
-
 export default function RouteAlternativeComparisonDialog({
   opened,
   isCompact,
@@ -73,7 +55,6 @@ export default function RouteAlternativeComparisonDialog({
   onClose,
 }: RouteAlternativeComparisonDialogProps) {
   const { t } = useTranslation()
-  const [sort, setSort] = useState<AlternativeSort>('relevance')
   const [localSelectedAlternativeId, setLocalSelectedAlternativeId] = useState<string | null>(null)
   const placeholder = t('placeholderValue')
   const currentMetrics = alternatives[0]?.comparison.current ?? null
@@ -91,35 +72,9 @@ export default function RouteAlternativeComparisonDialog({
     setLocalSelectedAlternativeId(nextSelectedId)
   }, [alternatives, opened, selectedAlternativeId])
 
-  const orderedAlternatives = useMemo(() => {
-    const nextAlternatives = [...alternatives]
-    nextAlternatives.sort((first, second) => {
-      if (sort === 'distance') {
-        return compareNullableNumbers(
-          first.comparison.alternative.distanceMeters,
-          second.comparison.alternative.distanceMeters,
-          'ascending',
-        )
-      }
-      if (sort === 'elevation_asc') {
-        return compareNullableNumbers(
-          first.comparison.alternative.elevationGainMeters,
-          second.comparison.alternative.elevationGainMeters,
-          'ascending',
-        )
-      }
-      if (sort === 'elevation_desc') {
-        return compareNullableNumbers(
-          first.comparison.alternative.elevationGainMeters,
-          second.comparison.alternative.elevationGainMeters,
-          'descending',
-        )
-      }
-
-      return second.assessment.relevanceScore - first.assessment.relevanceScore
-    })
-    return nextAlternatives
-  }, [alternatives, sort])
+  const orderedAlternatives = [...alternatives].sort(
+    (first, second) => second.assessment.relevanceScore - first.assessment.relevanceScore,
+  )
 
   const formatDistance = (distanceMeters: number | null) => {
     if (distanceMeters === null || !Number.isFinite(distanceMeters)) {
@@ -309,27 +264,50 @@ export default function RouteAlternativeComparisonDialog({
     label: string,
     color: string,
     isAlternative: boolean,
-  ) => (
-    <Stack gap={4}>
-      <Group gap={6} wrap="nowrap">
-        <Box
-          aria-hidden
-          style={{
-            width: 24,
-            height: isAlternative ? 0 : 4,
-            borderTop: isAlternative ? `4px dashed ${color}` : undefined,
-            borderRadius: isAlternative ? 0 : 2,
-            backgroundColor: isAlternative ? undefined : color,
-            flexShrink: 0,
-          }}
-        />
-        <Text component="span" size="sm" fw={600}>
-          {label}
-        </Text>
-      </Group>
-      {renderRouteBadges(routeId)}
-    </Stack>
-  )
+  ) => {
+    const content = (
+      <Stack gap={4}>
+        <Group gap={6} wrap="nowrap">
+          <Box
+            aria-hidden
+            style={{
+              width: 24,
+              height: isAlternative ? 0 : 4,
+              borderTop: isAlternative ? `4px dashed ${color}` : undefined,
+              borderRadius: isAlternative ? 0 : 2,
+              backgroundColor: isAlternative ? undefined : color,
+              flexShrink: 0,
+            }}
+          />
+          <Text component="span" size="sm" fw={600}>
+            {label}
+          </Text>
+          {isAlternative && routeId === localSelectedAlternativeId && (
+            <IconCheck size={15} color="var(--mantine-color-grape-6)" aria-hidden />
+          )}
+        </Group>
+        {renderRouteBadges(routeId)}
+      </Stack>
+    )
+
+    if (!isAlternative) {
+      return content
+    }
+
+    return (
+      <UnstyledButton
+        aria-pressed={routeId === localSelectedAlternativeId}
+        aria-label={label}
+        onClick={() => {
+          setLocalSelectedAlternativeId(routeId)
+          onSelectAlternative(routeId)
+        }}
+        style={{ display: 'block', width: '100%' }}
+      >
+        {content}
+      </UnstyledButton>
+    )
+  }
 
   const content = (
     <Stack
@@ -342,34 +320,6 @@ export default function RouteAlternativeComparisonDialog({
     >
       {orderedAlternatives.length > 0 && (
         <>
-          <Select
-            label={t('routeComparisonSortLabel')}
-            size="xs"
-            value={sort}
-            onChange={(value) => setSort((value as AlternativeSort | null) ?? 'relevance')}
-            data={[
-              { value: 'relevance', label: t('routeComparisonSortRelevance') },
-              { value: 'distance', label: t('routeComparisonSortShortest') },
-              { value: 'elevation_asc', label: t('routeComparisonSortFlattest') },
-              { value: 'elevation_desc', label: t('routeComparisonSortHilliest') },
-            ]}
-            allowDeselect={false}
-          />
-
-          <SegmentedControl
-            fullWidth
-            size="xs"
-            value={localSelectedAlternativeId ?? orderedAlternatives[0].id}
-            onChange={(alternativeId) => {
-              setLocalSelectedAlternativeId(alternativeId)
-              onSelectAlternative(alternativeId)
-            }}
-            data={orderedAlternatives.map((alternative, index) => ({
-              value: alternative.id,
-              label: t('routeComparisonAlternativeNumber', { number: index + 1 }),
-            }))}
-          />
-
           <Table.ScrollContainer minWidth={260 + orderedAlternatives.length * 150}>
             <Table withTableBorder withColumnBorders>
               <Table.Thead>

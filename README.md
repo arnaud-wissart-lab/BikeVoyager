@@ -44,15 +44,15 @@ Schéma détaillé: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 ## Stack technique
 - Backend: ASP.NET Core `net10.0`, Minimal APIs, FluentValidation, Serilog, architecture `Domain / Application / Infrastructure`.
-- Frontend: React `19.2.8`, TypeScript `5.9.x`, Vite `8.1.3`, Mantine `8.3.18`, Cesium `1.143.0`, i18next.
+- Frontend: React `19.2.8`, TypeScript `5.9.x`, Vite `8.1.5`, Mantine `8.3.18`, Cesium `1.143.0`, i18next.
 - Tests: xUnit (`BikeVoyager.UnitTests`, `BikeVoyager.ApiTests`), Vitest (`frontend`), Playwright E2E.
 - AppHost local: .NET Aspire (`Aspire.AppHost.Sdk 13.4.6`, `Aspire.Hosting.Redis 13.4.6`).
-- Conteneurs: Dockerfiles backend/frontend avec bases épinglées (`dotnet/sdk:10.0.203`, `dotnet/aspnet:10.0.9`, `node:22.23.1-alpine`, `nginx:1.31.2-alpine`) + stack Compose `front/api/valhalla/valhalla-bootstrap`.
+- Conteneurs: Dockerfiles backend/frontend avec bases épinglées (`dotnet/sdk:10.0.302`, `dotnet/aspnet:10.0.10`, `node:22.23.1-alpine`, `nginx:1.31.2-alpine`) + stack Compose `front/api/valhalla/valhalla-bootstrap`.
 - Moteur de routage: image Valhalla épinglée par digest SHA256 dans `deploy/home.compose.yml` et `infra/valhalla.compose.yml`.
 
 ## Démarrage rapide (dev local)
 Prérequis:
-- .NET SDK `10.0.203` ou patch compatible dans la même bande (CI: `actions/setup-dotnet@v5`)
+- .NET SDK `10.0.302` ou patch compatible dans la même bande (CI: `actions/setup-dotnet@v5`)
 - Node.js `22.23.1` + npm (CI: `actions/setup-node@v6`, fichier `.nvmrc`)
 - Docker + Docker Compose (nécessaires pour Valhalla)
 - PowerShell (`pwsh`) pour les scripts `scripts/dev-*`

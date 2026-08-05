@@ -28,12 +28,40 @@ updates:
       - "dependencies"
       - "backend"
 
-  - package-ecosystem: "github-actions"
+  - package-ecosystem: "dotnet-sdk"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "06:30"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(sdk)"
+    labels:
+      - "dependencies"
+      - "backend"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:45"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(images)"
+    labels:
+      - "dependencies"
+      - "ci"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
       timezone: "Europe/Paris"
     open-pull-requests-limit: 5
     commit-message:

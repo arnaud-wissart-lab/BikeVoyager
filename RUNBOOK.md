@@ -20,7 +20,7 @@ Valhalla (build, mises à jour, et nettoyage disque).
 ## Prérequis
 
 - .NET SDK 10.x
-- Node.js 22.x et npm
+- Node.js 24.x et npm
 - Docker Desktop (nécessaire pour Valhalla)
 - Dépendances frontend installées une fois : `npm ci` dans `frontend/`
 - `npm ci` nécessite `package-lock.json` (présent dans le repo).
@@ -53,7 +53,7 @@ Règles de décision :
 
 - Traiter d'abord les vulnérabilités directes ou transitives.
 - Privilégier les correctifs patch/mineurs compatibles avec les versions déjà ancrées.
-- Garder `@types/node` sur la ligne `22.x`, cohérente avec `.nvmrc` et `frontend/package.json`.
+- Garder `@types/node` sur la ligne `24.x`, cohérente avec `.nvmrc` et `frontend/package.json`.
 - Ne pas changer de feature band SDK .NET, de version majeure npm ou d'image Docker majeure sans validation explicite.
 - Pour `Microsoft.OpenApi`, conserver un override compatible si une version majeure casse le générateur OpenAPI.
 

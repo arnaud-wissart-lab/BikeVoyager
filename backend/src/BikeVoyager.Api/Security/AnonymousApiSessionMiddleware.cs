@@ -11,17 +11,20 @@ public sealed class AnonymousApiSessionMiddleware
 
     private readonly RequestDelegate _next;
     private readonly IDataProtector _protector;
+    private readonly IHostEnvironment _environment;
     private readonly IOptionsMonitor<ApiSecurityOptions> _optionsMonitor;
     private readonly ILogger<AnonymousApiSessionMiddleware> _logger;
 
     public AnonymousApiSessionMiddleware(
         RequestDelegate next,
         IDataProtectionProvider dataProtectionProvider,
+        IHostEnvironment environment,
         IOptionsMonitor<ApiSecurityOptions> optionsMonitor,
         ILogger<AnonymousApiSessionMiddleware> logger)
     {
         _next = next;
         _protector = dataProtectionProvider.CreateProtector(ProtectorPurpose);
+        _environment = environment;
         _optionsMonitor = optionsMonitor;
         _logger = logger;
     }
@@ -63,7 +66,7 @@ public sealed class AnonymousApiSessionMiddleware
             HttpOnly = true,
             IsEssential = true,
             SameSite = SameSiteMode.Lax,
-            Secure = context.Request.IsHttps,
+            Secure = ApiCookieSecurityPolicy.UseSecureCookies(_environment),
             Path = "/api",
             Expires = expiresAt,
         });

@@ -1,6 +1,9 @@
+using BikeVoyager.Api.Security;
+using Microsoft.Extensions.Hosting;
+
 namespace BikeVoyager.Api.Cloud;
 
-public sealed class CloudSessionCookies : ICloudSessionCookies
+public sealed class CloudSessionCookies(IHostEnvironment environment) : ICloudSessionCookies
 {
     public const string AuthSessionCookieName = "bv_cloud_auth_sid";
     public const string PendingSessionCookieName = "bv_cloud_pending_sid";
@@ -59,7 +62,7 @@ public sealed class CloudSessionCookies : ICloudSessionCookies
         return true;
     }
 
-    private static void SetCookie(
+    private void SetCookie(
         HttpContext httpContext,
         string cookieName,
         string value,
@@ -68,7 +71,7 @@ public sealed class CloudSessionCookies : ICloudSessionCookies
         httpContext.Response.Cookies.Append(cookieName, value, new CookieOptions
         {
             HttpOnly = true,
-            Secure = httpContext.Request.IsHttps,
+            Secure = ApiCookieSecurityPolicy.UseSecureCookies(environment),
             SameSite = SameSiteMode.Lax,
             IsEssential = true,
             Path = "/api",
@@ -76,12 +79,12 @@ public sealed class CloudSessionCookies : ICloudSessionCookies
         });
     }
 
-    private static void DeleteCookie(HttpContext httpContext, string cookieName)
+    private void DeleteCookie(HttpContext httpContext, string cookieName)
     {
         httpContext.Response.Cookies.Delete(cookieName, new CookieOptions
         {
             HttpOnly = true,
-            Secure = httpContext.Request.IsHttps,
+            Secure = ApiCookieSecurityPolicy.UseSecureCookies(environment),
             SameSite = SameSiteMode.Lax,
             IsEssential = true,
             Path = "/api",

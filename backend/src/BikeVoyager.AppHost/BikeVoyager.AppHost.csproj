@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.Redis" Version="13.5.0" />
+    <PackageReference Include="Aspire.Hosting.Redis" Version="13.5.4" />
   </ItemGroup>
   <ItemGroup>
     <!-- Version corrigée imposée pour supprimer une dépendance vulnérable détectée par NuGet. -->
